@@ -4,6 +4,36 @@
 	$pageTitle = isset($category)
 		? (isset($selectedTag) && $selectedTag ? ($category->name . ' / ' . $selectedTag) : $category->name)
 		: 'Tất cả sản phẩm';
+
+	$sortOptions = [
+		['value' => 'default', 'label' => 'Mặc định'],
+		['value' => 'alpha-asc', 'label' => 'A → Z'],
+		['value' => 'alpha-desc', 'label' => 'Z → A'],
+		['value' => 'price-asc', 'label' => 'Giá tăng dần'],
+		['value' => 'price-desc', 'label' => 'Giá giảm dần'],
+	];
+
+	$currentSort = (string) request('sort', 'default');
+	$currentSortLabel = collect($sortOptions)->firstWhere('value', $currentSort)['label'] ?? 'Mặc định';
+
+	$collectionBaseUrl = route('products.index');
+	if (isset($category)) {
+		$collectionBaseUrl = !empty($selectedTag)
+			? route('categories.show.tag', ['slug' => $category->slug, 'tag' => $selectedTag])
+			: route('categories.show', $category->slug);
+	} elseif (!empty($searchKeyword)) {
+		$collectionBaseUrl = route('search');
+	}
+
+	$buildSortUrl = function (string $value) use ($collectionBaseUrl) {
+		$query = request()->except(['sort', 'page', 'category', 'tag']);
+
+		if ($value !== 'default') {
+			$query['sort'] = $value;
+		}
+
+		return empty($query) ? $collectionBaseUrl : $collectionBaseUrl . '?' . http_build_query($query);
+	};
 @endphp
 
 @section('title', $pageTitle . ' - Thế Giới Trái Cây')
@@ -40,7 +70,7 @@
 	</div>
 </section>
 
-<div class="container">
+<div class="container collection-page">
 	<div class="row">
 		<!-- Main Product Area -->
 		<section class="main_container collection col-lg-9 col-lg-push-3">
@@ -67,30 +97,11 @@
 									<label class="left hidden-xs">Sắp xếp: </label>
 									<ul>
 										<li>
-											<span class="val">
-												@switch(request('sort'))
-													@case('alpha-asc')
-														A → Z
-														@break
-													@case('alpha-desc')
-														Z → A
-														@break
-													@case('price-asc')
-														Giá tăng dần
-														@break
-													@case('price-desc')
-														Giá giảm dần
-														@break
-													@default
-														Mặc định
-												@endswitch
-											</span>
+											<span class="val">{{ $currentSortLabel }}</span>
 											<ul class="ul_2">
-												<li><a href="{{ route('products.index') }}">Mặc định</a></li>
-												<li><a href="{{ route('products.index', ['sort' => 'alpha-asc']) }}">A → Z</a></li>
-												<li><a href="{{ route('products.index', ['sort' => 'alpha-desc']) }}">Z → A</a></li>
-												<li><a href="{{ route('products.index', ['sort' => 'price-asc']) }}">Giá tăng dần</a></li>
-												<li><a href="{{ route('products.index', ['sort' => 'price-desc']) }}">Giá giảm dần</a></li>
+												@foreach($sortOptions as $option)
+													<li><a href="{{ $buildSortUrl($option['value']) }}">{{ $option['label'] }}</a></li>
+												@endforeach
 											</ul>
 										</li>
 									</ul>
@@ -98,13 +109,13 @@
 
 								<!-- View Mode Toggle -->
 								<div class="view-mode f-left">
-									<a href="javascript:;" data-view="grid" >
+									<a href="javascript:;" data-view="grid" aria-label="Xem dạng lưới">
 										<b class="btn button-view-mode view-mode-grid active ">
 											<i class="fa fa-th" aria-hidden="true"></i>
 										</b>
 										<span>Lưới</span>
 									</a>
-									<a href="javascript:;" data-view="list">
+									<a href="javascript:;" data-view="list" aria-label="Xem dạng danh sách">
 										<b class="btn button-view-mode view-mode-list ">
 											<i class="fa fa-th-list" aria-hidden="true"></i>
 										</b>
@@ -117,11 +128,11 @@
 				</div>
 
 				<!-- Product Grid -->
-				<section class="products-view products-view-grid">
-					<div class="row">
+				<section class="products-view products-view-grid" id="collectionProducts">
+					<div class="row collection-products-row">
 						@if($products->count() > 0)
 							@foreach($products as $product)
-								<div class="col-xs-6 col-xss-6 col-sm-4 col-md-4 col-lg-4">
+								<div class="col-xs-6 col-xss-6 col-sm-4 col-md-4 col-lg-4 collection-product-col">
 									<x-products.card :product="$product" />
 								</div>
 							@endforeach
@@ -193,7 +204,7 @@
 		</section>
 
 <!-- Sidebar Navigation & Filters -->
-		<aside class="dqdt-sidebar sidebar left left-content col-lg-3 col-lg-pull-9">
+		<aside class="dqdt-sidebar sidebar left left-content col-lg-3 col-lg-pull-9" id="collectionSidebar">
 			<!-- Category Navigation -->
 			<aside class="aside-item sidebar-category collection-category">
 				<div class="aside-title">
@@ -438,6 +449,11 @@
 				</div>
 			</div>
 		</aside>
+
+		<button type="button" id="open-filters" class="open-filters hidden-lg" aria-controls="collectionSidebar" aria-expanded="false">
+			<i class="fa fa-filter" aria-hidden="true"></i>
+			<span>Lọc</span>
+		</button>
 	</div>
 </div>
 
@@ -451,6 +467,7 @@ function applyFilter(checkbox, filterType, filterValue) {
 		url.searchParams.delete(filterType);
 	}
 
+	url.searchParams.delete('page');
 	window.location.href = url.toString();
 }
 
@@ -479,6 +496,56 @@ function filterItemInList(inputElement) {
 		item.style.display = text.indexOf(query) >= 0 ? '' : 'none';
 	});
 }
+
+(function () {
+	var openFiltersBtn = document.getElementById('open-filters');
+	var sidebar = document.getElementById('collectionSidebar');
+
+	if (openFiltersBtn && sidebar) {
+		openFiltersBtn.addEventListener('click', function () {
+			var isOpen = sidebar.classList.toggle('is-open-mobile');
+			openFiltersBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+		});
+
+		document.addEventListener('click', function (event) {
+			if (window.innerWidth > 991 || !sidebar.classList.contains('is-open-mobile')) {
+				return;
+			}
+
+			if (sidebar.contains(event.target) || openFiltersBtn.contains(event.target)) {
+				return;
+			}
+
+			sidebar.classList.remove('is-open-mobile');
+			openFiltersBtn.setAttribute('aria-expanded', 'false');
+		});
+	}
+
+	var productsView = document.getElementById('collectionProducts');
+	var viewButtons = document.querySelectorAll('.view-mode [data-view]');
+
+	if (!productsView || !viewButtons.length) {
+		return;
+	}
+
+	viewButtons.forEach(function (link) {
+		link.addEventListener('click', function (event) {
+			event.preventDefault();
+
+			var viewMode = link.getAttribute('data-view') === 'list' ? 'list' : 'grid';
+			productsView.classList.toggle('products-view-grid', viewMode === 'grid');
+			productsView.classList.toggle('products-view-list', viewMode === 'list');
+
+			viewButtons.forEach(function (button) {
+				var isActive = button.getAttribute('data-view') === viewMode;
+				var iconButton = button.querySelector('.button-view-mode');
+				if (iconButton) {
+					iconButton.classList.toggle('active', isActive);
+				}
+			});
+		});
+	});
+})();
 </script>
 
 @endsection
@@ -712,6 +779,105 @@ function filterItemInList(inputElement) {
 
 	.product-page-nav {
 		font-size: 24px;
+	}
+
+	.products-view-list .collection-product-col {
+		width: 100% !important;
+		float: none !important;
+	}
+
+	.products-view-list .product-box {
+		display: flex;
+		align-items: stretch;
+		gap: 16px;
+		padding: 12px;
+	}
+
+	.products-view-list .product-thumbnail {
+		flex: 0 0 180px;
+		max-width: 180px;
+	}
+
+	.products-view-list .product-info {
+		flex: 1;
+		text-align: left !important;
+		min-width: 0;
+		padding-top: 6px;
+	}
+
+	.products-view-list .product-name a {
+		height: auto;
+		max-height: none;
+		margin-top: 0;
+		font-size: 16px;
+		line-height: 1.45;
+	}
+
+	.products-view-list .product-action {
+		position: static;
+		display: block;
+		text-align: left;
+		margin-top: 10px;
+	}
+
+	.open-filters {
+		display: none;
+	}
+
+	@media (max-width: 991px) {
+		.collection-page .main_container.collection {
+			width: 100%;
+			left: 0;
+		}
+
+		.collection-page .sidebar.left-content {
+			position: fixed;
+			left: -320px;
+			top: 0;
+			bottom: 0;
+			width: 300px;
+			z-index: 1050;
+			background: #fff;
+			overflow-y: auto;
+			transition: left 0.25s ease;
+			padding: 20px 15px;
+		}
+
+		.collection-page .sidebar.left-content.is-open-mobile {
+			left: 0;
+			box-shadow: 0 0 18px rgba(0, 0, 0, 0.2);
+		}
+
+		.collection-page .open-filters {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			position: fixed;
+			right: 14px;
+			bottom: 80px;
+			z-index: 1055;
+			border: 0;
+			border-radius: 999px;
+			background: #8bc34a;
+			color: #fff;
+			padding: 10px 14px;
+			font-size: 13px;
+			font-weight: 700;
+			box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+		}
+
+		.products-view-list .product-box {
+			display: block;
+		}
+
+		.products-view-list .product-thumbnail {
+			max-width: none;
+		}
+
+		.products-view-list .product-info {
+			padding-top: 0;
+		}
 	}
 
 	@media (max-width: 576px) {

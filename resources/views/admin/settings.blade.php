@@ -129,11 +129,11 @@
                 </div>
                 <div class="field">
                     <label>Hotline</label>
-                    <input class="input" type="text" value="0909 131 418">
+                    <input class="input" type="text" value="0333499426">
                 </div>
                 <div class="field">
                     <label>Email CSKH</label>
-                    <input class="input" type="email" value="support@fruitshop.local">
+                    <input class="input" type="email" value="bacnguyen2921@gmail.com">
                 </div>
                 <div class="field">
                     <label>Timezone</label>
@@ -143,7 +143,7 @@
                 </div>
                 <div class="field" style="grid-column: 1 / -1;">
                     <label>Dia chi giao hang mac dinh</label>
-                    <textarea class="textarea">338 Hai Ba Trung, Phuong Tan Dinh, Quan 1, TP HCM</textarea>
+                    <textarea class="textarea">74 Trần Thái Tông</textarea>
                 </div>
             </form>
         </article>

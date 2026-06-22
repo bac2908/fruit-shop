@@ -167,7 +167,7 @@ class HomeService
     {
         return Coupon::query()
             ->with('images')
-            ->where('is_active', true)
+            ->valid()
             ->orderByDesc('id')
             ->limit($limit)
             ->get();

@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>@yield('title', 'Thế Giới Trái Cây - Trái cây Việt Nam loại 1 & nhập khẩu cao cấp')</title>
 	<meta name="description" content="@yield('meta_description', 'The Gioi Trai Cay - Trai cay Viet Nam loai 1 va nhap khau chat luong cao.')">
 
@@ -15,6 +15,9 @@
 
 	<!-- Fonts & Icons -->
 	<link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i&amp;subset=vietnamese" rel="stylesheet">
 	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
@@ -43,7 +46,7 @@
 		<div class="container">
 			<i class="fa fa-mobile" style=" font-size: 20px; display: inline-block; position: relative; transform: translateY(2px); "></i> Hotline:
 			<span>
-				<a href="callto:0909131418"> 0909131418</a>
+				<a href="tel:0333499426">0333499426</a>
 			</span>
 		</div>
 	</div>
@@ -52,16 +55,29 @@
 		<div class="d-flex justify-content-between align-items-center">
 			<div class="topbar-left">
 				<span class="margin-right-20">
-					<i class="fa fa-mobile" style="font-size: 16px;"></i> Hotline: <b>0909131418 - 0798531637</b>
+					<i class="fa fa-mobile" style="font-size: 16px;"></i> Hotline: <b>0333499426</b>
 				</span>
 				<span>
-					<i class="fa fa-map-marker"></i> Địa chỉ: 338 Hai Bà Trưng, Phường Tân Định, Quận 1, Tp Hồ Chí Minh
+					<i class="fa fa-map-marker"></i> Địa chỉ: 74 Trần Thái Tông
 				</span>
 				</div>
 				<div class="topbar-right">
-				<a href="#"><i class="fa fa-user"></i> Đăng nhập</a>
-				<span class="margin-left-5 margin-right-5">hoặc</span>
-				<a href="#">Đăng ký</a>
+				@auth
+					@if(auth()->user()->isAdmin())
+						<a href="{{ route('admin.dashboard') }}"><i class="fa fa-user"></i> Admin</a>
+					@else
+						<span><i class="fa fa-user"></i> {{ auth()->user()->name }}</span>
+					@endif
+					<span class="margin-left-5 margin-right-5">|</span>
+					<form method="post" action="{{ route('logout') }}" style="display:inline;">
+						@csrf
+						<button type="submit" style="background:transparent;border:0;color:inherit;font:inherit;font-weight:700;padding:0;">Đăng xuất</button>
+					</form>
+				@else
+					<a href="{{ route('login') }}"><i class="fa fa-user"></i> Đăng nhập</a>
+					<span class="margin-left-5 margin-right-5">hoặc</span>
+					<a href="{{ route('register') }}">Đăng ký</a>
+				@endauth
 				</div>
 			</div>
 		</div>
@@ -93,7 +109,7 @@
 								<a href="#"><img src="//theme.hstatic.net/200000157781/1001036201/14/policy2.png?v=1061" alt=""></a>
 								<div class="info">
 								<a href="#">Hỗ trợ 24/7</a>
-									<p>Hotline: 0909131418</p>
+									<p>Hotline: 0333499426</p>
 								</div>
 							</div>
 							<div class="item-policy d-flex align-items-center">
@@ -317,18 +333,45 @@
 			max-width: 100%;
 			margin: 0 auto;
 		}
-		nav .nav-left > .nav-item { display: inline-block; }
-		nav .nav-left > .nav-item > .nav-link { color: #fff !important; font-weight: bold; text-transform: none; font-size: 14px; padding: 15px 20px !important; display: block; }
+		nav > .container > .hidden-sm.hidden-xs {
+			position: relative !important;
+			min-height: 52px;
+			align-items: stretch !important;
+		}
+		nav .nav-left {
+			display: flex !important;
+			align-items: stretch;
+			flex-wrap: nowrap;
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			min-width: 0;
+		}
+		nav .nav-left > .nav-item {
+			display: block;
+			float: none !important;
+			position: relative;
+		}
+		nav .nav-left > .nav-item > .nav-link { color: #fff !important; font-weight: bold; text-transform: none; font-size: 14px; padding: 15px 20px !important; display: flex; align-items: center; height: 100%; }
 		nav .nav-left > .nav-item.active > .nav-link { background: #ff9800 !important; }
 		nav .nav-left > .nav-item:hover > .nav-link { background: rgba(0,0,0,0.05); }
 
-		nav .nav-left > .nav-item.has-mega {
+		.bread_crumb {
 			position: relative;
+			z-index: 1;
+			margin-top: 12px;
+		}
+
+		nav .nav-left > .nav-item.has-mega {
+			position: static !important;
 		}
 
 		nav .nav-left > .nav-item.has-mega .mega-content {
+			position: absolute !important;
+			top: 100% !important;
 			left: 0 !important;
 			right: auto !important;
+			display: none !important;
 			width: min(1120px, calc(100vw - 32px)) !important;
 			max-width: calc(100vw - 32px) !important;
 			padding: 14px 18px 18px !important;
@@ -336,6 +379,21 @@
 			background: #fff;
 			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 			z-index: 1002;
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transform: translateY(8px);
+			transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+		}
+
+		nav .nav-left > .nav-item.has-mega:hover .mega-content,
+		nav .nav-left > .nav-item.has-mega:focus-within .mega-content {
+			display: block !important;
+			margin-top: 0 !important;
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+			transform: translateY(0);
 		}
 
 		nav .nav-left > .nav-item.has-mega .level0-wrapper2,
@@ -433,7 +491,7 @@
 		}
 
 		/* Search */
-		.menu-search { padding: 8px 0; }
+		.menu-search { flex: 0 0 auto; padding: 8px 0; }
 		.header_search form { background: #fff; border-radius: 25px; height: 34px; padding: 0 15px; width: 250px; display: flex; align-items: center; }
 		.header_search input { border: none !important; width: 100%; font-size: 13px; outline: none !important; height: 100%; }
 		.header_search .btn { color: #333 !important; font-size: 16px; padding: 0; background: none; }
@@ -722,6 +780,92 @@
 		.tgc-side-icons .icon-item.location { background: #f2ae16; }
 		.tgc-side-icons .icon-item.messenger { background: #22a8ff; }
 
+		.sales-pop-toast {
+			position: fixed;
+			left: 28px;
+			bottom: 24px;
+			z-index: 10001;
+			width: min(478px, calc(100vw - 56px));
+			min-height: 84px;
+			background: #fff;
+			border-radius: 3px;
+			box-shadow: 0 12px 28px rgba(20, 30, 16, 0.2);
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transform: translateY(16px);
+			transition: opacity .24s ease, transform .24s ease, visibility .24s ease;
+		}
+
+		.sales-pop-toast.is-visible {
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+			transform: translateY(0);
+		}
+
+		.sales-pop-link {
+			display: grid;
+			grid-template-columns: 86px minmax(0, 1fr);
+			align-items: center;
+			gap: 13px;
+			width: 100%;
+			min-height: 84px;
+			padding: 13px 46px 13px 13px;
+			color: #333 !important;
+			text-decoration: none !important;
+		}
+
+		.sales-pop-image {
+			width: 86px;
+			height: 58px;
+			object-fit: cover;
+			background: #f4f7ef;
+		}
+
+		.sales-pop-copy {
+			min-width: 0;
+		}
+
+		.sales-pop-name {
+			display: block;
+			color: #2d2d2d;
+			font-size: 17px;
+			font-weight: 800;
+			line-height: 1.25;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.sales-pop-message {
+			display: block;
+			margin-top: 7px;
+			color: #808080;
+			font-size: 14px;
+			line-height: 1.35;
+		}
+
+		.sales-pop-close {
+			position: absolute;
+			top: 7px;
+			right: 8px;
+			width: 28px;
+			height: 28px;
+			padding: 0;
+			border: 0;
+			background: transparent;
+			color: #444;
+			font-size: 28px;
+			font-weight: 700;
+			line-height: 24px;
+			cursor: pointer;
+		}
+
+		.sales-pop-close:hover {
+			color: #111;
+		}
+
 		@media (max-width: 1399px) {
 			.footer .footer-inner { padding: 34px 0 26px; }
 		}
@@ -770,11 +914,172 @@
 
 		@media (max-width: 767px) {
 			.tgc-side-icons { display: none; }
+			.sales-pop-toast {
+				left: 12px;
+				right: 12px;
+				bottom: 14px;
+				width: auto;
+				min-height: 76px;
+			}
+			.sales-pop-link {
+				grid-template-columns: 74px minmax(0, 1fr);
+				min-height: 76px;
+				gap: 11px;
+				padding: 11px 38px 11px 11px;
+			}
+			.sales-pop-image {
+				width: 74px;
+				height: 54px;
+			}
+			.sales-pop-name {
+				font-size: 14px;
+			}
+			.sales-pop-message {
+				margin-top: 5px;
+				font-size: 12px;
+			}
+			.sales-pop-close {
+				top: 5px;
+				right: 5px;
+			}
 			.footer .footer-widget { margin-bottom: 18px; }
 			.footer .list-menu li { font-size: 14px; }
 			.footer .footer-contact-list .line-break { margin-left: 0; }
 			.footer .footer-contact-list li {
 				align-items: flex-start;
+			}
+		}
+
+		/* 2026 step-1 visual layer */
+		:root {
+			--v26-bg: #eef3e8;
+			--v26-ink: #1f2f1f;
+			--v26-muted: #5e6f5b;
+			--v26-primary: #669a29;
+			--v26-primary-strong: #4f781f;
+			--v26-accent: #f1a428;
+			--v26-line: #d8e2ce;
+			--v26-paper: #ffffff;
+			--v26-shadow: 0 18px 38px rgba(45, 76, 24, 0.12);
+			--v26-radius: 18px;
+		}
+
+		body {
+			font-family: 'Manrope', 'Roboto', sans-serif;
+			color: var(--v26-ink);
+			background:
+				radial-gradient(circle at 3% -5%, #f8f3cf 0%, transparent 30%),
+				radial-gradient(circle at 95% 0%, #e1f1ce 0%, transparent 24%),
+				var(--v26-bg);
+		}
+
+		h1, h2, h3, .title-head, .section-title h2 {
+			font-family: 'Fraunces', serif;
+		}
+
+		a:focus-visible,
+		button:focus-visible,
+		input:focus-visible {
+			outline: 2px solid var(--v26-accent);
+			outline-offset: 2px;
+		}
+
+		.topbar {
+			background: linear-gradient(95deg, #76ad33 0%, #8ac842 100%) !important;
+			font-weight: 600;
+		}
+
+		.header-content {
+			background: var(--v26-paper);
+			border-radius: 24px;
+			margin-top: 14px;
+			padding: 18px 16px;
+			box-shadow: var(--v26-shadow);
+		}
+
+		.logo-wrapper img {
+			max-height: 72px;
+		}
+
+		nav {
+			background: linear-gradient(90deg, #6ca42e 0%, #7fc037 100%) !important;
+			border: 0 !important;
+			margin-top: 14px !important;
+			border-radius: var(--v26-radius);
+			box-shadow: 0 12px 24px rgba(63, 99, 34, 0.16) !important;
+			overflow: visible !important;
+		}
+
+		nav.fixed-nav {
+			margin-top: 0 !important;
+			border-radius: 0;
+		}
+
+		nav .nav-left > .nav-item > .nav-link {
+			font-size: 13px;
+			letter-spacing: 0.5px;
+			text-transform: uppercase;
+			font-weight: 700;
+		}
+
+		nav .nav-left > .nav-item.active > .nav-link {
+			background: linear-gradient(120deg, #f7ae33 0%, #e9901f 100%) !important;
+		}
+
+		.header_search form {
+			border: 1px solid #e4edd6;
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+			height: 38px;
+			width: 286px;
+		}
+
+		.product-box {
+			border-radius: var(--v26-radius);
+			border: 1px solid #e3ebd8;
+			box-shadow: 0 10px 22px rgba(61, 94, 36, 0.08);
+			transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+		}
+
+		.product-box:hover {
+			transform: translateY(-4px);
+			border-color: #bfd59b;
+			box-shadow: 0 18px 32px rgba(61, 94, 36, 0.16);
+		}
+
+		.tgc-brand-strip {
+			background: linear-gradient(180deg, #ffffff 0%, #f8fbf4 100%);
+		}
+
+		.tgc-brand-item {
+			background: #fff;
+			border: 1px solid #e3ebd7;
+			border-radius: 14px;
+			padding: 8px;
+			box-shadow: 0 8px 16px rgba(64, 94, 40, 0.08);
+		}
+
+		.footer {
+			background: linear-gradient(170deg, #638f28 0%, #4f771e 100%);
+		}
+
+		.footer .site-footer {
+			background: transparent;
+		}
+
+		.footer .copyright {
+			background: rgba(18, 34, 8, 0.32);
+		}
+
+		@media (max-width: 991px) {
+			.header-content {
+				border-radius: 0;
+				margin-top: 0;
+				box-shadow: none;
+			}
+
+			nav {
+				margin-top: 0 !important;
+				border-radius: 0;
 			}
 		}
 	</style>
@@ -803,16 +1108,12 @@
 							<div class="footer-widget">
 								<h3>Liên hệ</h3>
 								<ul class="list-menu footer-contact-list">
-									<li><i class="fa fa-map-marker"></i><span>338 Hai Bà Trưng, Phường Tân định, Quận 1, Tp Hồ Chí Minh</span></li>
-									<li><i class="fa fa-phone"></i><span>0909131418 - 0798531637<span class="line-break">Thứ 2 - Chủ nhật: 7:00 - 21:00</span></span></li>
-									<li><i class="fa fa-envelope"></i><span>hong3ly@gmail.com</span></li>
+									<li><i class="fa fa-map-marker"></i><span>74 Trần Thái Tông</span></li>
+									<li><i class="fa fa-phone"></i><span>0333499426<span class="line-break">Thứ 2 - Chủ nhật: 7:00 - 21:00</span></span></li>
+									<li><i class="fa fa-envelope"></i><span>bacnguyen2921@gmail.com</span></li>
 								</ul>
 								<ul class="list-menu">
-									<li>Hộ kinh doanh Võ Trần Cương</li>
-									<li>Đại diện Pháp luật: Võ Trần Cương</li>
-									<li>Mã số thuế: 8125704849</li>
-									<li>Giấy ĐKKD số :41A8037733</li>
-									<li>Ngày cấp:13/04/2015</li>
+									<li>Chủ sở hữu: Nguyễn Văn Bắc</li>
 								</ul>
 							</div>
 						</div>
@@ -827,11 +1128,6 @@
 									<li><a href="{{ route('about') }}">Giới thiệu</a></li>
 									<li><a href="{{ route('contact.page') }}">Liên hệ</a></li>
 								</ul>
-								<div class="wrap-bct" style="margin-top:14px;">
-									<a href="http://online.gov.vn/Home/WebDetails/94759" target="_blank" rel="noopener noreferrer">
-										<img src="//theme.hstatic.net/200000157781/1001036201/14/logo_bct.png?v=1064" alt="Bộ Công Thương" style="max-width: 220px; width: 100%;">
-									</a>
-								</div>
 							</div>
 						</div>
 
@@ -888,14 +1184,27 @@
 	</footer>
 
 	<div class="tgc-side-icons hidden-xs hidden-sm">
-		<a class="icon-item phone" href="tel:0909131418" aria-label="phone"><i class="fa fa-phone"></i></a>
-		<a class="icon-item zalo" href="https://zalo.me/0909131418" target="_blank" rel="noopener noreferrer" aria-label="zalo">Zalo</a>
+		<a class="icon-item phone" href="tel:0333499426" aria-label="phone"><i class="fa fa-phone"></i></a>
+		<a class="icon-item zalo" href="https://zalo.me/0333499426" target="_blank" rel="noopener noreferrer" aria-label="zalo">Zalo</a>
 		<a class="icon-item youtube" href="https://www.youtube.com/channel/UCbP8WRHFrvv06knZzKyf1Ew" target="_blank" rel="noopener noreferrer" aria-label="youtube"><i class="fa fa-youtube"></i></a>
 		<a class="icon-item instagram" href="https://www.instagram.com/thegioitraicay/" target="_blank" rel="noopener noreferrer" aria-label="instagram"><i class="fa fa-instagram"></i></a>
 		<a class="icon-item tiktok" href="https://www.tiktok.com/@thegioitraicay.net" target="_blank" rel="noopener noreferrer" aria-label="tiktok"><i class="fa fa-music"></i></a>
 		<a class="icon-item location" href="{{ route('contact.page') }}" aria-label="location"><i class="fa fa-map-marker"></i></a>
 		<a class="icon-item messenger" href="https://www.facebook.com/messages/t/270232287830" target="_blank" rel="noopener noreferrer" aria-label="messenger"><i class="fa fa-comment"></i></a>
 	</div>
+
+	@if(!empty($salesPopupProducts))
+	<div class="sales-pop-toast" id="salesPopToast" role="status" aria-live="polite">
+		<a class="sales-pop-link" id="salesPopLink" href="#">
+			<img class="sales-pop-image" id="salesPopImage" src="" alt="" loading="lazy">
+			<span class="sales-pop-copy">
+				<strong class="sales-pop-name" id="salesPopName"></strong>
+				<span class="sales-pop-message">Một khách hàng vừa đặt mua cách đây <span id="salesPopTime"></span> phút</span>
+			</span>
+		</a>
+		<button class="sales-pop-close" id="salesPopClose" type="button" aria-label="Đóng thông báo">&times;</button>
+	</div>
+	@endif
 
 	<script src='//theme.hstatic.net/200000157781/1001036201/14/jquery-2.2.3.min.js?v=1061'></script>
 	<script src='//theme.hstatic.net/200000157781/1001036201/14/plugin.js?v=1061'></script>
@@ -916,9 +1225,7 @@
 				if (scrollTop >= headerHeight) {
 					nav.classList.add('fixed-nav');
 					// Add padding to prevent content jump
-					if (!document.body.style.paddingTop) {
-						document.body.style.paddingTop = nav.offsetHeight + 'px';
-					}
+					document.body.style.paddingTop = nav.offsetHeight + 'px';
 				} else {
 					nav.classList.remove('fixed-nav');
 					document.body.style.paddingTop = '0';
@@ -987,8 +1294,98 @@
 			toggleFloatingActions();
 			window.addEventListener('scroll', toggleFloatingActions, { passive: true });
 		})();
+
+		@if(!empty($salesPopupProducts))
+		(function() {
+			var products = @json($salesPopupProducts);
+			var toast = document.getElementById('salesPopToast');
+			var link = document.getElementById('salesPopLink');
+			var image = document.getElementById('salesPopImage');
+			var name = document.getElementById('salesPopName');
+			var time = document.getElementById('salesPopTime');
+			var close = document.getElementById('salesPopClose');
+			var storageKey = 'sales_popup_closed';
+			var showTimer = null;
+			var hideTimer = null;
+			var index = Math.floor(Math.random() * products.length);
+			var minuteOptions = [4, 8, 12, 17, 23, 31, 42, 52];
+
+			if (!toast || !link || !image || !name || !time || !Array.isArray(products) || products.length === 0) {
+				return;
+			}
+
+			try {
+				if (sessionStorage.getItem(storageKey) === '1') {
+					return;
+				}
+			} catch (error) {}
+
+			function getNextProduct() {
+				var tries = 0;
+				var product = null;
+
+				while (tries < products.length) {
+					product = products[index % products.length];
+					index += 1;
+					tries += 1;
+
+					if (product && product.name && product.url && product.image) {
+						return product;
+					}
+				}
+
+				return null;
+			}
+
+			function renderProduct(product) {
+				var minutes = minuteOptions[Math.floor(Math.random() * minuteOptions.length)];
+
+				link.href = product.url;
+				image.src = product.image;
+				image.alt = product.name;
+				name.textContent = product.name;
+				time.textContent = minutes;
+			}
+
+			function hideToast(scheduleNext) {
+				toast.classList.remove('is-visible');
+
+				if (scheduleNext) {
+					showTimer = window.setTimeout(showToast, 9000);
+				}
+			}
+
+			function showToast() {
+				var product = getNextProduct();
+
+				if (!product) {
+					return;
+				}
+
+				renderProduct(product);
+				toast.classList.add('is-visible');
+				hideTimer = window.setTimeout(function() {
+					hideToast(true);
+				}, 5800);
+			}
+
+			if (close) {
+				close.addEventListener('click', function(event) {
+					event.preventDefault();
+					window.clearTimeout(showTimer);
+					window.clearTimeout(hideTimer);
+					hideToast(false);
+
+					try {
+						sessionStorage.setItem(storageKey, '1');
+					} catch (error) {}
+				});
+			}
+
+			showTimer = window.setTimeout(showToast, 1800);
+		})();
+		@endif
 	</script>
 	@stack('scripts')
 </body>
 </html>
-

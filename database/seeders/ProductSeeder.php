@@ -17,10 +17,14 @@ class ProductSeeder extends Seeder
         $count = Product::query()->count();
 
         if ($count === 0) {
-            $this->command?->warn('Products table is empty. No static JSON seeding is performed.');
+            if ($this->command) {
+                $this->command->warn('Products table is empty. No static JSON seeding is performed.');
+            }
             return;
         }
 
-        $this->command?->info("Products already available in MySQL: {$count}. Skipped static seeding.");
+        if ($this->command) {
+            $this->command->info("Products already available in MySQL: {$count}. Skipped static seeding.");
+        }
     }
 }

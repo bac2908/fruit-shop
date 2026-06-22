@@ -20,7 +20,7 @@ class AdminUserSeeder extends Seeder
         $password = env('ADMIN_PASSWORD', 'Admin@12345');
 
         User::query()->updateOrCreate(
-            ['email' => 'admin@fruitshop.local'],
+            ['email' => 'bacnguyen2921@gmail.com'],
             [
                 'name' => 'Admin FruitShop',
                 'password' => Hash::make($password),
@@ -30,7 +30,7 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        $this->command->info('Admin user seeded: admin@fruitshop.local');
+        $this->command->info('Admin user seeded: bacnguyen2921@gmail.com');
         if (env('APP_DEBUG')) {
             $this->command->warn('⚠️  Default password: ' . $password);
             $this->command->warn('⚠️  CHANGE THIS PASSWORD IMMEDIATELY IN PRODUCTION');

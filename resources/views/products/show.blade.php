@@ -57,6 +57,8 @@
         ? (int) round((($basePrice - $salePrice) / $basePrice) * 100)
         : 0;
     $isContactPrice = !$isSalePrice && $displayPrice <= 0;
+    $canOrderProduct = (bool) $product->is_active && (int) $product->stock > 0 && !$isContactPrice && $displayPrice > 0;
+    $sku = trim((string) $product->getAttribute('sku'));
 
     $summaryText = trim((string) ($product->short_desc ?? ''));
     if ($summaryText === '' && $plainDescription !== '') {
@@ -69,6 +71,11 @@
             ? '<p>' . e($summaryText) . '</p>'
             : '<p>Thông tin sản phẩm đang được cập nhật.</p>';
     }
+
+    $descriptionHtml = preg_replace('#<(script|style|iframe|object|embed|link|meta)\b[^>]*>.*?</\1>#is', '', $descriptionHtml);
+    $descriptionHtml = preg_replace('/\son[a-z]+\s*=\s*(["\']).*?\1/is', '', $descriptionHtml);
+    $descriptionHtml = preg_replace('/\s(href|src)\s*=\s*(["\'])\s*javascript:.*?\2/is', ' $1="#"', $descriptionHtml);
+    $descriptionHtml = strip_tags($descriptionHtml, '<p><br><strong><b><em><i><ul><ol><li><table><thead><tbody><tr><th><td><img><a><h2><h3><h4><blockquote>');
 
     $variantProducts = collect($optionProducts ?? [])->filter(function ($item) {
         return $item && $item->id;
@@ -83,6 +90,15 @@
     $featuredItems = collect($featuredProducts ?? [])->filter(function ($item) {
         return $item && $item->id;
     })->take(5);
+
+    $aprioriItems = collect($frequentlyBoughtTogether ?? []);
+    $aprioriStats = $aprioriStats ?? [
+        'orders_count' => 0,
+        'transaction_count' => 0,
+        'rules_count' => 0,
+        'min_pair_count' => 1,
+    ];
+    $showAprioriMetrics = auth()->check() && auth()->user()->isAdmin();
 
     $policyItems = [
         [
@@ -137,9 +153,13 @@
                     <div class="row">
                         <div class="col-xs-12 col-sm-6">
                             <div class="pdx-gallery-wrap">
-                                <a href="{{ $mainImage }}" class="pdx-main-image-link" target="_blank" rel="noopener noreferrer">
-                                    <img id="pdx-main-image" src="{{ $mainImage }}" alt="{{ $product->name }}" class="pdx-main-image">
-                                </a>
+                                <div class="pdx-zoom-stage" id="pdx-zoom-stage">
+                                    <a href="{{ $mainImage }}" class="pdx-main-image-link" target="_blank" rel="noopener noreferrer">
+                                        <img id="pdx-main-image" src="{{ $mainImage }}" alt="{{ $product->name }}" class="pdx-main-image">
+                                    </a>
+                                    <span class="pdx-zoom-lens" aria-hidden="true"></span>
+                                </div>
+                                <div class="pdx-zoom-result" id="pdx-zoom-result" aria-hidden="true"></div>
 
                                 @if($resolvedImages->count() > 1)
                                     <div class="pdx-thumb-grid" id="pdx-thumb-grid">
@@ -163,8 +183,8 @@
                                         <i class="fa {{ $product->stock > 0 ? 'fa-check-circle' : 'fa-times-circle' }}" aria-hidden="true"></i>
                                         {{ $product->stock > 0 ? 'Còn hàng' : 'Tạm hết hàng' }}
                                     </span>
-                                    @if($product->sku)
-                                        <span class="pdx-meta-sku">SKU: {{ $product->sku }}</span>
+                                    @if($sku !== '')
+                                        <span class="pdx-meta-sku">SKU: {{ $sku }}</span>
                                     @endif
                                 </div>
 
@@ -186,6 +206,7 @@
                                     <p class="pdx-summary">{{ $summaryText }}</p>
                                 @endif
 
+                                @if($canOrderProduct)
                                 <form action="{{ route('cart.add') }}" method="post" class="pdx-buy-form" data-cart-form>
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -213,7 +234,7 @@
                                         <label for="pdx-qty">Số lượng</label>
                                         <div class="pdx-qty-control">
                                             <button type="button" class="pdx-qty-btn" data-action="minus" aria-label="Giảm số lượng">-</button>
-                                            <input id="pdx-qty" class="pdx-qty-input" type="text" name="quantity" value="1" maxlength="3">
+                                            <input id="pdx-qty" class="pdx-qty-input" type="text" name="quantity" value="1" maxlength="3" min="1" max="{{ min(99, (int) $product->stock) }}" data-max="{{ min(99, (int) $product->stock) }}">
                                             <button type="button" class="pdx-qty-btn" data-action="plus" aria-label="Tăng số lượng">+</button>
                                         </div>
                                     </div>
@@ -228,6 +249,14 @@
                                         </button>
                                     </div>
                                 </form>
+                                @else
+                                    <div class="pdx-buy-form pdx-buy-disabled">
+                                        <p class="pdx-unavailable-message">
+                                            {{ $product->stock <= 0 ? 'San pham dang tam het hang.' : 'San pham dang cho cap nhat gia ban.' }}
+                                        </p>
+                                        <a href="{{ route('contact.page') }}" class="pdx-btn pdx-btn-secondary">Lien he tu van</a>
+                                    </div>
+                                @endif
 
                                 <div class="pdx-share-line">
                                     <span>Chia sẻ:</span>
@@ -319,6 +348,61 @@
     </div>
 </section>
 
+<section class="pdx-apriori-section">
+    <div class="container">
+        <div class="pdx-apriori-heading">
+            <div>
+                <span class="pdx-apriori-kicker">Apriori recommendation</span>
+                <h2>Sản phẩm thường mua kèm</h2>
+            </div>
+            @if($showAprioriMetrics)
+                <div class="pdx-apriori-stats">
+                    <span>{{ (int) ($aprioriStats['transaction_count'] ?? 0) }} giao dịch hợp lệ</span>
+                    <span>{{ (int) ($aprioriStats['rules_count'] ?? 0) }} luật kết hợp</span>
+                </div>
+            @endif
+        </div>
+
+        @if($aprioriItems->isNotEmpty())
+            <div class="row row-fix">
+                @foreach($aprioriItems as $recommendation)
+                    @php
+                        $recommendedProduct = $recommendation['product'];
+                    @endphp
+                    <div class="col-xs-6 col-sm-4 col-md-3 col-fix">
+                        <div class="pdx-apriori-card">
+                            <x-products.card :product="$recommendedProduct" />
+                            @if($showAprioriMetrics)
+                                <div class="pdx-apriori-metrics">
+                                    <span title="Support: tỷ lệ đơn hàng chứa cả hai sản phẩm">
+                                        Support {{ number_format(($recommendation['support'] ?? 0) * 100, 1, ',', '.') }}%
+                                    </span>
+                                    <span title="Confidence: xác suất mua sản phẩm này khi đã mua sản phẩm đang xem">
+                                        Confidence {{ number_format(($recommendation['confidence'] ?? 0) * 100, 1, ',', '.') }}%
+                                    </span>
+                                    <span title="Lift: mức độ mạnh của luật kết hợp so với mua ngẫu nhiên">
+                                        Lift {{ number_format($recommendation['lift'] ?? 0, 2, ',', '.') }}
+                                    </span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="pdx-apriori-empty">
+                @if($showAprioriMetrics)
+                    <strong>Chưa đủ dữ liệu để sinh gợi ý Apriori cho sản phẩm này.</strong>
+                    <p>Thuật toán cần các đơn hàng có từ 2 sản phẩm trở lên để tạo luật dạng “mua A thì thường mua B”. Khi có thêm dữ liệu trong bảng <code>orders</code> và <code>order_items</code>, danh sách mua kèm sẽ tự hiển thị tại đây.</p>
+                @else
+                    <strong>Chưa có gợi ý mua kèm cho sản phẩm này.</strong>
+                    <p>Hệ thống sẽ tự cập nhật khi có thêm dữ liệu mua hàng phù hợp.</p>
+                @endif
+            </div>
+        @endif
+    </div>
+</section>
+
 @if($relatedProducts->isNotEmpty())
     <section class="pdx-related-section">
         <div class="container">
@@ -370,14 +454,21 @@
 
 .pdx-gallery-wrap {
     margin-bottom: 12px;
+    position: relative;
+}
+
+.pdx-zoom-stage {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid #ececec;
+    background: #fff;
+    cursor: zoom-in;
 }
 
 .pdx-main-image-link {
     display: block;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #ececec;
-    background: #fff;
+    height: 100%;
 }
 
 .pdx-main-image {
@@ -385,6 +476,60 @@
     aspect-ratio: 1;
     object-fit: cover;
     display: block;
+    transition: transform 0.15s ease;
+    transform-origin: center;
+}
+
+.pdx-zoom-lens {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 120px;
+    height: 120px;
+    border: 1px solid #8bc34a;
+    background: rgba(139, 195, 74, 0.2);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+.pdx-zoom-stage.is-zooming {
+    cursor: zoom-out;
+}
+
+.pdx-zoom-stage.is-zooming .pdx-main-image {
+    transform: none;
+}
+
+.pdx-zoom-stage.is-zooming .pdx-zoom-lens {
+    opacity: 1;
+}
+
+.pdx-zoom-result {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 16px);
+    width: 100%;
+    height: 100%;
+    max-width: 360px;
+    max-height: 360px;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    box-shadow: 0 10px 28px rgba(23, 44, 30, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.pdx-zoom-result.is-visible {
+    opacity: 1;
+    visibility: visible;
 }
 
 .pdx-thumb-grid {
@@ -510,6 +655,21 @@
 .pdx-buy-form {
     border-top: 1px dashed #e7e7e7;
     padding-top: 12px;
+}
+
+.pdx-buy-disabled {
+    display: grid;
+    gap: 10px;
+}
+
+.pdx-unavailable-message {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    color: #9a3412;
+    font-weight: 700;
+    margin: 0;
+    padding: 10px 12px;
 }
 
 .pdx-field {
@@ -836,6 +996,105 @@
     margin: 0 0 46px;
 }
 
+.pdx-apriori-section {
+    margin: 0 0 28px;
+}
+
+.pdx-apriori-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.pdx-apriori-kicker {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    border-radius: 999px;
+    background: #ecf7df;
+    color: #5f922b;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.pdx-apriori-heading h2 {
+    margin: 0;
+    color: #2a2a2a;
+    font-size: 30px;
+}
+
+.pdx-apriori-stats {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    color: #666;
+    font-size: 13px;
+}
+
+.pdx-apriori-stats span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border: 1px solid #e2edd7;
+    border-radius: 999px;
+    background: #fff;
+    padding: 0 10px;
+}
+
+.pdx-apriori-card {
+    position: relative;
+}
+
+.pdx-apriori-metrics {
+    display: grid;
+    gap: 5px;
+    margin: -10px 10px 18px;
+    padding: 9px 10px;
+    border: 1px dashed #dbe8cf;
+    border-radius: 10px;
+    background: #fbfff7;
+    color: #5d6b58;
+    font-size: 12px;
+}
+
+.pdx-apriori-metrics span {
+    display: block;
+    line-height: 1.35;
+}
+
+.pdx-apriori-empty {
+    border: 1px dashed #dbe8cf;
+    border-radius: 14px;
+    background: #fbfff7;
+    padding: 16px;
+    color: #4d5f49;
+}
+
+.pdx-apriori-empty strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #2f2f2f;
+    font-size: 15px;
+}
+
+.pdx-apriori-empty p {
+    margin: 0;
+    line-height: 1.7;
+}
+
+.pdx-apriori-empty code {
+    color: #5f922b;
+    background: #eef8e5;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
 .pdx-related-title {
     margin: 0 0 12px;
     color: #2a2a2a;
@@ -872,12 +1131,35 @@
         margin-top: 12px;
     }
 
+    .pdx-zoom-lens {
+        width: 100px;
+        height: 100px;
+    }
+
+    .pdx-zoom-result,
+    .pdx-zoom-lens {
+        display: none;
+    }
+
+    .pdx-zoom-stage {
+        cursor: default;
+    }
+
     .pdx-price {
         font-size: 30px;
     }
 
     .pdx-related-title {
         font-size: 26px;
+    }
+
+    .pdx-apriori-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pdx-apriori-stats {
+        justify-content: flex-start;
     }
 }
 
@@ -921,6 +1203,10 @@
     .pdx-related-title {
         font-size: 22px;
     }
+
+    .pdx-apriori-heading h2 {
+        font-size: 22px;
+    }
 }
 </style>
 @endpush
@@ -931,6 +1217,90 @@ document.addEventListener('DOMContentLoaded', function () {
     var mainImage = document.getElementById('pdx-main-image');
     var mainImageLink = document.querySelector('.pdx-main-image-link');
     var thumbButtons = document.querySelectorAll('#pdx-thumb-grid .pdx-thumb');
+    var zoomStage = document.getElementById('pdx-zoom-stage');
+    var zoomLens = zoomStage ? zoomStage.querySelector('.pdx-zoom-lens') : null;
+    var zoomResult = document.getElementById('pdx-zoom-result');
+    var canHover = window.matchMedia ? window.matchMedia('(hover: hover)').matches : true;
+    var zoomScaleX = 1;
+    var zoomScaleY = 1;
+
+    function syncZoomImage(imageUrl) {
+        if (!zoomResult || !imageUrl) {
+            return;
+        }
+
+        zoomResult.style.backgroundImage = 'url("' + imageUrl + '")';
+    }
+
+    function updateZoomMetrics() {
+        if (!zoomStage || !zoomLens || !zoomResult) {
+            return;
+        }
+
+        var rect = zoomStage.getBoundingClientRect();
+        var lensWidth = zoomLens.offsetWidth || 1;
+        var lensHeight = zoomLens.offsetHeight || 1;
+        var resultWidth = zoomResult.offsetWidth || 1;
+        var resultHeight = zoomResult.offsetHeight || 1;
+
+        if (resultWidth < 20 || resultHeight < 20) {
+            return;
+        }
+
+        zoomScaleX = resultWidth / lensWidth;
+        zoomScaleY = resultHeight / lensHeight;
+        zoomResult.style.backgroundSize = (rect.width * zoomScaleX) + 'px ' + (rect.height * zoomScaleY) + 'px';
+    }
+
+    function setZoomPosition(clientX, clientY) {
+        if (!zoomStage || !zoomLens || !zoomResult) {
+            return;
+        }
+
+        var rect = zoomStage.getBoundingClientRect();
+        var lensWidth = zoomLens.offsetWidth;
+        var lensHeight = zoomLens.offsetHeight;
+        var x = clientX - rect.left;
+        var y = clientY - rect.top;
+        var lensX = Math.max(0, Math.min(rect.width - lensWidth, x - lensWidth / 2));
+        var lensY = Math.max(0, Math.min(rect.height - lensHeight, y - lensHeight / 2));
+
+        zoomLens.style.left = lensX + 'px';
+        zoomLens.style.top = lensY + 'px';
+        zoomResult.style.backgroundPosition = '-' + (lensX * zoomScaleX) + 'px -' + (lensY * zoomScaleY) + 'px';
+    }
+
+    if (zoomStage && zoomLens && zoomResult && canHover) {
+        zoomStage.addEventListener('mouseenter', function () {
+            updateZoomMetrics();
+            zoomStage.classList.add('is-zooming');
+            zoomResult.classList.add('is-visible');
+        });
+
+        zoomStage.addEventListener('mouseleave', function () {
+            zoomStage.classList.remove('is-zooming');
+            zoomResult.classList.remove('is-visible');
+            zoomLens.style.left = '0px';
+            zoomLens.style.top = '0px';
+            zoomResult.style.backgroundPosition = '0 0';
+        });
+
+        zoomStage.addEventListener('mousemove', function (event) {
+            setZoomPosition(event.clientX, event.clientY);
+        });
+
+        window.addEventListener('resize', function () {
+            updateZoomMetrics();
+        });
+    }
+
+    if (mainImage) {
+        syncZoomImage(mainImage.getAttribute('src'));
+        mainImage.addEventListener('load', function () {
+            updateZoomMetrics();
+            syncZoomImage(mainImage.getAttribute('src'));
+        });
+    }
 
     thumbButtons.forEach(function (button) {
         button.addEventListener('click', function () {
@@ -944,6 +1314,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 mainImageLink.setAttribute('href', nextImage);
             }
 
+            if (zoomStage) {
+                zoomStage.classList.remove('is-zooming');
+            }
+
+            if (zoomResult) {
+                zoomResult.classList.remove('is-visible');
+                zoomResult.style.backgroundPosition = '0 0';
+            }
+
+            syncZoomImage(nextImage);
+            updateZoomMetrics();
+
             thumbButtons.forEach(function (item) {
                 item.classList.remove('is-active');
             });
@@ -955,13 +1337,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var qtyButtons = document.querySelectorAll('.pdx-qty-btn');
 
     if (qtyInput && qtyButtons.length) {
+        var maxQty = parseInt(qtyInput.getAttribute('data-max'), 10) || 99;
+
         qtyButtons.forEach(function (button) {
             button.addEventListener('click', function () {
                 var action = button.getAttribute('data-action');
                 var current = parseInt(qtyInput.value, 10) || 1;
 
                 if (action === 'plus') {
-                    qtyInput.value = Math.min(999, current + 1);
+                    qtyInput.value = Math.min(maxQty, current + 1);
                     return;
                 }
 
@@ -976,8 +1360,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 value = 1;
             }
 
-            if (value > 999) {
-                value = 999;
+            if (value > maxQty) {
+                value = maxQty;
             }
 
             qtyInput.value = value;

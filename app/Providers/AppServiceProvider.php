@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Services\HomeService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -197,6 +199,156 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('sections', $sections);
             $view->with('megaCategories', $megaCategories);
+            $view->with('salesPopupProducts', $this->getSalesPopupProducts());
         });
+    }
+
+    private function getSalesPopupProducts(): array
+    {
+        return cache()->remember('sales_popup_products_v1', now()->addMinutes(15), function () {
+            $products = collect();
+            $bestSellerIds = $this->getBestSellerProductIds();
+
+            if (!empty($bestSellerIds)) {
+                $products = $products->concat($this->getProductsByIds($bestSellerIds));
+            }
+
+            if ($products->count() < 8) {
+                $products = $products->concat($this->getHotCategoryProducts(
+                    ['san-pham-ban-chay', 'hang-vao-mua'],
+                    8 - $products->count(),
+                    $products->pluck('id')->all()
+                ));
+            }
+
+            if ($products->count() < 8) {
+                $products = $products->concat($this->getLatestProducts(
+                    8 - $products->count(),
+                    $products->pluck('id')->all()
+                ));
+            }
+
+            return $products
+                ->unique('id')
+                ->take(12)
+                ->map(function (Product $product) {
+                    return [
+                        'name' => (string) $product->name,
+                        'url' => route('products.show', $product->slug),
+                        'image' => $product->primary_image_url,
+                    ];
+                })
+                ->values()
+                ->all();
+        });
+    }
+
+    private function getBestSellerProductIds(): array
+    {
+        if (!Schema::hasTable('orders') || !Schema::hasTable('order_items')) {
+            return [];
+        }
+
+        return DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.status', '!=', 'cancelled')
+            ->whereNotNull('order_items.product_id')
+            ->select('order_items.product_id')
+            ->groupBy('order_items.product_id')
+            ->orderByRaw('SUM(order_items.qty) DESC')
+            ->limit(12)
+            ->pluck('order_items.product_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    private function getProductsByIds(array $productIds)
+    {
+        $productIds = collect($productIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($productIds->isEmpty()) {
+            return collect();
+        }
+
+        return Product::query()
+            ->with([
+                'images' => function ($query) {
+                    $query->orderBy('sort_order');
+                },
+            ])
+            ->where('is_active', true)
+            ->whereIn('id', $productIds->all())
+            ->get()
+            ->sortBy(function (Product $product) use ($productIds) {
+                return $productIds->search((int) $product->id);
+            })
+            ->values();
+    }
+
+    private function getHotCategoryProducts(array $categorySlugs, int $limit, array $excludeIds = [])
+    {
+        if ($limit <= 0) {
+            return collect();
+        }
+
+        $categories = Category::query()
+            ->whereIn('slug', $categorySlugs)
+            ->where('is_active', true)
+            ->with('children')
+            ->get();
+
+        if ($categories->isEmpty()) {
+            return collect();
+        }
+
+        $categoryIds = $categories
+            ->flatMap(function (Category $category) {
+                return $category->descendants()
+                    ->pluck('id')
+                    ->push($category->id);
+            })
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        return Product::query()
+            ->with([
+                'images' => function ($query) {
+                    $query->orderBy('sort_order');
+                },
+            ])
+            ->where('is_active', true)
+            ->whereIn('category_id', $categoryIds->all())
+            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
+                $query->whereNotIn('id', $excludeIds);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    private function getLatestProducts(int $limit, array $excludeIds = [])
+    {
+        if ($limit <= 0) {
+            return collect();
+        }
+
+        return Product::query()
+            ->with([
+                'images' => function ($query) {
+                    $query->orderBy('sort_order');
+                },
+            ])
+            ->where('is_active', true)
+            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
+                $query->whereNotIn('id', $excludeIds);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
     }
 }

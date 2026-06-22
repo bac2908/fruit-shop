@@ -15,14 +15,67 @@ class CouponSeeder extends Seeder
      */
     public function run()
     {
-        $couponCount = Coupon::query()->count();
-        $imageCount = CouponImage::query()->count();
+        $endsAt = now()->addMonths(3)->endOfDay();
+        $startsAt = now()->subDay()->startOfDay();
 
-        if ($couponCount === 0) {
-            $this->command?->warn('Coupons table is empty. No static array seeding is performed.');
-            return;
+        $coupons = [
+            [
+                'title' => 'Tang ngay 500gr Kiwi vang New Zealand',
+                'code' => 'KIWIVANG500',
+                'type' => Coupon::TYPE_GIFT,
+                'value' => null,
+                'min_order_total' => 500000,
+                'description' => 'Ap dung cho don hang tu 500.000d, qua tang duoc xac nhan khi goi dien.',
+                'image_url' => '//theme.hstatic.net/200000157781/1001036201/14/icon_coupon_1.png?v=1061',
+            ],
+            [
+                'title' => 'Tang 1kg Quyt Thai cho don tu 800k',
+                'code' => 'QUYTTHAI1KG',
+                'type' => Coupon::TYPE_GIFT,
+                'value' => null,
+                'min_order_total' => 800000,
+                'description' => 'Qua tang theo mua, ap dung den khi het so luong khuyen mai.',
+                'image_url' => '//theme.hstatic.net/200000157781/1001036201/14/icon_coupon_2.png?v=1061',
+            ],
+            [
+                'title' => 'Giam 10% cho don gio qua trai cay',
+                'code' => 'GIOQUA10',
+                'type' => Coupon::TYPE_PERCENT,
+                'value' => 10,
+                'min_order_total' => 300000,
+                'description' => 'Giam toi da 100.000d cho cac don gio qua trai cay.',
+                'image_url' => '//theme.hstatic.net/200000157781/1001036201/14/icon_coupon_3.png?v=1061',
+                'max_discount' => 100000,
+            ],
+        ];
+
+        foreach ($coupons as $couponData) {
+            $imageUrl = $couponData['image_url'];
+            unset($couponData['image_url']);
+
+            $coupon = Coupon::query()->updateOrCreate(
+                ['code' => $couponData['code']],
+                array_merge($couponData, [
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
+                    'is_active' => true,
+                    'used_count' => 0,
+                ])
+            );
+
+            CouponImage::query()->updateOrCreate(
+                [
+                    'coupon_id' => $coupon->id,
+                    'sort_order' => 0,
+                ],
+                [
+                    'url' => $imageUrl,
+                ]
+            );
         }
 
-        $this->command?->info("Coupons already available in MySQL: {$couponCount}, images: {$imageCount}. Skipped static seeding.");
+        if ($this->command) {
+            $this->command->info('Active coupons seeded/refreshed: ' . count($coupons));
+        }
     }
 }

@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AprioriRecommendationService;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     protected $productService;
+    protected $aprioriRecommendationService;
 
-    public function __construct(ProductService $productService)
+    public function __construct(ProductService $productService, AprioriRecommendationService $aprioriRecommendationService)
     {
         $this->productService = $productService;
+        $this->aprioriRecommendationService = $aprioriRecommendationService;
     }
 
     public function index(Request $request)
@@ -40,12 +43,16 @@ class ProductController extends Controller
             ? $this->productService->getOptionProducts($product, 8)
             : collect([$product]);
         $featuredProducts = $this->productService->getFeaturedProducts(5);
+        $frequentlyBoughtTogether = $this->aprioriRecommendationService->recommendForProduct($product, 4);
+        $aprioriStats = $this->aprioriRecommendationService->getStats();
 
         return view('products.show', [
             'product' => $product,
             'relatedProducts' => $relatedProducts,
             'optionProducts' => $optionProducts,
             'featuredProducts' => $featuredProducts,
+            'frequentlyBoughtTogether' => $frequentlyBoughtTogether,
+            'aprioriStats' => $aprioriStats,
         ]);
     }
 

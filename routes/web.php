@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,8 +28,16 @@ Route::get('/pages/chinh-sach-giao-hang-va-thanh-toan', [PageController::class, 
 Route::get('/pages/dieu-khoan-dich-vu', [PageController::class, 'termsOfService'])->name('page.terms');
 Route::get('/pages/khach-hang-doanh-nghiep', [PageController::class, 'corporateCustomers'])->name('page.corporate');
 
+Route::middleware('guest')->group(function () {
+	Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+	Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+	Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
 // Admin FE-first routes (UI only, BE data wiring in the next phase)
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
 	Route::get('/', function () {
 		return view('admin.dashboard');
 	})->name('dashboard');
@@ -74,5 +83,5 @@ Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.
 Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
 Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->name('checkout.place');
-Route::get('/checkout/thank-you/{code}', [CartController::class, 'thankYou'])->name('checkout.thankyou');
+Route::get('/checkout/thank-you/{code}/{token?}', [CartController::class, 'thankYou'])->name('checkout.thankyou');
 Route::get('/search', [ProductController::class, 'search'])->name('search');

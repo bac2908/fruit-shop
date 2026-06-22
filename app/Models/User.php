@@ -24,6 +24,10 @@ class User extends Authenticatable
         'phone',
         'address',
         'role',
+        'password_changed_at',
+        'force_password_change',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -44,6 +48,10 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'role' => 'string',
+        'password_changed_at' => 'datetime',
+        'force_password_change' => 'boolean',
+        'failed_login_attempts' => 'integer',
+        'locked_until' => 'datetime',
     ];
 
     /**
@@ -66,17 +74,4 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
 }

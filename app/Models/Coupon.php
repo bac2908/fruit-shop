@@ -20,6 +20,10 @@ class Coupon extends Model
         'starts_at',
         'ends_at',
         'is_active',
+        'usage_limit',
+        'per_customer_limit',
+        'used_count',
+        'max_discount',
         'description',
         'image_url',
     ];
@@ -30,6 +34,10 @@ class Coupon extends Model
         'is_active' => 'boolean',
         'value' => 'integer',
         'min_order_total' => 'integer',
+        'usage_limit' => 'integer',
+        'per_customer_limit' => 'integer',
+        'used_count' => 'integer',
+        'max_discount' => 'integer',
     ];
 
     // Coupon types
@@ -53,6 +61,10 @@ class Coupon extends Model
         }
 
         if ($this->ends_at && $now->greaterThan($this->ends_at)) {
+            return false;
+        }
+
+        if ($this->usage_limit && (int) $this->used_count >= (int) $this->usage_limit) {
             return false;
         }
 
@@ -81,12 +93,18 @@ class Coupon extends Model
         }
 
         if ($this->type === self::TYPE_PERCENT) {
-            return intval($subtotal * $this->value / 100);
+            $discount = intval($subtotal * $this->value / 100);
         } elseif ($this->type === self::TYPE_FIXED) {
-            return min($this->value, $subtotal);
+            $discount = min($this->value, $subtotal);
+        } else {
+            return 0;
         }
 
-        return 0;
+        if ($this->max_discount) {
+            $discount = min($discount, (int) $this->max_discount);
+        }
+
+        return $discount;
     }
 
     /**
@@ -95,6 +113,11 @@ class Coupon extends Model
     public function images()
     {
         return $this->hasMany(CouponImage::class)->orderBy('sort_order');
+    }
+
+    public function usages()
+    {
+        return $this->hasMany(CouponUsage::class);
     }
 
     /**
@@ -133,4 +156,3 @@ class Coupon extends Model
         return $query->where('ends_at', '<', Carbon::now());
     }
 }
-

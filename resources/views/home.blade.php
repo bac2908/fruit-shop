@@ -1,7 +1,11 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 <h1 class="hidden">Thế Giới Trái Cây -Trái cây Việt nam loại 1 & nhập khẩu cao cấp</h1>
+
+@php
+	$assetBaseUrl = preg_replace('#^https?:#', '', rtrim(config('app.url'), '/'));
+@endphp
 
 {{-- Section 1: Slider & Sidebar --}}
 <section class="awe-section-1" id="awe-section-1">
@@ -13,27 +17,27 @@
 					<div class="home-slider owl-carousel" data-lg-items='1' data-md-items='1' data-sm-items='1' data-autoplay='true' data-autoplaytimeout='4000' data-xs-items="1" data-margin='0' data-nav="true">
 						<div class="item">
 							<a href="{{ route('products.show', 'thanh-tra-thai-lan') }}" class="clearfix">
-								<img src="//theme.hstatic.net/200000157781/1001036201/14/slider_1.jpg?v=1061" alt="Thanh Trà Thái lan - Thế giới trái cây">
+								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_1.jpg" alt="Thanh Trà Thái lan - Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'may-indo') }}" class="clearfix">
-								<img src="//theme.hstatic.net/200000157781/1001036201/14/slider_2.jpg?v=1061" alt="Mây Indo- Thế giới trái cây">
+								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_2.jpg" alt="Mây Indo- Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'nho-xanh-uc-btm-sweetglobe') }}" class="clearfix">
-								<img src="//theme.hstatic.net/200000157781/1001036201/14/slider_3.jpg?v=1061" alt="Nho xanh Úc - Thế giới trái cây">
+								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_3.jpg" alt="Nho xanh Úc - Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'mang-cut-da-cam-thai-lan') }}" class="clearfix">
-								<img src="//theme.hstatic.net/200000157781/1001036201/14/slider_4.jpg?v=1061" alt="Măng cụt Thái Lan - Thế giới trái cây">
+								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_4.jpg" alt="Măng cụt Thái Lan - Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'vu-sua-tim') }}" class="clearfix">
-								<img src="//theme.hstatic.net/200000157781/1001036201/14/slider_5.jpg?v=1061" alt="Vú sữa Tím Mica - Thế giới trái cây">
+								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_5.jpg" alt="Vú sữa Tím Mica - Thế giới trái cây">
 							</a>
 						</div>
 					</div>
@@ -70,13 +74,13 @@
 			<h2 class="hidden">Banner</h2>
 			<div class="row home-banner-row">
 				<div class="col-xs-12 col-sm-4 home-banner-col">
-					<a href="{{ route('categories.show', 'chuoi') }}" class="home-banner-item clearfix">
-						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner1.jpg?v=1061" alt="Chuối ngon">
+					<a href="{{ route('products.show', 'mang-cut-lai-thieu') }}" class="home-banner-item clearfix">
+						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner1.jpg?v=1061" alt="Măng cụt Lái Thiêu">
 					</a>
 				</div>
 				<div class="col-xs-12 col-sm-4 home-banner-col">
-					<a href="{{ route('categories.show', 'vu-sua') }}" class="home-banner-item clearfix">
-						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner2.jpg?v=1061" alt="Vú sữa Lò rèn">
+					<a href="{{ route('products.show', 'vai-thieu-luc-ngan') }}" class="home-banner-item clearfix">
+						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner2.jpg?v=1061" alt="Vải Thiều hàng máy bay">
 					</a>
 				</div>
 				<div class="col-xs-12 col-sm-4 home-banner-col">
@@ -303,9 +307,169 @@
 	border-radius: 14px;
 }
 
+/* 2026 Step-1 homepage refresh */
+.section_category_slider {
+	padding-top: 18px;
+}
+
+.home-slider {
+	border-radius: 24px;
+	overflow: hidden;
+	box-shadow: 0 20px 44px rgba(49, 84, 24, 0.18);
+	border: 1px solid rgba(127, 180, 66, 0.2);
+}
+
+.home-slider .item img {
+	display: block;
+	width: 100%;
+	min-height: 320px;
+	object-fit: cover;
+}
+
+.section-title h2 {
+	font-size: 34px;
+	line-height: 1.2;
+	margin-bottom: 8px;
+}
+
+.section-title p {
+	font-size: 15px;
+	color: #5d6e59;
+	margin-bottom: 20px;
+}
+
+.section-deal.products-view-grid {
+	padding: 30px 0 18px;
+}
+
+.section-deal .section-content {
+	background: linear-gradient(160deg, #ffffff 0%, #f7fbf2 100%);
+	border: 1px solid #dfebd1;
+	border-radius: 20px;
+	padding: 16px 14px;
+	box-shadow: 0 14px 28px rgba(63, 100, 34, 0.1);
+}
+
+.home-banner-item {
+	position: relative;
+	box-shadow: 0 16px 32px rgba(53, 79, 29, 0.16);
+	border: 1px solid rgba(129, 178, 73, 0.25);
+	transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.home-banner-item:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 20px 36px rgba(53, 79, 29, 0.24);
+}
+
+.home-coupon {
+	padding: 32px 0 12px;
+}
+
+.coupon-item__inner {
+	border: 1px solid #d8e8c4;
+	border-style: solid;
+	background: linear-gradient(130deg, #fefefe 0%, #f4fbec 100%);
+	border-radius: 16px;
+	padding: 14px;
+	box-shadow: 0 12px 24px rgba(70, 106, 41, 0.09);
+	transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.coupon-item__inner:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 18px 30px rgba(70, 106, 41, 0.14);
+}
+
+.coupon-item__right .cp-top h3 {
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.coupon-item__right .cp-top p {
+	font-size: 14px;
+	color: #5b6d57;
+}
+
+.cp-btn.button {
+	border-radius: 10px;
+	background: linear-gradient(130deg, #6ba931 0%, #7fbe3b 100%);
+	color: #fff;
+	font-weight: 700;
+	border: 0;
+	padding: 10px 14px;
+}
+
+.sidebar-category {
+	border-radius: 18px;
+	box-shadow: 0 18px 32px rgba(53, 79, 29, 0.14);
+	border: 1px solid #dce7cf;
+}
+
+.sidebar-category .aside-title {
+	background: linear-gradient(120deg, #6ca42f 0%, #7fbe3b 100%) !important;
+	padding: 14px 12px;
+}
+
+.sidebar-category .title-head {
+	font-size: 20px !important;
+	letter-spacing: 0.4px;
+}
+
+.nav-category .nav-item {
+	padding: 10px 14px !important;
+}
+
+.nav-category .nav-item:hover {
+	background: #f4f9ee;
+}
+
+.nav-category .nav-item img {
+	width: 32px !important;
+	height: 32px !important;
+}
+
+@keyframes v26Rise {
+	from {
+		opacity: 0;
+		transform: translateY(18px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.awe-section-1,
+.awe-section-2,
+.awe-section-3 {
+	animation: v26Rise .5s ease both;
+}
+
+.awe-section-2 {
+	animation-delay: .08s;
+}
+
+.awe-section-3 {
+	animation-delay: .14s;
+}
+
 @media (max-width: 767px) {
 	.home-banner-col {
 		width: 100%;
+	}
+
+	.section-title h2 {
+		font-size: 28px;
+	}
+
+	.home-slider .item img {
+		min-height: 220px;
+	}
+
+	.sidebar-category .title-head {
+		font-size: 18px !important;
 	}
 }
 </style>

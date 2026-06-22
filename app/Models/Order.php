@@ -11,17 +11,27 @@ class Order extends Model
 
     protected $fillable = [
         'code',
+        'public_token',
         'user_id',
         'customer_name',
         'customer_phone',
         'customer_email',
         'shipping_address',
+        'customer_note',
+        'admin_note',
         'subtotal',
         'shipping_fee',
         'discount_total',
         'total',
         'coupon_code',
         'status',
+        'payment_method',
+        'payment_status',
+        'paid_at',
+        'shipping_status',
+        'shipping_provider',
+        'tracking_code',
+        'cancelled_at',
     ];
 
     protected $casts = [
@@ -30,6 +40,10 @@ class Order extends Model
         'discount_total' => 'integer',
         'total' => 'integer',
         'status' => 'string',
+        'payment_status' => 'string',
+        'shipping_status' => 'string',
+        'paid_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -40,6 +54,16 @@ class Order extends Model
     const STATUS_SHIPPING = 'shipping';
     const STATUS_DONE = 'done';
     const STATUS_CANCELLED = 'cancelled';
+
+    const PAYMENT_STATUS_UNPAID = 'unpaid';
+    const PAYMENT_STATUS_PAID = 'paid';
+    const PAYMENT_STATUS_REFUNDED = 'refunded';
+
+    const SHIPPING_STATUS_PENDING = 'pending';
+    const SHIPPING_STATUS_PREPARING = 'preparing';
+    const SHIPPING_STATUS_SHIPPING = 'shipping';
+    const SHIPPING_STATUS_DELIVERED = 'delivered';
+    const SHIPPING_STATUS_FAILED = 'failed';
 
     /**
      * Relationships
@@ -52,6 +76,11 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(OrderStatusHistory::class);
     }
 
     /**
@@ -77,4 +106,3 @@ class Order extends Model
         return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_CONFIRMED, self::STATUS_SHIPPING]);
     }
 }
-

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -17,23 +17,32 @@ class Product extends Model
         'category_id',
         'name',
         'slug',
+        'sku',
         'unit',
         'stock',
+        'low_stock_threshold',
         'price',
         'sale_price',
+        'cost_price',
         'thumb',
         'short_desc',
         'description',
         'is_active',
         'has_gear_detail',
+        'sort_order',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'price' => 'integer',
         'sale_price' => 'integer',
+        'cost_price' => 'integer',
         'stock' => 'integer',
+        'low_stock_threshold' => 'integer',
         'has_gear_detail' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function category(): BelongsTo
@@ -91,6 +100,16 @@ class Product extends Model
         return $query->where('stock', '>', 0);
     }
 
+    public function scopeOrderable($query)
+    {
+        return $query->active()
+            ->inStock()
+            ->where(function ($q) {
+                $q->where('price', '>', 0)
+                    ->orWhere('sale_price', '>', 0);
+            });
+    }
+
     public function scopeOnSale($query)
     {
         return $query->whereNotNull('sale_price');
@@ -126,28 +145,6 @@ class Product extends Model
 
     private function resolveMediaUrl(string $rawPath): string
     {
-        $rawPath = trim($rawPath);
-
-        if (Str::startsWith($rawPath, ['http://', 'https://', '//'])) {
-            return $rawPath;
-        }
-
-        $path = ltrim($rawPath, '/');
-        $rootUrl = rtrim((string) url('/'), '/');
-
-        // When the app is opened through server.php, asset() can generate server.php/images/... URLs.
-        // In that case we point directly to the public directory where images actually exist.
-        if (Str::endsWith(Str::lower($rootUrl), '/server.php')) {
-            $base = preg_replace('#/server\.php$#i', '', $rootUrl) ?: $rootUrl;
-
-            if (!Str::endsWith(Str::lower($base), '/public')) {
-                $base .= '/public';
-            }
-
-            return rtrim($base, '/') . '/' . $path;
-        }
-
-        return asset($path);
+        return MediaUrl::resolve($rawPath);
     }
 }
-

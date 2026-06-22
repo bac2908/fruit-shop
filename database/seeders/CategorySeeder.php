@@ -17,10 +17,14 @@ class CategorySeeder extends Seeder
         $count = Category::query()->count();
 
         if ($count === 0) {
-            $this->command?->warn('Categories table is empty. No static JSON seeding is performed.');
+            if ($this->command) {
+                $this->command->warn('Categories table is empty. No static JSON seeding is performed.');
+            }
             return;
         }
 
-        $this->command?->info("Categories already available in MySQL: {$count}. Skipped static seeding.");
+        if ($this->command) {
+            $this->command->info("Categories already available in MySQL: {$count}. Skipped static seeding.");
+        }
     }
 }
