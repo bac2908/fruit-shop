@@ -62,22 +62,38 @@
 				</span>
 				</div>
 				<div class="topbar-right">
-				@auth
-					@if(auth()->user()->isAdmin())
-						<a href="{{ route('admin.dashboard') }}"><i class="fa fa-user"></i> Admin</a>
+				<div class="topbar-account">
+					@auth
+						@if(auth()->user()->isAdmin())
+							<a href="{{ route('admin.dashboard') }}" class="topbar-account-pill topbar-account-primary">
+								<i class="fa fa-user" aria-hidden="true"></i>
+								<span>Admin</span>
+							</a>
+						@else
+							<a href="{{ route('account.profile') }}" class="topbar-account-pill topbar-account-primary" title="Hồ sơ của tôi">
+								<i class="fa fa-user" aria-hidden="true"></i>
+								<span>{{ auth()->user()->name }}</span>
+							</a>
+						@endif
+						<form method="post" action="{{ route('logout') }}" class="topbar-logout-form">
+							@csrf
+							<button type="submit" class="topbar-account-pill topbar-account-logout">
+								<i class="fa fa-sign-out" aria-hidden="true"></i>
+								<span>Đăng xuất</span>
+							</button>
+						</form>
 					@else
-						<span><i class="fa fa-user"></i> {{ auth()->user()->name }}</span>
-					@endif
-					<span class="margin-left-5 margin-right-5">|</span>
-					<form method="post" action="{{ route('logout') }}" style="display:inline;">
-						@csrf
-						<button type="submit" style="background:transparent;border:0;color:inherit;font:inherit;font-weight:700;padding:0;">Đăng xuất</button>
-					</form>
-				@else
-					<a href="{{ route('login') }}"><i class="fa fa-user"></i> Đăng nhập</a>
-					<span class="margin-left-5 margin-right-5">hoặc</span>
-					<a href="{{ route('register') }}">Đăng ký</a>
-				@endauth
+						<a href="{{ route('login') }}" class="topbar-account-pill topbar-account-primary">
+							<i class="fa fa-user" aria-hidden="true"></i>
+							<span>Đăng nhập</span>
+						</a>
+						<span class="topbar-account-divider">hoặc</span>
+						<a href="{{ route('register') }}" class="topbar-account-pill topbar-account-register">
+							<i class="fa fa-user-plus" aria-hidden="true"></i>
+							<span>Đăng ký</span>
+						</a>
+					@endauth
+				</div>
 				</div>
 			</div>
 		</div>
@@ -205,10 +221,45 @@
 </header>
 
 	<main>
+		@if(session('success') || session('error'))
+			<div class="container site-flash-container">
+				@if(session('success'))
+					<div class="site-flash site-flash-success">{{ session('success') }}</div>
+				@endif
+
+				@if(session('error'))
+					<div class="site-flash site-flash-error">{{ session('error') }}</div>
+				@endif
+			</div>
+		@endif
+
 		@yield('content')
 	</main>
 
 	<style>
+		.site-flash-container {
+			margin-top: 16px;
+		}
+
+		.site-flash {
+			border-radius: 8px;
+			font-weight: 700;
+			line-height: 1.5;
+			padding: 12px 16px;
+		}
+
+		.site-flash-success {
+			background: #eef8e8;
+			border: 1px solid #cfe6bf;
+			color: #365f18;
+		}
+
+		.site-flash-error {
+			background: #fff3f0;
+			border: 1px solid #ffd3ca;
+			color: #9c341f;
+		}
+
 		/* Sticky Sidebar - Contact/Social Icons */
 		.contact-float-wrapper {
 			position: fixed !important;
@@ -986,7 +1037,134 @@
 
 		.topbar {
 			background: linear-gradient(95deg, #76ad33 0%, #8ac842 100%) !important;
+			display: flex;
+			align-items: center;
 			font-weight: 600;
+			min-height: 46px;
+			padding: 0 !important;
+		}
+
+		.topbar > .container,
+		.topbar > .container > .d-flex {
+			min-height: 46px;
+		}
+
+		.topbar-left,
+		.topbar-right {
+			align-items: center;
+			display: flex;
+			min-height: 46px;
+		}
+
+		.topbar-left span {
+			align-items: center;
+			display: inline-flex;
+		}
+
+		.topbar-right {
+			align-items: center;
+			display: flex;
+			justify-content: flex-end;
+		}
+
+		.topbar-account {
+			align-items: center;
+			background: rgba(31, 83, 10, 0.16);
+			border: 1px solid rgba(255, 255, 255, 0.36);
+			border-radius: 999px;
+			box-shadow: 0 4px 10px rgba(43, 82, 18, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+			display: inline-flex;
+			gap: 5px;
+			max-width: 100%;
+			padding: 4px;
+		}
+
+		.topbar-account-pill {
+			align-items: center;
+			border: 0;
+			border-radius: 999px;
+			display: inline-flex;
+			font-size: 13px;
+			font-weight: 800 !important;
+			gap: 7px;
+			justify-content: center;
+			line-height: 1;
+			min-height: 30px;
+			padding: 0 13px;
+			text-decoration: none !important;
+			transition: background-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+			white-space: nowrap;
+		}
+
+		.topbar-account-pill:hover,
+		.topbar-account-pill:focus {
+			transform: translateY(-1px);
+		}
+
+		.topbar-account-pill i {
+			font-size: 14px;
+			margin-right: 0 !important;
+		}
+
+		.topbar-account-pill span {
+			display: block;
+			max-width: 150px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.topbar .topbar-account-primary {
+			background: #ffffff;
+			box-shadow: 0 4px 10px rgba(44, 91, 13, 0.18);
+			color: #447316 !important;
+		}
+
+		.topbar .topbar-account-primary:hover,
+		.topbar .topbar-account-primary:focus {
+			background: #f7ffe9;
+			color: #31590f !important;
+		}
+
+		.topbar .topbar-account-register {
+			background: #ff9f1a;
+			box-shadow: 0 4px 10px rgba(153, 88, 0, 0.2);
+			color: #fff !important;
+		}
+
+		.topbar .topbar-account-register:hover,
+		.topbar .topbar-account-register:focus {
+			background: #f08e00;
+			color: #fff !important;
+		}
+
+		.topbar-logout-form {
+			display: inline-flex;
+			margin: 0;
+		}
+
+		.topbar .topbar-account-logout {
+			background: rgba(255, 255, 255, 0.18);
+			border: 1px solid rgba(255, 255, 255, 0.32);
+			color: #fff !important;
+			font-family: inherit;
+		}
+
+		.topbar .topbar-account-logout:hover,
+		.topbar .topbar-account-logout:focus {
+			background: rgba(255, 255, 255, 0.24);
+			color: #fff !important;
+		}
+
+		.topbar-account-divider {
+			align-items: center;
+			background: rgba(255, 255, 255, 0.16);
+			border-radius: 999px;
+			color: rgba(255, 255, 255, 0.94);
+			display: inline-flex;
+			font-size: 12px;
+			font-weight: 800;
+			min-height: 24px;
+			padding: 0 8px;
 		}
 
 		.header-content {

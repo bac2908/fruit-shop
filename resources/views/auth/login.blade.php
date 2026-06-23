@@ -41,7 +41,13 @@
                 </div>
 
                 @if($errors->any())
-                    <div class="auth-alert">{{ $errors->first() }}</div>
+                    <div class="auth-alert">
+                        <ul class="auth-error-list">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 @endif
 
                 <form method="post" action="{{ route('login.post') }}">
@@ -51,15 +57,18 @@
                         <label for="email">Email</label>
                         <div class="auth-control">
                             <i class="fa fa-envelope-o" aria-hidden="true"></i>
-                            <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="email" required autofocus>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required autofocus>
                         </div>
                     </div>
 
                     <div class="auth-field">
                         <label for="password">Mật khẩu</label>
-                        <div class="auth-control">
+                        <div class="auth-control auth-password-control">
                             <i class="fa fa-lock" aria-hidden="true"></i>
-                            <input id="password" type="password" name="password" autocomplete="current-password" required>
+                            <input id="password" type="password" name="password" autocomplete="current-password" maxlength="72" required>
+                            <button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Hiện mật khẩu">
+                                <i class="fa fa-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -68,7 +77,7 @@
                             <input type="checkbox" name="remember" value="1">
                             <span>Ghi nhớ đăng nhập</span>
                         </label>
-                        <a href="#" class="auth-link">Quên mật khẩu?</a>
+                        <a href="{{ route('password.request') }}" class="auth-link">Quên mật khẩu?</a>
                     </div>
 
                     <button type="submit" class="auth-submit">
@@ -77,13 +86,24 @@
                     </button>
                 </form>
 
+                <div class="auth-social-block auth-social-block-bottom">
+                    <div class="auth-separator">
+                        <span>hoặc đăng nhập nhanh</span>
+                    </div>
+
+                    <a href="{{ route('google.redirect') }}" class="auth-google-btn">
+                        <span class="auth-google-mark" aria-hidden="true">G</span>
+                        <span>Đăng nhập với Google</span>
+                    </a>
+                </div>
+
                 <div class="auth-switch">
                     Chưa có tài khoản?
                     <a href="{{ route('register') }}" class="auth-link">Tạo tài khoản mới</a>
                 </div>
 
                 <div class="auth-small">
-                    Tài khoản admin sau khi đăng nhập sẽ được chuyển vào khu vực quản trị.
+                    Đăng nhập để theo dõi đơn hàng và sử dụng ưu đãi thành viên.
                 </div>
             </div>
         </div>
@@ -94,3 +114,7 @@
 @section('styles')
     @include('auth.partials.auth-styles')
 @endsection
+
+@push('scripts')
+    @include('auth.partials.auth-scripts')
+@endpush

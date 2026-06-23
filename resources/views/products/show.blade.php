@@ -258,6 +258,21 @@
                                     </div>
                                 @endif
 
+                                @auth
+                                    <form action="{{ route('account.wishlist.toggle', $product) }}" method="post" class="pdx-wishlist-form">
+                                        @csrf
+                                        <button type="submit" class="pdx-wishlist-btn {{ !empty($isWishlisted) ? 'is-active' : '' }}">
+                                            <i class="fa {{ !empty($isWishlisted) ? 'fa-heart' : 'fa-heart-o' }}" aria-hidden="true"></i>
+                                            {{ !empty($isWishlisted) ? 'Đã yêu thích' : 'Thêm vào yêu thích' }}
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login') }}" class="pdx-wishlist-btn pdx-wishlist-link">
+                                        <i class="fa fa-heart-o" aria-hidden="true"></i>
+                                        Đăng nhập để lưu yêu thích
+                                    </a>
+                                @endauth
+
                                 <div class="pdx-share-line">
                                     <span>Chia sẻ:</span>
                                     <a rel="nofollow" target="_blank" href="https://www.facebook.com/sharer.php?u={{ urlencode($canonicalUrl) }}" title="Facebook">Facebook</a>
@@ -776,6 +791,37 @@
 .pdx-btn-secondary:hover {
     background: #e8e8e8;
     color: #222;
+}
+
+.pdx-wishlist-form {
+    margin: 12px 0 0;
+}
+
+.pdx-wishlist-btn {
+    align-items: center;
+    background: #fff8f8;
+    border: 1px solid #ffd7d7;
+    border-radius: 8px;
+    color: #b83535;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+}
+
+.pdx-wishlist-btn:hover,
+.pdx-wishlist-btn:focus {
+    background: #ffecec;
+    color: #9e2525;
+    text-decoration: none;
+}
+
+.pdx-wishlist-btn.is-active {
+    background: #b83535;
+    border-color: #b83535;
+    color: #fff;
 }
 
 .pdx-share-line {

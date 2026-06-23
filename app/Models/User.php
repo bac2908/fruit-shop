@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\CustomerResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -20,9 +21,17 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
+        'google_id',
+        'auth_provider',
         'password',
         'phone',
         'address',
+        'birthday',
+        'gender',
+        'avatar_url',
+        'notify_order_status',
+        'notify_promotions',
         'role',
         'password_changed_at',
         'force_password_change',
@@ -47,6 +56,9 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birthday' => 'date',
+        'notify_order_status' => 'boolean',
+        'notify_promotions' => 'boolean',
         'role' => 'string',
         'password_changed_at' => 'datetime',
         'force_password_change' => 'boolean',
@@ -67,11 +79,41 @@ class User extends Authenticatable
         return $this->hasOne(Cart::class);
     }
 
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function defaultAddress()
+    {
+        return $this->hasOne(UserAddress::class)->where('is_default', true);
+    }
+
+    public function wishlistItems()
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
+
+    public function productViews()
+    {
+        return $this->hasMany(ProductView::class);
+    }
+
+    public function vouchers()
+    {
+        return $this->hasMany(UserVoucher::class);
+    }
+
     /**
      * Check if user is admin
      */
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomerResetPasswordNotification($token));
     }
 }

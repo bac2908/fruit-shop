@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,11 +31,28 @@ Route::get('/pages/khach-hang-doanh-nghiep', [PageController::class, 'corporateC
 
 Route::middleware('guest')->group(function () {
 	Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-	Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+	Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login.post');
 	Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+	Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.post');
+	Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+	Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->middleware('throttle:3,1')->name('password.email');
+	Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+	Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
+	Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->middleware('throttle:10,1')->name('google.redirect');
+	Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->middleware('throttle:10,1')->name('google.callback');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->prefix('account')->name('account.')->group(function () {
+	Route::get('/', [ProfileController::class, 'show'])->name('profile');
+	Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+	Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('addresses.store');
+	Route::patch('/addresses/{address}/default', [ProfileController::class, 'setDefaultAddress'])->name('addresses.default');
+	Route::delete('/addresses/{address}', [ProfileController::class, 'destroyAddress'])->name('addresses.destroy');
+	Route::post('/wishlist/{product}', [ProfileController::class, 'toggleWishlist'])->name('wishlist.toggle');
+	Route::delete('/wishlist/{item}', [ProfileController::class, 'removeWishlist'])->name('wishlist.remove');
+});
 
 // Admin FE-first routes (UI only, BE data wiring in the next phase)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
