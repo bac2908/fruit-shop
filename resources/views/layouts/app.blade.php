@@ -1204,6 +1204,24 @@
 			background: linear-gradient(120deg, #f7ae33 0%, #e9901f 100%) !important;
 		}
 
+		.header {
+			position: relative;
+			z-index: 5000;
+		}
+
+		.header nav {
+			z-index: 5100 !important;
+		}
+
+		.header nav .nav-left > .nav-item.has-mega .mega-content {
+			z-index: 5200 !important;
+		}
+
+		main {
+			position: relative;
+			z-index: 1;
+		}
+
 		.header_search form {
 			border: 1px solid #e4edd6;
 			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);

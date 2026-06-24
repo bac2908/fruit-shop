@@ -168,6 +168,7 @@ class HomeService
         return Coupon::query()
             ->with('images')
             ->valid()
+            ->where('is_public', true)
             ->orderByDesc('id')
             ->limit($limit)
             ->get();

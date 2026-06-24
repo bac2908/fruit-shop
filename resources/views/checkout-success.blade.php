@@ -78,10 +78,10 @@
                     <span>Tạm tính</span>
                     <strong>{{ number_format($order->subtotal) }}₫</strong>
                 </div>
-                @if((int) $order->discount_total > 0)
+                @if((int) $order->discount_total > 0 || $order->coupon_code)
                     <div>
-                        <span>Giảm giá{{ $order->coupon_code ? ' (' . $order->coupon_code . ')' : '' }}</span>
-                        <strong>-{{ number_format($order->discount_total) }}₫</strong>
+                        <span>Voucher{{ $order->coupon_code ? ' (' . $order->coupon_code . ')' : '' }}</span>
+                        <strong>{{ (int) $order->discount_total > 0 ? '-' . number_format($order->discount_total) . '₫' : 'Đã áp dụng' }}</strong>
                     </div>
                 @endif
                 <div>

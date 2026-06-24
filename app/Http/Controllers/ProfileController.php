@@ -54,8 +54,10 @@ class ProfileController extends Controller
             ->values();
 
         $personalVouchers = $user->vouchers
-            ->filter(function ($voucher) {
-                return $voucher->coupon && $voucher->is_usable;
+            ->filter(function ($voucher) use ($user) {
+                return $voucher->coupon
+                    && $voucher->is_usable
+                    && !$voucher->coupon->getInvalidReason(0, $user->id, $user->email);
             })
             ->sortBy(function ($voucher) {
                 return optional($voucher->expires_at)->timestamp ?? PHP_INT_MAX;
@@ -64,12 +66,19 @@ class ProfileController extends Controller
 
         $availableCoupons = Coupon::query()
             ->valid()
+            ->where('is_public', true)
             ->orderByRaw('ends_at IS NULL')
             ->orderBy('ends_at')
-            ->take(4)
-            ->get();
+            ->take(12)
+            ->get()
+            ->filter(function ($coupon) use ($user) {
+                return !$coupon->getInvalidReason(0, $user->id, $user->email);
+            })
+            ->take(6)
+            ->values();
 
         $usedCoupons = CouponUsage::query()
+            ->with('coupon')
             ->where('user_id', $user->id)
             ->latest('used_at')
             ->take(5)

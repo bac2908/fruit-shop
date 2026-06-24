@@ -3,6 +3,16 @@
 @section('title', 'Checkout - Thế Giới Trái Cây')
 
 @section('content')
+@php
+    $defaultShippingAddress = $defaultAddress
+        ? collect([
+            $defaultAddress->address_line,
+            $defaultAddress->ward,
+            $defaultAddress->district,
+            $defaultAddress->province,
+        ])->filter()->implode(', ')
+        : '';
+@endphp
 <section class="bread_crumb py-4">
     <div class="container">
         <ul class="breadcrumb">
@@ -40,23 +50,23 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <label>Họ và tên *</label>
-                                <input type="text" name="customer_name" class="form-control" required value="{{ old('customer_name') }}">
+                                <input type="text" name="customer_name" class="form-control" required value="{{ old('customer_name', optional($defaultAddress)->recipient_name ?: $user->name) }}">
                             </div>
                             <div class="col-sm-6">
-                                <label>Số điện thoại</label>
-                                <input type="text" name="customer_phone" class="form-control" value="{{ old('customer_phone') }}">
+                                <label>Số điện thoại *</label>
+                                <input type="text" name="customer_phone" class="form-control" required value="{{ old('customer_phone', optional($defaultAddress)->phone ?: $user->phone) }}">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-sm-12">
                                 <label>Email</label>
-                                <input type="email" name="customer_email" class="form-control" value="{{ old('customer_email') }}">
+                                <input type="email" name="customer_email" class="form-control" value="{{ old('customer_email', $user->email) }}">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-sm-12">
                                 <label>Địa chỉ giao hàng *</label>
-                                <input type="text" name="shipping_address" class="form-control" required value="{{ old('shipping_address') }}">
+                                <input type="text" name="shipping_address" class="form-control" required value="{{ old('shipping_address', $defaultShippingAddress) }}">
                             </div>
                         </div>
                         <div class="row">
@@ -64,6 +74,16 @@
                                 <label>Ghi chú</label>
                                 <textarea name="notes" rows="4" class="form-control" placeholder="Yêu cầu thêm cho đơn hàng">{{ old('notes') }}</textarea>
                             </div>
+                        </div>
+                        <div class="checkout-options">
+                            <label>
+                                <input type="checkbox" name="save_address" value="1" {{ old('save_address') ? 'checked' : '' }}>
+                                Lưu địa chỉ này vào hồ sơ của tôi
+                            </label>
+                            <label>
+                                <input type="checkbox" name="set_default_address" value="1" {{ old('set_default_address') ? 'checked' : '' }}>
+                                Đặt làm địa chỉ mặc định
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -93,7 +113,10 @@
                         </ul>
 
                         @if(!empty($appliedCoupon))
-                            <p class="coupon-note">Đã áp mã giảm giá: <strong>{{ $appliedCoupon->code }}</strong></p>
+                            <div class="coupon-note">
+                                <strong>{{ $appliedCoupon->code }}</strong>
+                                <span>{{ $appliedCoupon->discount_label }} · {{ $appliedCoupon->condition_label }}</span>
+                            </div>
                         @endif
 
                         <button type="submit" class="btn-place-order">Đặt hàng</button>
@@ -216,9 +239,44 @@
     }
 
     .coupon-note {
-        margin: 8px 0 10px;
+        display: grid;
+        gap: 2px;
+        margin: 10px 0 12px;
+        padding: 10px 12px;
+        border: 1px solid #dfead3;
+        border-radius: 8px;
+        background: #f8fcf2;
         color: #444;
         font-size: 13px;
+    }
+
+    .coupon-note strong {
+        color: #4f7f15;
+        font-size: 14px;
+    }
+
+    .checkout-options {
+        display: grid;
+        gap: 8px;
+        margin-top: 2px;
+        padding: 10px 12px;
+        border: 1px solid #e4ecd9;
+        border-radius: 10px;
+        background: #fbfef7;
+    }
+
+    .checkout-options label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        color: #34492b;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .checkout-options input {
+        margin: 0;
     }
 
     .btn-place-order,

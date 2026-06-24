@@ -102,13 +102,16 @@
                     <div class="coupon-box">
                         <form method="post" action="{{ route('cart.coupon.apply') }}" class="coupon-form">
                             @csrf
-                            <input type="text" name="code" placeholder="Nhập mã giảm giá">
+                            <input type="text" name="code" placeholder="Nhập mã voucher" value="{{ old('code') }}">
                             <button type="submit">Áp dụng</button>
                         </form>
 
                         @if(!empty($appliedCoupon))
                             <div class="coupon-applied">
-                                <p>Đã áp mã: <strong>{{ $appliedCoupon->code }}</strong></p>
+                                <div>
+                                    <p>Đã áp dụng: <strong>{{ $appliedCoupon->code }}</strong></p>
+                                    <small>{{ $appliedCoupon->discount_label }} · {{ $appliedCoupon->condition_label }}</small>
+                                </div>
                                 <form method="post" action="{{ route('cart.coupon.remove') }}">
                                     @csrf
                                     <button type="submit">Bỏ mã</button>
@@ -323,12 +326,23 @@
         justify-content: space-between;
         align-items: center;
         gap: 8px;
+        padding: 10px 12px;
+        border: 1px solid #dfead3;
+        border-radius: 8px;
+        background: #f8fcf2;
     }
 
     .coupon-applied p {
         margin: 0;
         color: #333;
         font-size: 13px;
+    }
+
+    .coupon-applied small {
+        display: block;
+        margin-top: 2px;
+        color: #66715f;
+        line-height: 1.35;
     }
 
     .summary-list {

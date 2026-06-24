@@ -8,6 +8,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,9 +73,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 		return view('admin.customers');
 	})->name('customers');
 
-	Route::get('/coupons', function () {
-		return view('admin.coupons');
-	})->name('coupons');
+	Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
+	Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
+	Route::post('/coupons/assign', [AdminCouponController::class, 'assign'])->name('coupons.assign');
+	Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
+	Route::patch('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
+	Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
 
 	Route::get('/reports', function () {
 		return view('admin.reports');
@@ -98,8 +102,9 @@ Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+Route::post('/cart/coupon/use/{coupon}', [CartController::class, 'useCoupon'])->middleware('auth')->name('cart.coupon.use');
 Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
-Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
-Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->name('checkout.place');
+Route::get('/checkout', [CartController::class, 'checkout'])->middleware('auth')->name('checkout');
+Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->middleware('auth')->name('checkout.place');
 Route::get('/checkout/thank-you/{code}/{token?}', [CartController::class, 'thankYou'])->name('checkout.thankyou');
 Route::get('/search', [ProductController::class, 'search'])->name('search');

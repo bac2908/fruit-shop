@@ -1,37 +1,185 @@
 @extends('layouts.admin')
 
-@section('title', 'Quan ly coupon | FruitShop Admin')
+@section('title', 'Quản lý voucher | FruitShop Admin')
 
 @section('head')
     <style>
-        .campaign-strip {
+        .voucher-stats {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
-        .campaign {
-            border: 1px solid #dfd9c8;
-            background: linear-gradient(145deg, #fff7e7, #fffdf7);
-            border-radius: 12px;
-            padding: 12px;
+        .voucher-stat,
+        .admin-alert,
+        .coupon-form-box {
+            border: 1px solid var(--admin-line);
+            border-radius: var(--admin-radius-md);
+            background: #fffdf7;
+            padding: 14px;
         }
 
-        .campaign h4 {
-            margin: 0;
-            font-size: 14px;
+        .voucher-stat span {
+            display: block;
+            color: var(--admin-subtle);
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .voucher-stat strong {
+            color: var(--admin-ink);
             font-family: 'Sora', sans-serif;
+            font-size: 24px;
         }
 
-        .campaign p {
-            margin: 6px 0 0;
-            color: #6d725f;
+        .admin-alert {
+            margin-bottom: 14px;
+            font-weight: 700;
+        }
+
+        .admin-alert.success {
+            background: #edf8ef;
+            border-color: #c8e6cf;
+            color: #1d6b39;
+        }
+
+        .admin-alert.danger {
+            background: #fff0ed;
+            border-color: #f2c4ba;
+            color: #b8402a;
+        }
+
+        .coupon-manage-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .coupon-form-grid,
+        .coupon-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .coupon-form-box h3 {
+            margin: 0 0 10px;
+            font-family: 'Sora', sans-serif;
+            font-size: 16px;
+        }
+
+        .coupon-field {
+            display: grid;
+            gap: 5px;
+        }
+
+        .coupon-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .coupon-field label {
+            color: var(--admin-subtle);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .coupon-field input,
+        .coupon-field select,
+        .coupon-field textarea {
+            width: 100%;
+            min-height: 38px;
+            border: 1px solid var(--admin-line);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--admin-ink);
+            font-family: inherit;
+            padding: 0 10px;
+        }
+
+        .coupon-field textarea {
+            min-height: 72px;
+            padding: 10px;
+            resize: vertical;
+        }
+
+        .coupon-check {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            color: var(--admin-ink);
+            font-weight: 700;
+        }
+
+        .coupon-check input {
+            width: auto;
+            min-height: auto;
+        }
+
+        .coupon-actions,
+        .row-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .coupon-actions {
+            margin-top: 12px;
+        }
+
+        .row-actions form {
+            margin: 0;
+        }
+
+        .btn-small {
+            min-height: 32px;
+            padding: 0 10px;
             font-size: 12px;
         }
 
-        @media (max-width: 1000px) {
-            .campaign-strip {
+        .coupon-edit-row td {
+            background: #fbfaf3;
+            border-top: 0;
+        }
+
+        .coupon-edit-box {
+            padding: 12px 0;
+        }
+
+        .coupon-edit-box summary {
+            cursor: pointer;
+            color: var(--admin-primary);
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .coupon-code {
+            color: var(--admin-primary);
+            font-family: 'Sora', sans-serif;
+        }
+
+        .coupon-muted {
+            color: var(--admin-subtle);
+            font-size: 12px;
+        }
+
+        @media (max-width: 1100px) {
+            .voucher-stats,
+            .coupon-manage-grid,
+            .coupon-form-grid,
+            .coupon-edit-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .voucher-stats,
+            .coupon-manage-grid,
+            .coupon-form-grid,
+            .coupon-edit-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -41,37 +189,93 @@
 @section('admin_content')
     <section class="page-head reveal" style="--delay: 0ms;">
         <div>
-            <h1 class="page-title">Quan ly coupon</h1>
-            <p class="page-subtitle">Toi uu khuyen mai theo giai doan campaign va hanh vi mua hang.</p>
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-ghost"><i class="ri-file-copy-2-line"></i>Clone campaign</button>
-            <button class="btn btn-primary"><i class="ri-ticket-2-line"></i>Tao coupon moi</button>
+            <h1 class="page-title">Quản lý voucher</h1>
+            <p class="page-subtitle">Tạo mã công khai, giới hạn lượt dùng và gán voucher cá nhân cho khách hàng.</p>
         </div>
     </section>
 
-    <section class="panel reveal" style="--delay: 80ms; margin-bottom: 14px;">
-        <div class="panel-head">
-            <div>
-                <h2 class="panel-title">Campaign center</h2>
-                <p class="panel-sub">Quan ly coupon theo mua vu, su kien va nhom khach muc tieu.</p>
-            </div>
-            <span class="tag">Promo ops</span>
+    @if(session('success'))
+        <div class="admin-alert success">{{ session('success') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="admin-alert danger">
+            @foreach($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
+    <section class="voucher-stats reveal" style="--delay: 60ms;">
+        <div class="voucher-stat">
+            <span>Tổng voucher</span>
+            <strong>{{ number_format($coupons->count()) }}</strong>
+        </div>
+        <div class="voucher-stat">
+            <span>Đang bật</span>
+            <strong>{{ number_format($activeCoupons ?? 0) }}</strong>
+        </div>
+        <div class="voucher-stat">
+            <span>Lượt đã dùng</span>
+            <strong>{{ number_format($usedCount ?? 0) }}</strong>
+        </div>
+        <div class="voucher-stat">
+            <span>Voucher cá nhân</span>
+            <strong>{{ number_format($personalVoucherCount ?? 0) }}</strong>
+        </div>
+    </section>
+
+    <section class="coupon-manage-grid reveal" style="--delay: 100ms;">
+        <div class="coupon-form-box">
+            <h3>Tạo voucher mới</h3>
+            <form method="post" action="{{ route('admin.coupons.store') }}">
+                @csrf
+                @include('admin.partials.coupon-fields', ['coupon' => null, 'prefix' => 'create'])
+                <div class="coupon-actions">
+                    <button type="submit" class="btn btn-primary"><i class="ri-ticket-2-line"></i>Tạo voucher</button>
+                </div>
+            </form>
         </div>
 
-        <div class="campaign-strip">
-            <div class="campaign">
-                <h4>New user boost</h4>
-                <p>Coupon cho khach mua lan dau, theo doi ROI va repeat rate.</p>
+        <div class="coupon-form-box">
+            <h3>Gán voucher cá nhân</h3>
+            <form method="post" action="{{ route('admin.coupons.assign') }}">
+                @csrf
+                <div class="coupon-form-grid" style="grid-template-columns:1fr;">
+                    <div class="coupon-field">
+                        <label>Voucher</label>
+                        <select name="coupon_id" required>
+                            <option value="">Chọn mã</option>
+                            @foreach($coupons as $coupon)
+                                <option value="{{ $coupon->id }}" {{ (string) old('coupon_id') === (string) $coupon->id ? 'selected' : '' }}>
+                                    {{ $coupon->code }} - {{ $coupon->title }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="coupon-field">
+                        <label>Email khách hàng</label>
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="khach@example.com" required>
+                    </div>
+                    <div class="coupon-field">
+                        <label>Hạn riêng</label>
+                        <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}">
+                    </div>
+                </div>
+                <div class="coupon-actions">
+                    <button type="submit" class="btn btn-primary"><i class="ri-user-heart-line"></i>Gán voucher</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="panel reveal" style="--delay: 140ms;">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Danh sách voucher</h2>
+                <p class="panel-sub">Mã đang được dùng ở giỏ hàng, checkout và hồ sơ khách hàng.</p>
             </div>
-            <div class="campaign">
-                <h4>Flash sale gio vang</h4>
-                <p>Khuyen mai ngan han de day nhanh ton kho ton dong.</p>
-            </div>
-            <div class="campaign">
-                <h4>Retention 30 ngay</h4>
-                <p>Gui ma uu dai cho khach da 30 ngay chua quay lai mua.</p>
-            </div>
+            <span class="tag">MySQL</span>
         </div>
 
         <div class="table-wrap">
@@ -79,43 +283,83 @@
                 <thead>
                 <tr>
                     <th>Code</th>
-                    <th>Tieu de</th>
-                    <th>Loai</th>
-                    <th>Gia tri</th>
-                    <th>Don toi thieu</th>
-                    <th>Hieu luc</th>
-                    <th>Trang thai</th>
+                    <th>Tiêu đề</th>
+                    <th>Ưu đãi</th>
+                    <th>Điều kiện</th>
+                    <th>Lượt dùng</th>
+                    <th>Cá nhân</th>
+                    <th>Phạm vi</th>
+                    <th>Hiệu lực</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
                 </tr>
                 </thead>
                 <tbody>
-                @forelse(($coupons ?? []) as $coupon)
+                @forelse($coupons as $coupon)
                     <tr>
-                        <td><strong>{{ $coupon->code }}</strong></td>
-                        <td>{{ $coupon->title }}</td>
-                        <td>{{ strtoupper($coupon->type) }}</td>
+                        <td><strong class="coupon-code">{{ $coupon->code }}</strong></td>
                         <td>
-                            @if($coupon->type === 'percent')
-                                {{ (int) $coupon->value }}%
-                            @elseif($coupon->type === 'fixed')
-                                {{ number_format((int) $coupon->value) }} VND
-                            @else
-                                QUA TANG
+                            {{ $coupon->title }}
+                            @if($coupon->description)
+                                <div class="coupon-muted">{{ \Illuminate\Support\Str::limit($coupon->description, 72) }}</div>
                             @endif
                         </td>
-                        <td>{{ $coupon->min_order_total ? number_format((int) $coupon->min_order_total) . ' VND' : '-' }}</td>
+                        <td>{{ $coupon->discount_label }}</td>
+                        <td>{{ $coupon->condition_label }}</td>
                         <td>
-                            {{ optional($coupon->starts_at)->format('d/m') ?? '--' }}
-                            -
-                            {{ optional($coupon->ends_at)->format('d/m') ?? '--' }}
+                            {{ number_format((int) $coupon->used_count) }}
+                            @if($coupon->usage_limit)
+                                / {{ number_format((int) $coupon->usage_limit) }}
+                            @endif
+                            <div class="coupon-muted">Theo khách: {{ $coupon->per_customer_limit ?: 'Không giới hạn' }}</div>
                         </td>
-                        <td><span class="status-pill {{ $coupon->is_active ? 'done' : 'cancelled' }}">{{ $coupon->is_active ? 'ACTIVE' : 'OFF' }}</span></td>
+                        <td>{{ number_format((int) $coupon->user_vouchers_count) }}</td>
+                        <td>{{ $coupon->is_public ? 'Công khai' : 'Gán riêng' }}</td>
+                        <td>
+                            {{ optional($coupon->starts_at)->format('d/m/Y H:i') ?: 'Bắt đầu ngay' }}
+                            <div class="coupon-muted">{{ $coupon->expiry_label }}</div>
+                        </td>
+                        <td>
+                            <span class="status-pill {{ $coupon->isValid() ? 'done' : ($coupon->is_active ? 'pending' : 'cancelled') }}">
+                                {{ $coupon->isValid() ? 'VALID' : ($coupon->is_active ? 'WAIT/EXPIRED' : 'OFF') }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                <form method="post" action="{{ route('admin.coupons.toggle', $coupon) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-ghost btn-small">{{ $coupon->is_active ? 'Tắt' : 'Bật' }}</button>
+                                </form>
+                                <form method="post" action="{{ route('admin.coupons.destroy', $coupon) }}" onsubmit="return confirm('Xóa mềm voucher này?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-ghost btn-small">Xóa</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="coupon-edit-row">
+                        <td colspan="10">
+                            <details class="coupon-edit-box">
+                                <summary>Chỉnh sửa {{ $coupon->code }}</summary>
+                                <form method="post" action="{{ route('admin.coupons.update', $coupon) }}">
+                                    @csrf
+                                    @method('PUT')
+                                    @include('admin.partials.coupon-fields', ['coupon' => $coupon, 'prefix' => 'edit_' . $coupon->id])
+                                    <div class="coupon-actions">
+                                        <button type="submit" class="btn btn-primary"><i class="ri-save-3-line"></i>Lưu thay đổi</button>
+                                    </div>
+                                </form>
+                            </details>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="10">
                             <div class="empty-box">
                                 <i class="ri-coupon-3-line"></i>
-                                <div>Danh sach coupon se duoc nap tu MySQL trong pha ket noi BE.</div>
+                                <div>Chưa có voucher nào. Hãy tạo mã đầu tiên cho hệ thống.</div>
                             </div>
                         </td>
                     </tr>

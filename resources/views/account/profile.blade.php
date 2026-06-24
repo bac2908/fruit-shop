@@ -193,7 +193,7 @@
                             @forelse($availableCoupons->take(3) as $coupon)
                                 <div class="account-row">
                                     <span>{{ $coupon->code }}</span>
-                                    <strong>{{ $coupon->title }}</strong>
+                                    <strong>{{ $coupon->discount_label }}</strong>
                                 </div>
                             @empty
                                 <div class="account-empty">Chưa có mã phù hợp.</div>
@@ -434,10 +434,26 @@
                         <h3 class="account-section-title">Voucher cá nhân</h3>
                         <div class="account-voucher-grid">
                             @foreach($personalVouchers as $voucher)
-                                <div class="account-voucher">
-                                    <strong>{{ $voucher->coupon->code }}</strong>
-                                    <span>{{ $voucher->coupon->title }}</span>
-                                    <small>Hết hạn: {{ $voucher->expires_at ? $voucher->expires_at->format('d/m/Y') : 'Theo mã gốc' }}</small>
+                                <div class="account-voucher account-voucher-featured">
+                                    <div class="account-voucher-main">
+                                        <span class="account-voucher-kicker">Voucher cá nhân</span>
+                                        <strong>{{ $voucher->coupon->code }}</strong>
+                                        <span>{{ $voucher->coupon->title }}</span>
+                                    </div>
+                                    <div class="account-voucher-meta">
+                                        <small>{{ $voucher->coupon->discount_label }}</small>
+                                        <small>{{ $voucher->coupon->condition_label }}</small>
+                                        <small>{{ $voucher->expiry_label }}</small>
+                                    </div>
+                                    <div class="account-voucher-foot">
+                                        <span class="account-voucher-status is-{{ $voucher->status_tone }}">{{ $voucher->status_label }}</span>
+                                        @if($voucher->is_usable)
+                                            <form method="post" action="{{ route('cart.coupon.use', $voucher->coupon) }}" class="account-voucher-action">
+                                                @csrf
+                                                <button type="submit">Dùng ngay</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -450,9 +466,24 @@
                         <div class="account-voucher-grid">
                             @foreach($availableCoupons as $coupon)
                                 <div class="account-voucher">
-                                    <strong>{{ $coupon->code }}</strong>
-                                    <span>{{ $coupon->title }}</span>
-                                    <small>{{ $coupon->description ?: 'Áp dụng khi đủ điều kiện đơn hàng.' }}</small>
+                                    <div class="account-voucher-main">
+                                        <span class="account-voucher-kicker">Mã công khai</span>
+                                        <strong>{{ $coupon->code }}</strong>
+                                        <span>{{ $coupon->title }}</span>
+                                    </div>
+                                    <div class="account-voucher-meta">
+                                        <small>{{ $coupon->discount_label }}</small>
+                                        <small>{{ $coupon->condition_label }}</small>
+                                        <small>{{ $coupon->expiry_label }}</small>
+                                        <small>{{ $coupon->usage_label }}</small>
+                                    </div>
+                                    <div class="account-voucher-foot">
+                                        <span class="account-voucher-status is-success">Dùng được</span>
+                                        <form method="post" action="{{ route('cart.coupon.use', $coupon) }}" class="account-voucher-action">
+                                            @csrf
+                                            <button type="submit">Dùng ngay</button>
+                                        </form>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -464,6 +495,7 @@
                             @foreach($usedCoupons as $usage)
                                 <div class="account-row">
                                     <span>{{ $usage->coupon_code }}</span>
+                                    <small>{{ $usage->used_at ? $usage->used_at->format('d/m/Y H:i') : 'Đã dùng' }}</small>
                                     <strong>-{{ number_format((int) $usage->discount_total, 0, ',', '.') }}₫</strong>
                                 </div>
                             @endforeach
@@ -945,6 +977,184 @@
         padding: 14px;
     }
 
+    .account-page {
+        background:
+            radial-gradient(circle at 8% 10%, rgba(255, 239, 177, 0.42) 0, rgba(255, 239, 177, 0) 32%),
+            radial-gradient(circle at 92% 12%, rgba(178, 223, 128, 0.34) 0, rgba(178, 223, 128, 0) 34%),
+            linear-gradient(180deg, #fbfdf6 0%, #eef8e9 100%);
+        color: #203418;
+        position: relative;
+        z-index: 0;
+    }
+
+    .account-shell {
+        max-width: 1120px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .account-hero,
+    .account-tabs,
+    .account-card,
+    .account-panel {
+        border-color: #e2ebdb;
+        box-shadow: 0 16px 36px rgba(37, 66, 25, 0.08);
+    }
+
+    .account-hero {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 253, 244, 0.98));
+        padding: 20px 22px;
+    }
+
+    .account-avatar {
+        background: linear-gradient(135deg, #72af27, #f3a222);
+        box-shadow: 0 10px 24px rgba(74, 128, 27, 0.18);
+    }
+
+    .account-kicker {
+        color: #6f9225;
+        letter-spacing: .02em;
+    }
+
+    .account-summary div {
+        background: #fff;
+        border-color: #dfead6;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+        min-width: 96px;
+    }
+
+    .account-tabs {
+        background: #fff;
+        border-radius: 8px;
+        gap: 7px;
+        padding: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .account-tab {
+        background: #f6faf2;
+        border: 1px solid transparent;
+        color: #425a38;
+        transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+
+    .account-tab:hover {
+        background: #eef7e8;
+        border-color: #dbe9d1;
+        color: #2f4f22;
+    }
+
+    .account-tab.is-active {
+        background: #66a928;
+        border-color: #66a928;
+        box-shadow: 0 8px 18px rgba(89, 146, 32, 0.22);
+        color: #fff;
+    }
+
+    .account-card,
+    .account-panel {
+        background: rgba(255, 255, 255, 0.98);
+    }
+
+    .account-card {
+        min-height: 164px;
+    }
+
+    .account-card-highlight {
+        background: #fff;
+        border-left: 4px solid #66a928;
+        color: #203418;
+    }
+
+    .account-card-highlight h2,
+    .account-card-highlight p {
+        color: #203418;
+    }
+
+    .account-card-highlight .account-card-head span {
+        background: #66a928;
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 800;
+        min-height: 26px;
+        padding: 4px 10px;
+    }
+
+    .account-progress {
+        background: #e6f0dd;
+    }
+
+    .account-progress span {
+        background: linear-gradient(90deg, #66a928, #f2a21f);
+    }
+
+    .account-panel-head {
+        border-bottom: 1px solid #edf3e8;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    .account-card h2,
+    .account-panel h2 {
+        color: #1f3217;
+        font-size: 19px;
+    }
+
+    .account-btn-primary {
+        background: linear-gradient(135deg, #72b52c, #55951b);
+        box-shadow: 0 9px 18px rgba(75, 134, 24, 0.18);
+    }
+
+    .account-btn-secondary,
+    .account-btn-light {
+        background: #eef7e8;
+        color: #47711e;
+    }
+
+    .account-card-highlight .account-btn-light {
+        background: #eef7e8;
+        color: #47711e;
+    }
+
+    .account-row,
+    .account-address,
+    .account-voucher,
+    .account-product {
+        background: #fff;
+        border-color: #e2ebdb;
+        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .account-row:hover,
+    .account-product:hover {
+        border-color: #cfe3c0;
+        box-shadow: 0 10px 22px rgba(42, 75, 23, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .account-product {
+        display: grid;
+        gap: 10px;
+    }
+
+    .account-product img {
+        background: #f5faef;
+        border: 1px solid #e5eedf;
+    }
+
+    .account-voucher strong {
+        color: #54851f;
+    }
+
+    .account-empty {
+        background: #fbfdf8;
+        border-color: #d5e5ca;
+        color: #65745e;
+    }
+
     @media (max-width: 991px) {
         .account-hero {
             align-items: stretch;
@@ -964,6 +1174,353 @@
         .account-product-grid,
         .account-voucher-grid {
             grid-template-columns: 1fr;
+        }
+    }
+
+    /* Refined account dashboard */
+    body .account-page {
+        background: linear-gradient(180deg, #f8fbf3 0%, #eef7e9 100%) !important;
+        padding: 34px 0 64px !important;
+    }
+
+    body .account-page .account-shell {
+        max-width: 1140px !important;
+    }
+
+    body .account-page .account-hero {
+        background: #fff !important;
+        border: 1px solid #e5edde !important;
+        box-shadow: 0 14px 34px rgba(38, 66, 24, 0.07) !important;
+        margin-bottom: 18px !important;
+        padding: 24px !important;
+    }
+
+    body .account-page .account-person {
+        gap: 16px !important;
+    }
+
+    body .account-page .account-avatar {
+        background: #75ab2c !important;
+        box-shadow: none !important;
+        flex-basis: 60px !important;
+        height: 60px !important;
+        width: 60px !important;
+    }
+
+    body .account-page .account-kicker {
+        color: #6d8d24 !important;
+        font-size: 11px !important;
+        letter-spacing: .04em !important;
+        margin-bottom: 4px !important;
+    }
+
+    body .account-page .account-hero h1 {
+        font-size: 25px !important;
+        line-height: 1.18 !important;
+    }
+
+    body .account-page .account-hero p {
+        color: #71806a !important;
+        font-size: 14px !important;
+    }
+
+    body .account-page .account-summary {
+        gap: 10px !important;
+    }
+
+    body .account-page .account-summary div {
+        align-items: center !important;
+        background: #fbfdf8 !important;
+        border: 1px solid #e3ecdc !important;
+        box-shadow: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        min-height: 76px !important;
+        min-width: 102px !important;
+        padding: 12px 14px !important;
+    }
+
+    body .account-page .account-summary strong {
+        color: #1f3217 !important;
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+    }
+
+    body .account-page .account-summary span {
+        color: #67745f !important;
+        font-size: 12px !important;
+        margin-top: 5px !important;
+    }
+
+    body .account-page .account-tabs {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        gap: 10px !important;
+        margin: 0 0 18px !important;
+        padding: 0 !important;
+    }
+
+    body .account-page .account-tab {
+        background: #fff !important;
+        border: 1px solid #e2ebdb !important;
+        box-shadow: 0 8px 18px rgba(42, 72, 28, 0.05) !important;
+        color: #405338 !important;
+        min-height: 42px !important;
+        padding: 0 15px !important;
+    }
+
+    body .account-page .account-tab:hover {
+        background: #f8fbf5 !important;
+        border-color: #cfe1c3 !important;
+        color: #253b1d !important;
+    }
+
+    body .account-page .account-tab.is-active {
+        background: #1f3217 !important;
+        border-color: #1f3217 !important;
+        box-shadow: 0 10px 22px rgba(31, 50, 23, 0.18) !important;
+        color: #fff !important;
+    }
+
+    body .account-page .account-overview-grid,
+    body .account-page .account-compact-grid {
+        gap: 16px !important;
+    }
+
+    body .account-page .account-overview-grid {
+        grid-template-columns: 1.06fr repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    body .account-page .account-card,
+    body .account-page .account-panel {
+        background: #fff !important;
+        border: 1px solid #e5edde !important;
+        box-shadow: 0 12px 28px rgba(38, 66, 24, 0.06) !important;
+        padding: 22px !important;
+    }
+
+    body .account-page .account-card {
+        min-height: 180px !important;
+    }
+
+    body .account-page .account-card-highlight {
+        border-left: 0 !important;
+    }
+
+    body .account-page .account-card h2,
+    body .account-page .account-panel h2 {
+        color: #1f3217 !important;
+        font-size: 18px !important;
+        letter-spacing: 0 !important;
+    }
+
+    body .account-page .account-card p,
+    body .account-page .account-panel p {
+        color: #66745f !important;
+        font-size: 14px !important;
+    }
+
+    body .account-page .account-card-head,
+    body .account-page .account-panel-head {
+        border-bottom: 0 !important;
+        margin-bottom: 14px !important;
+        padding-bottom: 0 !important;
+    }
+
+    body .account-page .account-card-highlight .account-card-head span {
+        background: #eff7e8 !important;
+        color: #527b20 !important;
+    }
+
+    body .account-page .account-progress {
+        background: #e8f0df !important;
+        height: 6px !important;
+        margin: 13px 0 14px !important;
+    }
+
+    body .account-page .account-progress span {
+        background: #f3a422 !important;
+    }
+
+    body .account-page .account-btn,
+    body .account-page .account-link-button {
+        letter-spacing: 0 !important;
+    }
+
+    body .account-page .account-btn-light,
+    body .account-page .account-btn-secondary {
+        background: #f4f9ef !important;
+        border: 1px solid #dce9d1 !important;
+        color: #466f1e !important;
+    }
+
+    body .account-page .account-btn-primary {
+        background: #66a928 !important;
+        box-shadow: none !important;
+    }
+
+    body .account-page .account-link-button {
+        color: #5d8d1f !important;
+    }
+
+    body .account-page .account-row,
+    body .account-page .account-address,
+    body .account-page .account-voucher,
+    body .account-page .account-product,
+    body .account-page .account-empty {
+        background: #fcfefa !important;
+        border-color: #e3ecdc !important;
+        box-shadow: none !important;
+    }
+
+    body .account-page .account-row {
+        min-height: 48px !important;
+        padding: 0 14px !important;
+    }
+
+    body .account-page .account-voucher {
+        min-height: 66px !important;
+        padding: 13px 14px !important;
+    }
+
+    body .account-page .account-voucher strong {
+        color: #45681d !important;
+        font-size: 15px !important;
+    }
+
+    body .account-page .account-product {
+        padding: 14px !important;
+    }
+
+    body .account-page .account-product img {
+        border: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    body .account-page .account-empty {
+        color: #6b7963 !important;
+        font-weight: 600 !important;
+    }
+
+    body .account-page .account-voucher {
+        align-items: stretch !important;
+        background: #fffef9 !important;
+        border-color: #dfe9d4 !important;
+        border-radius: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        justify-content: space-between !important;
+        min-height: 178px !important;
+        padding: 16px !important;
+    }
+
+    body .account-page .account-voucher-featured {
+        background: linear-gradient(135deg, #fffdf4 0%, #f1f8e8 100%) !important;
+        border-color: #c8dfae !important;
+    }
+
+    body .account-page .account-voucher-main,
+    body .account-page .account-voucher-meta {
+        display: grid !important;
+        gap: 5px !important;
+    }
+
+    body .account-page .account-voucher-kicker {
+        color: #7a8d22 !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0 !important;
+        text-transform: uppercase !important;
+    }
+
+    body .account-page .account-voucher strong {
+        color: #284417 !important;
+        font-size: 20px !important;
+        line-height: 1.15 !important;
+    }
+
+    body .account-page .account-voucher span:not(.account-voucher-kicker):not(.account-voucher-status) {
+        color: #34492b !important;
+        font-weight: 700 !important;
+        line-height: 1.35 !important;
+    }
+
+    body .account-page .account-voucher small {
+        color: #697760 !important;
+        font-size: 12px !important;
+        line-height: 1.35 !important;
+    }
+
+    body .account-page .account-voucher-foot {
+        align-items: center !important;
+        display: flex !important;
+        gap: 10px !important;
+        justify-content: space-between !important;
+    }
+
+    body .account-page .account-voucher-status {
+        align-items: center !important;
+        border-radius: 999px !important;
+        display: inline-flex !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+    }
+
+    body .account-page .account-voucher-status.is-success {
+        background: #edf8df !important;
+        color: #4d8514 !important;
+    }
+
+    body .account-page .account-voucher-status.is-muted {
+        background: #f2f3ef !important;
+        color: #747b6f !important;
+    }
+
+    body .account-page .account-voucher-status.is-danger {
+        background: #fff0ed !important;
+        color: #b64b30 !important;
+    }
+
+    body .account-page .account-voucher-action {
+        margin: 0 !important;
+    }
+
+    body .account-page .account-voucher-action button {
+        background: #f7941e !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        color: #fff !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        min-height: 32px !important;
+        padding: 0 14px !important;
+        white-space: nowrap !important;
+    }
+
+    body .account-page .account-voucher-action button:hover {
+        background: #e98410 !important;
+    }
+
+    @media (max-width: 991px) {
+        body .account-page .account-overview-grid,
+        body .account-page .account-compact-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media (max-width: 575px) {
+        body .account-page .account-voucher-foot {
+            align-items: stretch !important;
+            flex-direction: column !important;
+        }
+
+        body .account-page .account-voucher-action button {
+            width: 100% !important;
         }
     }
 </style>

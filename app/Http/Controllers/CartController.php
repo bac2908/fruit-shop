@@ -9,6 +9,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
+use App\Models\User;
+use App\Models\UserAddress;
+use App\Models\UserVoucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -136,23 +139,46 @@ class CartController extends Controller
         }
 
         $subtotal = (int) $cartItems->sum('line_total');
+        $user = $request->user();
         $code = trim((string) $validated['code']);
 
         $coupon = Coupon::query()
             ->whereRaw('LOWER(code) = ?', [Str::lower($code)])
             ->first();
 
-        if (!$coupon || !$coupon->isValid()) {
+        if (!$coupon) {
             return redirect()->route('cart')->with('error', 'Ma giam gia khong hop le hoac da het han.');
         }
 
-        if ($coupon->min_order_total && $subtotal < (int) $coupon->min_order_total) {
-            return redirect()->route('cart')->with('error', 'Don hang chua dat gia tri toi thieu de ap ma.');
+        if ($error = $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
+            return redirect()->route('cart')->with('error', $error);
         }
 
         session(['cart_coupon_code' => $coupon->code]);
 
-        return redirect()->route('cart')->with('success', 'Ap ma giam gia thanh cong.');
+        return redirect()->route('cart')->with('success', 'Da ap dung voucher ' . $coupon->code . '.');
+    }
+
+    public function useCoupon(Request $request, Coupon $coupon)
+    {
+        $cartItems = $this->getCartItems();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart')->with('error', 'Gio hang dang trong, hay them san pham truoc khi dung voucher.');
+        }
+
+        $subtotal = (int) $cartItems->sum('line_total');
+        $user = $request->user();
+
+        if ($error = $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
+            return redirect()->route('account.profile')->with('error', $error);
+        }
+
+        session(['cart_coupon_code' => $coupon->code]);
+
+        $redirectRoute = $request->input('redirect_to') === 'checkout' ? 'checkout' : 'cart';
+
+        return redirect()->route($redirectRoute)->with('success', 'Da chon voucher ' . $coupon->code . ' cho gio hang.');
     }
 
     public function removeCoupon()
@@ -165,6 +191,7 @@ class CartController extends Controller
     public function checkout()
     {
         $cartItems = $this->getCartItems();
+        $user = auth()->user()->loadMissing('addresses');
 
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart')->with('error', 'Gio hang dang trong. Vui long them san pham de tiep tuc.');
@@ -175,22 +202,46 @@ class CartController extends Controller
         }
 
         $summary = $this->getCartSummary($cartItems);
+        $defaultAddress = $user->addresses->firstWhere('is_default', true) ?: $user->addresses->first();
 
         return view('checkout', [
             'cartItems' => $cartItems,
             'summary' => $summary,
             'appliedCoupon' => $summary['coupon'],
+            'user' => $user,
+            'defaultAddress' => $defaultAddress,
         ]);
     }
 
     public function placeOrder(Request $request)
     {
+        $user = $request->user();
+        $request->merge([
+            'customer_name' => $this->cleanTextInput($request->input('customer_name')),
+            'customer_phone' => $this->normalizeVietnamPhone($request->input('customer_phone')),
+            'customer_email' => $this->normalizeEmail($request->input('customer_email')),
+            'shipping_address' => $this->cleanTextInput($request->input('shipping_address')),
+            'notes' => $this->cleanTextInput($request->input('notes'), true),
+        ]);
+
         $validated = $request->validate([
-            'customer_name' => ['required', 'string', 'max:120'],
-            'customer_phone' => ['nullable', 'string', 'max:30'],
+            'customer_name' => ['required', 'string', 'min:2', 'max:120', 'not_regex:/[<>]/'],
+            'customer_phone' => ['required', 'string', 'regex:/^\+84[0-9]{9}$/'],
             'customer_email' => ['nullable', 'email', 'max:120'],
-            'shipping_address' => ['required', 'string', 'max:255'],
-            'notes' => ['nullable', 'string', 'max:1000'],
+            'shipping_address' => ['required', 'string', 'min:5', 'max:255', 'not_regex:/[<>]/'],
+            'notes' => ['nullable', 'string', 'max:1000', 'not_regex:/[<>]/'],
+            'save_address' => ['nullable', 'boolean'],
+            'set_default_address' => ['nullable', 'boolean'],
+        ], [
+            'customer_name.required' => 'Vui lòng nhập họ và tên người nhận.',
+            'customer_name.min' => 'Họ tên người nhận phải có ít nhất 2 ký tự.',
+            'customer_phone.required' => 'Vui lòng nhập số điện thoại nhận hàng.',
+            'customer_phone.regex' => 'Số điện thoại cần theo định dạng 0xxxxxxxxx hoặc +84xxxxxxxxx.',
+            'customer_email.email' => 'Email nhận hàng không hợp lệ.',
+            'shipping_address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
+            'shipping_address.min' => 'Địa chỉ giao hàng cần có ít nhất 5 ký tự.',
+            'shipping_address.not_regex' => 'Địa chỉ giao hàng không được chứa ký tự HTML.',
+            'notes.not_regex' => 'Ghi chú không được chứa ký tự HTML.',
         ]);
 
         $cartItems = $this->getCartItems();
@@ -202,7 +253,11 @@ class CartController extends Controller
             return redirect()->route('cart')->with('error', $error);
         }
 
-        $order = DB::transaction(function () use ($validated, $cartItems) {
+        $validated['customer_email'] = strtolower(trim((string) ($validated['customer_email'] ?? $user->email)));
+        $validated['save_address'] = $request->boolean('save_address');
+        $validated['set_default_address'] = $request->boolean('set_default_address');
+
+        $order = DB::transaction(function () use ($validated, $cartItems, $user) {
             $cartItems = $this->lockAndValidateCartItems($cartItems);
             $summary = $this->getCartSummary($cartItems);
             $summary = $this->lockAndValidateCoupon($summary);
@@ -210,10 +265,10 @@ class CartController extends Controller
             $order = Order::query()->create([
                 'code' => $this->generateOrderCode(),
                 'public_token' => Str::random(48),
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'] ?? null,
-                'customer_email' => $validated['customer_email'] ?? null,
+                'customer_email' => $validated['customer_email'],
                 'shipping_address' => $validated['shipping_address'],
                 'customer_note' => $validated['notes'] ?? null,
                 'subtotal' => (int) $summary['subtotal'],
@@ -247,7 +302,7 @@ class CartController extends Controller
                 InventoryMovement::query()->create([
                     'product_id' => $product->id,
                     'order_id' => $order->id,
-                    'user_id' => auth()->id(),
+                    'user_id' => $user->id,
                     'type' => 'order',
                     'quantity' => -1 * (int) $item['quantity'],
                     'stock_before' => $stockBefore,
@@ -259,7 +314,7 @@ class CartController extends Controller
 
             OrderStatusHistory::query()->create([
                 'order_id' => $order->id,
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
                 'previous_status' => null,
                 'status' => Order::STATUS_PENDING,
                 'note' => 'Don hang moi duoc tao.',
@@ -270,14 +325,24 @@ class CartController extends Controller
                 CouponUsage::query()->create([
                     'coupon_id' => $summary['coupon']->id,
                     'order_id' => $order->id,
-                    'user_id' => auth()->id(),
+                    'user_id' => $user->id,
                     'coupon_code' => $summary['coupon']->code,
-                    'customer_email' => $validated['customer_email'] ?? null,
+                    'customer_email' => $validated['customer_email'],
                     'discount_total' => (int) $summary['discount_total'],
                     'used_at' => now(),
                 ]);
 
                 $summary['coupon']->increment('used_count');
+
+                UserVoucher::query()
+                    ->where('user_id', $user->id)
+                    ->where('coupon_id', $summary['coupon']->id)
+                    ->whereNull('used_at')
+                    ->update(['used_at' => now()]);
+            }
+
+            if ($validated['save_address']) {
+                $this->saveCheckoutAddress($user, $validated);
             }
 
             return $order;
@@ -375,12 +440,10 @@ class CartController extends Controller
             ->whereRaw('LOWER(code) = ?', [Str::lower($couponCode)])
             ->first();
 
-        if (!$coupon || !$coupon->isValid()) {
-            session()->forget('cart_coupon_code');
-            return null;
-        }
+        $user = auth()->user();
 
-        if ($coupon->min_order_total && $subtotal < (int) $coupon->min_order_total) {
+        if (!$coupon || $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
+            session()->forget('cart_coupon_code');
             return null;
         }
 
@@ -479,15 +542,17 @@ class CartController extends Controller
             ->lockForUpdate()
             ->first();
 
-        if (!$coupon || !$coupon->isValid()) {
+        $user = auth()->user();
+
+        if (!$coupon) {
             throw ValidationException::withMessages([
                 'coupon' => 'Ma giam gia khong hop le hoac da het luot su dung.',
             ]);
         }
 
-        if ($coupon->min_order_total && (int) $summary['subtotal'] < (int) $coupon->min_order_total) {
+        if ($error = $coupon->getInvalidReason((int) $summary['subtotal'], optional($user)->id, optional($user)->email)) {
             throw ValidationException::withMessages([
-                'coupon' => 'Don hang chua dat gia tri toi thieu de ap ma.',
+                'coupon' => $error,
             ]);
         }
 
@@ -497,6 +562,71 @@ class CartController extends Controller
         $summary['total'] = max(0, (int) $summary['subtotal'] + (int) $summary['shipping_fee'] - $discountTotal);
 
         return $summary;
+    }
+
+    private function saveCheckoutAddress(User $user, array $validated): void
+    {
+        $shouldDefault = (bool) $validated['set_default_address'] || !$user->addresses()->exists();
+
+        if ($shouldDefault) {
+            $user->addresses()->update(['is_default' => false]);
+        }
+
+        $address = UserAddress::query()->firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'recipient_name' => $validated['customer_name'],
+                'phone' => $validated['customer_phone'],
+                'address_line' => $validated['shipping_address'],
+            ],
+            [
+                'ward' => null,
+                'district' => null,
+                'province' => null,
+                'is_default' => $shouldDefault,
+            ]
+        );
+
+        if ($shouldDefault && !$address->is_default) {
+            $address->forceFill(['is_default' => true])->save();
+        }
+    }
+
+    private function normalizeVietnamPhone($value): ?string
+    {
+        $phone = preg_replace('/[\s().-]+/', '', trim((string) $value));
+
+        if ($phone === '') {
+            return null;
+        }
+
+        if (preg_match('/^0[0-9]{9}$/', $phone)) {
+            return '+84' . substr($phone, 1);
+        }
+
+        if (preg_match('/^84[0-9]{9}$/', $phone)) {
+            return '+' . $phone;
+        }
+
+        return $phone;
+    }
+
+    private function cleanTextInput($value, bool $nullable = false): ?string
+    {
+        $cleaned = preg_replace('/\s+/u', ' ', trim((string) $value));
+
+        if ($nullable && $cleaned === '') {
+            return null;
+        }
+
+        return $cleaned;
+    }
+
+    private function normalizeEmail($value): ?string
+    {
+        $email = Str::lower(trim((string) $value));
+
+        return $email === '' ? null : $email;
     }
 
     private function canViewOrder(Order $order, ?string $token): bool
