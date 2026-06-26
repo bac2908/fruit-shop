@@ -59,11 +59,43 @@ class Order extends Model
     const PAYMENT_STATUS_PAID = 'paid';
     const PAYMENT_STATUS_REFUNDED = 'refunded';
 
+    const PAYMENT_METHOD_COD = 'cod';
+    const PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
+    const PAYMENT_METHOD_MOMO = 'momo';
+
     const SHIPPING_STATUS_PENDING = 'pending';
     const SHIPPING_STATUS_PREPARING = 'preparing';
     const SHIPPING_STATUS_SHIPPING = 'shipping';
     const SHIPPING_STATUS_DELIVERED = 'delivered';
     const SHIPPING_STATUS_FAILED = 'failed';
+
+    public static function paymentMethodLabels(): array
+    {
+        return [
+            self::PAYMENT_METHOD_COD => 'Thanh toán khi nhận hàng',
+            self::PAYMENT_METHOD_BANK_TRANSFER => 'Chuyển khoản ngân hàng',
+            self::PAYMENT_METHOD_MOMO => 'Ví MoMo sandbox',
+        ];
+    }
+
+    public static function paymentStatusLabels(): array
+    {
+        return [
+            self::PAYMENT_STATUS_UNPAID => 'Chưa thanh toán',
+            self::PAYMENT_STATUS_PAID => 'Đã thanh toán',
+            self::PAYMENT_STATUS_REFUNDED => 'Đã hoàn tiền',
+        ];
+    }
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return self::paymentMethodLabels()[$this->payment_method] ?? 'Chưa xác định';
+    }
+
+    public function getPaymentStatusLabelAttribute(): string
+    {
+        return self::paymentStatusLabels()[$this->payment_status] ?? 'Chưa xác định';
+    }
 
     /**
      * Relationships

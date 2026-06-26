@@ -221,9 +221,9 @@
 </header>
 
 	<main>
-		@if(session('success') || session('error'))
+		@if((session('success') && !session('cart_added')) || session('error'))
 			<div class="container site-flash-container">
-				@if(session('success'))
+				@if(session('success') && !session('cart_added'))
 					<div class="site-flash site-flash-success">{{ session('success') }}</div>
 				@endif
 
@@ -235,6 +235,38 @@
 
 		@yield('content')
 	</main>
+
+	@if(session('cart_added'))
+		@php
+			$cartAdded = session('cart_added');
+		@endphp
+		<div class="cart-added-overlay is-visible" id="cartAddedModal" role="dialog" aria-modal="true" aria-labelledby="cartAddedTitle">
+			<div class="cart-added-modal">
+				<button type="button" class="cart-added-close" data-cart-modal-close aria-label="Đóng">&times;</button>
+				<div class="cart-added-head">
+					<i class="fa fa-check-square-o" aria-hidden="true"></i>
+					<h2 id="cartAddedTitle">Sản phẩm đã được thêm vào giỏ hàng</h2>
+				</div>
+				<div class="cart-added-product">
+					<img src="{{ $cartAdded['image'] ?? '//theme.hstatic.net/200000157781/1001036201/14/no-image.jpg?v=1064' }}" alt="{{ $cartAdded['name'] ?? 'Sản phẩm' }}">
+					<div class="cart-added-info">
+						<strong>{{ $cartAdded['name'] ?? 'Sản phẩm' }}</strong>
+						<span>Số lượng: {{ number_format((int) ($cartAdded['quantity'] ?? 1)) }}</span>
+						<span>Giá: {{ number_format((int) ($cartAdded['unit_price'] ?? 0), 0, ',', '.') }}₫</span>
+					</div>
+				</div>
+				<div class="cart-added-summary">
+					<i class="fa fa-caret-right" aria-hidden="true"></i>
+					<span>Giỏ hàng của bạn hiện có <strong>{{ number_format((int) ($cartAdded['cart_quantity'] ?? 0)) }}</strong> sản phẩm</span>
+				</div>
+				<div class="cart-added-actions">
+					<button type="button" class="cart-added-btn cart-added-btn-light" data-cart-modal-close>Tiếp tục mua sắm</button>
+					<a href="{{ route('cart') }}" class="cart-added-btn cart-added-btn-outline">Xem giỏ hàng</a>
+					<a href="{{ route('checkout') }}" class="cart-added-btn cart-added-btn-primary">Tiến hành thanh toán</a>
+				</div>
+			</div>
+		</div>
+	@endif
 
 	<style>
 		.site-flash-container {
@@ -258,6 +290,186 @@
 			background: #fff3f0;
 			border: 1px solid #ffd3ca;
 			color: #9c341f;
+		}
+
+		.cart-added-overlay {
+			align-items: flex-start;
+			background: rgba(17, 32, 22, 0.32);
+			display: none;
+			inset: 0;
+			justify-content: center;
+			padding: 96px 16px 24px;
+			position: fixed;
+			z-index: 10050;
+		}
+
+		.cart-added-overlay.is-visible {
+			display: flex;
+		}
+
+		.cart-added-modal {
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 24px 70px rgba(19, 35, 21, 0.24);
+			max-width: 520px;
+			padding: 28px 32px 30px;
+			position: relative;
+			width: min(100%, 520px);
+		}
+
+		.cart-added-close {
+			align-items: center;
+			background: transparent;
+			border: 0;
+			color: #b8b8b8;
+			display: flex;
+			font-size: 30px;
+			height: 34px;
+			justify-content: center;
+			line-height: 1;
+			position: absolute;
+			right: 10px;
+			top: 8px;
+			width: 34px;
+		}
+
+		.cart-added-close:hover {
+			color: #6f7d65;
+		}
+
+		.cart-added-head {
+			align-items: center;
+			border-bottom: 1px solid #edf0e9;
+			display: flex;
+			gap: 10px;
+			padding-bottom: 16px;
+		}
+
+		.cart-added-head i {
+			color: #5b8d1f;
+			font-size: 24px;
+		}
+
+		.cart-added-head h2 {
+			color: #1f2e1d;
+			font-family: inherit;
+			font-size: 20px;
+			font-weight: 700;
+			line-height: 1.35;
+			margin: 0;
+		}
+
+		.cart-added-product {
+			display: flex;
+			gap: 16px;
+			padding: 24px 0;
+		}
+
+		.cart-added-product img {
+			border: 1px solid #edf0e9;
+			border-radius: 6px;
+			flex: 0 0 96px;
+			height: 96px;
+			object-fit: cover;
+			width: 96px;
+		}
+
+		.cart-added-info {
+			display: grid;
+			gap: 8px;
+			min-width: 0;
+		}
+
+		.cart-added-info strong {
+			color: #1e2c1c;
+			font-size: 16px;
+			line-height: 1.45;
+		}
+
+		.cart-added-info span {
+			color: #65705f;
+			font-size: 14px;
+		}
+
+		.cart-added-info span:last-child {
+			color: #5f922b;
+			font-size: 18px;
+			font-weight: 700;
+		}
+
+		.cart-added-summary {
+			align-items: center;
+			border-top: 1px solid #edf0e9;
+			color: #253421;
+			display: flex;
+			gap: 8px;
+			font-size: 16px;
+			padding: 18px 0;
+		}
+
+		.cart-added-summary i {
+			color: #1f2e1d;
+		}
+
+		.cart-added-actions {
+			display: grid;
+			gap: 10px;
+		}
+
+		.cart-added-btn {
+			align-items: center;
+			border-radius: 4px;
+			display: inline-flex;
+			font-size: 16px;
+			font-weight: 700;
+			height: 48px;
+			justify-content: center;
+			text-align: center;
+			text-decoration: none !important;
+			width: 100%;
+		}
+
+		.cart-added-btn-primary {
+			background: #7fbe2d;
+			border: 1px solid #7fbe2d;
+			color: #fff !important;
+		}
+
+		.cart-added-btn-primary:hover {
+			background: #6da822;
+			border-color: #6da822;
+		}
+
+		.cart-added-btn-outline,
+		.cart-added-btn-light {
+			background: #fff;
+			border: 1px solid #dfe8d4;
+			color: #3f5f21 !important;
+		}
+
+		.cart-added-btn-light {
+			background: #f8fbf3;
+		}
+
+		@media (max-width: 575px) {
+			.cart-added-overlay {
+				align-items: flex-end;
+				padding: 16px;
+			}
+
+			.cart-added-modal {
+				padding: 24px 18px 20px;
+			}
+
+			.cart-added-product {
+				gap: 12px;
+			}
+
+			.cart-added-product img {
+				flex-basis: 78px;
+				height: 78px;
+				width: 78px;
+			}
 		}
 
 		/* Sticky Sidebar - Contact/Social Icons */
@@ -656,10 +868,11 @@
 		.footer .list-menu li a {
 			color: #fff !important;
 			text-decoration: none;
+			transition: opacity .18s ease, transform .18s ease;
 		}
 
 		.footer .list-menu li a:hover {
-			opacity: 0.85;
+			opacity: 1;
 		}
 
 		.footer .footer-contact-list li {
@@ -694,6 +907,19 @@
 			height: 8px;
 			border-radius: 50%;
 			background: #fff;
+			transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+		}
+
+		.footer .menu-dot li:hover::before,
+		.footer .menu-dot li:focus-within::before {
+			background: #ff9f0e;
+			box-shadow: 0 0 0 4px rgba(255, 159, 14, 0.16);
+			transform: scale(1.12);
+		}
+
+		.footer .menu-dot li:hover a,
+		.footer .menu-dot li:focus-within a {
+			transform: translateX(2px);
 		}
 
 		.footer .footer-connect {
@@ -1460,6 +1686,34 @@
 
 			backToTop.addEventListener('click', function() {
 				window.scrollTo({ top: 0, behavior: 'smooth' });
+			});
+		})();
+
+		// Mini cart modal after adding a product.
+		(function() {
+			var modal = document.getElementById('cartAddedModal');
+			if (!modal) {
+				return;
+			}
+
+			function closeModal() {
+				modal.classList.remove('is-visible');
+			}
+
+			document.querySelectorAll('[data-cart-modal-close]').forEach(function(button) {
+				button.addEventListener('click', closeModal);
+			});
+
+			modal.addEventListener('click', function(event) {
+				if (event.target === modal) {
+					closeModal();
+				}
+			});
+
+			document.addEventListener('keydown', function(event) {
+				if (event.key === 'Escape') {
+					closeModal();
+				}
 			});
 		})();
 

@@ -12,10 +12,12 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserVoucher;
+use App\Services\MomoPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
@@ -67,11 +69,23 @@ class CartController extends Controller
 
         session(['cart' => $cart]);
 
+        $cartQuantity = collect($cart)->sum(function ($item) {
+            return (int) ($item['quantity'] ?? 0);
+        });
+
         if ($request->boolean('checkout_redirect')) {
             return redirect()->route('checkout');
         }
 
-        return redirect()->back()->with('success', 'Da them san pham vao gio hang.');
+        return redirect()->back()
+            ->with('success', 'Đã thêm sản phẩm vào giỏ hàng.')
+            ->with('cart_added', [
+                'name' => $product->name,
+                'image' => $product->thumb_url,
+                'quantity' => $quantity,
+                'unit_price' => $this->getOrderableUnitPrice($product),
+                'cart_quantity' => $cartQuantity,
+            ]);
     }
 
     public function update(Request $request)
@@ -122,6 +136,8 @@ class CartController extends Controller
 
         if (empty($cart)) {
             session()->forget('cart_coupon_code');
+            session()->forget('checkout_shipping');
+            session()->forget('checkout_payment_method');
         }
 
         return redirect()->route('cart')->with('success', 'Da xoa san pham khoi gio hang.');
@@ -133,6 +149,7 @@ class CartController extends Controller
             'code' => ['required', 'string', 'max:80'],
         ]);
 
+        $redirectRoute = $this->resolveCartRedirectRoute($request);
         $cartItems = $this->getCartItems();
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart')->with('error', 'Gio hang dang trong, khong the ap ma giam gia.');
@@ -147,16 +164,16 @@ class CartController extends Controller
             ->first();
 
         if (!$coupon) {
-            return redirect()->route('cart')->with('error', 'Ma giam gia khong hop le hoac da het han.');
+            return redirect()->route($redirectRoute)->with('error', 'Ma giam gia khong hop le hoac da het han.');
         }
 
         if ($error = $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
-            return redirect()->route('cart')->with('error', $error);
+            return redirect()->route($redirectRoute)->with('error', $error);
         }
 
         session(['cart_coupon_code' => $coupon->code]);
 
-        return redirect()->route('cart')->with('success', 'Da ap dung voucher ' . $coupon->code . '.');
+        return redirect()->route($redirectRoute)->with('success', 'Da ap dung voucher ' . $coupon->code . '.');
     }
 
     public function useCoupon(Request $request, Coupon $coupon)
@@ -176,16 +193,18 @@ class CartController extends Controller
 
         session(['cart_coupon_code' => $coupon->code]);
 
-        $redirectRoute = $request->input('redirect_to') === 'checkout' ? 'checkout' : 'cart';
+        $redirectRoute = $this->resolveCartRedirectRoute($request);
 
         return redirect()->route($redirectRoute)->with('success', 'Da chon voucher ' . $coupon->code . ' cho gio hang.');
     }
 
-    public function removeCoupon()
+    public function removeCoupon(Request $request)
     {
         session()->forget('cart_coupon_code');
 
-        return redirect()->route('cart')->with('success', 'Da bo ma giam gia.');
+        $redirectRoute = $this->resolveCartRedirectRoute($request);
+
+        return redirect()->route($redirectRoute)->with('success', 'Da bo ma giam gia.');
     }
 
     public function checkout()
@@ -210,39 +229,13 @@ class CartController extends Controller
             'appliedCoupon' => $summary['coupon'],
             'user' => $user,
             'defaultAddress' => $defaultAddress,
+            'checkoutShipping' => session('checkout_shipping', []),
         ]);
     }
 
-    public function placeOrder(Request $request)
+    public function storeCheckoutShipping(Request $request)
     {
         $user = $request->user();
-        $request->merge([
-            'customer_name' => $this->cleanTextInput($request->input('customer_name')),
-            'customer_phone' => $this->normalizeVietnamPhone($request->input('customer_phone')),
-            'customer_email' => $this->normalizeEmail($request->input('customer_email')),
-            'shipping_address' => $this->cleanTextInput($request->input('shipping_address')),
-            'notes' => $this->cleanTextInput($request->input('notes'), true),
-        ]);
-
-        $validated = $request->validate([
-            'customer_name' => ['required', 'string', 'min:2', 'max:120', 'not_regex:/[<>]/'],
-            'customer_phone' => ['required', 'string', 'regex:/^\+84[0-9]{9}$/'],
-            'customer_email' => ['nullable', 'email', 'max:120'],
-            'shipping_address' => ['required', 'string', 'min:5', 'max:255', 'not_regex:/[<>]/'],
-            'notes' => ['nullable', 'string', 'max:1000', 'not_regex:/[<>]/'],
-            'save_address' => ['nullable', 'boolean'],
-            'set_default_address' => ['nullable', 'boolean'],
-        ], [
-            'customer_name.required' => 'Vui lòng nhập họ và tên người nhận.',
-            'customer_name.min' => 'Họ tên người nhận phải có ít nhất 2 ký tự.',
-            'customer_phone.required' => 'Vui lòng nhập số điện thoại nhận hàng.',
-            'customer_phone.regex' => 'Số điện thoại cần theo định dạng 0xxxxxxxxx hoặc +84xxxxxxxxx.',
-            'customer_email.email' => 'Email nhận hàng không hợp lệ.',
-            'shipping_address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
-            'shipping_address.min' => 'Địa chỉ giao hàng cần có ít nhất 5 ký tự.',
-            'shipping_address.not_regex' => 'Địa chỉ giao hàng không được chứa ký tự HTML.',
-            'notes.not_regex' => 'Ghi chú không được chứa ký tự HTML.',
-        ]);
 
         $cartItems = $this->getCartItems();
         if ($cartItems->isEmpty()) {
@@ -253,13 +246,82 @@ class CartController extends Controller
             return redirect()->route('cart')->with('error', $error);
         }
 
-        $validated['customer_email'] = strtolower(trim((string) ($validated['customer_email'] ?? $user->email)));
-        $validated['save_address'] = $request->boolean('save_address');
-        $validated['set_default_address'] = $request->boolean('set_default_address');
+        session(['checkout_shipping' => $this->validateCheckoutShipping($request, $user)]);
 
-        $order = DB::transaction(function () use ($validated, $cartItems, $user) {
+        return redirect()->route('checkout.payment');
+    }
+
+    public function payment()
+    {
+        $cartItems = $this->getCartItems();
+        $user = auth()->user();
+
+        if ($cartItems->isEmpty()) {
+            session()->forget(['checkout_shipping', 'checkout_payment_method']);
+            return redirect()->route('cart')->with('error', 'Gio hang dang trong. Vui long them san pham de tiep tuc.');
+        }
+
+        if ($error = $this->getCartAvailabilityError($cartItems)) {
+            return redirect()->route('cart')->with('error', $error);
+        }
+
+        $checkoutShipping = session('checkout_shipping');
+        if (!is_array($checkoutShipping) || empty($checkoutShipping)) {
+            return redirect()->route('checkout')->with('error', 'Vui long kiem tra thong tin giao hang truoc khi chon thanh toan.');
+        }
+
+        $summary = $this->getCartSummary($cartItems);
+
+        return view('checkout-payment', [
+            'cartItems' => $cartItems,
+            'summary' => $summary,
+            'appliedCoupon' => $summary['coupon'],
+            'user' => $user,
+            'checkoutShipping' => $checkoutShipping,
+            'selectedPaymentMethod' => old('payment_method', session('checkout_payment_method', Order::PAYMENT_METHOD_COD)),
+        ]);
+    }
+
+    public function placeOrder(Request $request, MomoPaymentService $momoPayment)
+    {
+        $user = $request->user();
+        $checkoutShipping = session('checkout_shipping');
+
+        if (!is_array($checkoutShipping) || empty($checkoutShipping)) {
+            return redirect()->route('checkout')->with('error', 'Vui long kiem tra thong tin giao hang truoc khi dat hang.');
+        }
+
+        $validatedPayment = $request->validate([
+            'payment_method' => ['required', Rule::in([
+                Order::PAYMENT_METHOD_COD,
+                Order::PAYMENT_METHOD_BANK_TRANSFER,
+                Order::PAYMENT_METHOD_MOMO,
+            ])],
+        ], [
+            'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
+            'payment_method.in' => 'Phương thức thanh toán không hợp lệ.',
+        ]);
+
+        session(['checkout_payment_method' => $validatedPayment['payment_method']]);
+
+        $cartItems = $this->getCartItems();
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart')->with('error', 'Gio hang dang trong.');
+        }
+
+        if ($error = $this->getCartAvailabilityError($cartItems)) {
+            return redirect()->route('cart')->with('error', $error);
+        }
+
+        $validated = array_merge($checkoutShipping, [
+            'payment_method' => $validatedPayment['payment_method'],
+        ]);
+
+        $momoPayUrl = null;
+
+        $order = DB::transaction(function () use ($validated, $cartItems, $user, $momoPayment, &$momoPayUrl) {
             $cartItems = $this->lockAndValidateCartItems($cartItems);
-            $summary = $this->getCartSummary($cartItems);
+            $summary = $this->getCartSummary($cartItems, true);
             $summary = $this->lockAndValidateCoupon($summary);
 
             $order = Order::query()->create([
@@ -277,7 +339,7 @@ class CartController extends Controller
                 'total' => (int) $summary['total'],
                 'coupon_code' => $summary['coupon'] ? $summary['coupon']->code : null,
                 'status' => Order::STATUS_PENDING,
-                'payment_method' => 'cod',
+                'payment_method' => $validated['payment_method'],
                 'payment_status' => Order::PAYMENT_STATUS_UNPAID,
                 'shipping_status' => Order::SHIPPING_STATUS_PENDING,
             ]);
@@ -345,6 +407,11 @@ class CartController extends Controller
                 $this->saveCheckoutAddress($user, $validated);
             }
 
+            if ($validated['payment_method'] === Order::PAYMENT_METHOD_MOMO) {
+                $momoResponse = $momoPayment->createPayment($order);
+                $momoPayUrl = $momoResponse['payUrl'];
+            }
+
             return $order;
         });
 
@@ -354,10 +421,61 @@ class CartController extends Controller
         ]);
         session()->forget('cart');
         session()->forget('cart_coupon_code');
+        session()->forget('checkout_shipping');
+        session()->forget('checkout_payment_method');
+
+        if ($validated['payment_method'] === Order::PAYMENT_METHOD_MOMO && $momoPayUrl) {
+            return redirect()->away($momoPayUrl);
+        }
 
         return redirect()->route('checkout.thankyou', [
             'code' => $order->code,
             'token' => $order->public_token,
+        ]);
+    }
+
+    public function momoReturn(Request $request, string $code, ?string $token = null, MomoPaymentService $momoPayment)
+    {
+        $order = Order::query()
+            ->where('code', $code)
+            ->firstOrFail();
+
+        if (!$this->canViewOrder($order, $token)) {
+            abort(404);
+        }
+
+        $paid = $this->applyMomoPaymentResult($order, $request->query(), $momoPayment);
+        $flashType = $paid ? 'success' : 'error';
+        $flashMessage = $paid
+            ? 'Thanh toán MoMo thành công.'
+            : 'Thanh toán MoMo chưa thành công hoặc đã bị hủy.';
+
+        return redirect()
+            ->route('checkout.thankyou', [
+                'code' => $order->code,
+                'token' => $order->public_token,
+            ])
+            ->with($flashType, $flashMessage);
+    }
+
+    public function momoIpn(Request $request, MomoPaymentService $momoPayment)
+    {
+        $payload = $request->all();
+        $orderId = (string) ($payload['orderId'] ?? '');
+
+        $order = Order::query()->where('code', $orderId)->first();
+        if (!$order) {
+            return response()->json([
+                'resultCode' => 1,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        $this->applyMomoPaymentResult($order, $payload, $momoPayment);
+
+        return response()->json([
+            'resultCode' => 0,
+            'message' => 'Received',
         ]);
     }
 
@@ -411,11 +529,11 @@ class CartController extends Controller
         })->filter()->values();
     }
 
-    private function getCartSummary(Collection $cartItems): array
+    private function getCartSummary(Collection $cartItems, bool $throwOnInvalidCoupon = false): array
     {
         $subtotal = (int) $cartItems->sum('line_total');
         $shippingFee = 0;
-        $coupon = $this->resolveCoupon($subtotal);
+        $coupon = $this->resolveCoupon($subtotal, $throwOnInvalidCoupon);
         $discountTotal = $coupon ? min($coupon->calculateDiscount($subtotal), $subtotal) : 0;
         $total = max(0, $subtotal + $shippingFee - $discountTotal);
 
@@ -428,7 +546,7 @@ class CartController extends Controller
         ];
     }
 
-    private function resolveCoupon(int $subtotal): ?Coupon
+    private function resolveCoupon(int $subtotal, bool $throwOnInvalid = false): ?Coupon
     {
         $couponCode = trim((string) session('cart_coupon_code', ''));
 
@@ -442,12 +560,28 @@ class CartController extends Controller
 
         $user = auth()->user();
 
-        if (!$coupon || $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
-            session()->forget('cart_coupon_code');
-            return null;
+        if (!$coupon) {
+            return $this->handleInvalidSessionCoupon($throwOnInvalid, 'Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+        }
+
+        if ($error = $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
+            return $this->handleInvalidSessionCoupon($throwOnInvalid, $error);
         }
 
         return $coupon;
+    }
+
+    private function handleInvalidSessionCoupon(bool $throwOnInvalid, string $message): ?Coupon
+    {
+        session()->forget('cart_coupon_code');
+
+        if ($throwOnInvalid) {
+            throw ValidationException::withMessages([
+                'coupon' => $message,
+            ]);
+        }
+
+        return null;
     }
 
     private function getOrderableUnitPrice(Product $product): int
@@ -564,6 +698,43 @@ class CartController extends Controller
         return $summary;
     }
 
+    private function validateCheckoutShipping(Request $request, User $user): array
+    {
+        $request->merge([
+            'customer_name' => $this->cleanTextInput($request->input('customer_name')),
+            'customer_phone' => $this->normalizeVietnamPhone($request->input('customer_phone')),
+            'customer_email' => $this->normalizeEmail($request->input('customer_email')),
+            'shipping_address' => $this->cleanTextInput($request->input('shipping_address')),
+            'notes' => $this->cleanTextInput($request->input('notes'), true),
+        ]);
+
+        $validated = $request->validate([
+            'customer_name' => ['required', 'string', 'min:2', 'max:120', 'not_regex:/[<>]/'],
+            'customer_phone' => ['required', 'string', 'regex:/^\+84[0-9]{9}$/'],
+            'customer_email' => ['nullable', 'email', 'max:120'],
+            'shipping_address' => ['required', 'string', 'min:5', 'max:255', 'not_regex:/[<>]/'],
+            'notes' => ['nullable', 'string', 'max:1000', 'not_regex:/[<>]/'],
+            'save_address' => ['nullable', 'boolean'],
+            'set_default_address' => ['nullable', 'boolean'],
+        ], [
+            'customer_name.required' => 'Vui lòng nhập họ và tên người nhận.',
+            'customer_name.min' => 'Họ tên người nhận phải có ít nhất 2 ký tự.',
+            'customer_phone.required' => 'Vui lòng nhập số điện thoại nhận hàng.',
+            'customer_phone.regex' => 'Số điện thoại cần theo định dạng 0xxxxxxxxx hoặc +84xxxxxxxxx.',
+            'customer_email.email' => 'Email nhận hàng không hợp lệ.',
+            'shipping_address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
+            'shipping_address.min' => 'Địa chỉ giao hàng cần có ít nhất 5 ký tự.',
+            'shipping_address.not_regex' => 'Địa chỉ giao hàng không được chứa ký tự HTML.',
+            'notes.not_regex' => 'Ghi chú không được chứa ký tự HTML.',
+        ]);
+
+        $validated['customer_email'] = strtolower(trim((string) ($validated['customer_email'] ?? $user->email)));
+        $validated['save_address'] = $request->boolean('save_address') || $request->boolean('set_default_address');
+        $validated['set_default_address'] = $request->boolean('set_default_address');
+
+        return $validated;
+    }
+
     private function saveCheckoutAddress(User $user, array $validated): void
     {
         $shouldDefault = (bool) $validated['set_default_address'] || !$user->addresses()->exists();
@@ -589,6 +760,18 @@ class CartController extends Controller
 
         if ($shouldDefault && !$address->is_default) {
             $address->forceFill(['is_default' => true])->save();
+        }
+    }
+
+    private function resolveCartRedirectRoute(Request $request): string
+    {
+        switch ($request->input('redirect_to')) {
+            case 'payment':
+                return 'checkout.payment';
+            case 'checkout':
+                return 'checkout';
+            default:
+                return 'cart';
         }
     }
 
@@ -627,6 +810,46 @@ class CartController extends Controller
         $email = Str::lower(trim((string) $value));
 
         return $email === '' ? null : $email;
+    }
+
+    private function applyMomoPaymentResult(Order $order, array $payload, MomoPaymentService $momoPayment): bool
+    {
+        if ($order->payment_method !== Order::PAYMENT_METHOD_MOMO) {
+            return false;
+        }
+
+        if (!$momoPayment->verifyResult($payload)) {
+            $this->appendOrderAdminNote($order, 'MoMo sandbox: chữ ký callback không hợp lệ.');
+            return false;
+        }
+
+        if ((int) ($payload['resultCode'] ?? -1) !== 0) {
+            $message = (string) ($payload['message'] ?? 'Thanh toán chưa thành công.');
+            $this->appendOrderAdminNote($order, 'MoMo sandbox: ' . $message);
+            return false;
+        }
+
+        if ($order->payment_status !== Order::PAYMENT_STATUS_PAID) {
+            $transId = (string) ($payload['transId'] ?? '');
+            $this->appendOrderAdminNote($order, 'MoMo sandbox paid. TransId: ' . ($transId !== '' ? $transId : 'N/A'));
+
+            $order->forceFill([
+                'payment_status' => Order::PAYMENT_STATUS_PAID,
+                'paid_at' => now(),
+            ])->save();
+        }
+
+        return true;
+    }
+
+    private function appendOrderAdminNote(Order $order, string $note): void
+    {
+        $existingNote = trim((string) $order->admin_note);
+        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
+
+        $order->forceFill([
+            'admin_note' => $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote,
+        ])->save();
     }
 
     private function canViewOrder(Order $order, ?string $token): bool

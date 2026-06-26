@@ -14,6 +14,9 @@
         'cancelled' => 'Đã hủy',
     ];
     $statusText = $statusLabels[$order->status] ?? 'Đang chờ xác nhận';
+    $bankTransfer = config('shop.bank_transfer', []);
+    $isBankTransfer = $order->payment_method === \App\Models\Order::PAYMENT_METHOD_BANK_TRANSFER;
+    $isMomo = $order->payment_method === \App\Models\Order::PAYMENT_METHOD_MOMO;
 @endphp
 
 <section class="bread_crumb py-4">
@@ -46,6 +49,8 @@
                 <p><span>Email:</span> {{ $order->customer_email ?: 'Chưa cung cấp' }}</p>
                 <p><span>Địa chỉ:</span> {{ $order->shipping_address }}</p>
                 <p><span>Số sản phẩm:</span> {{ $totalQuantity }} sản phẩm</p>
+                <p><span>Thanh toán:</span> {{ $order->payment_method_label }}</p>
+                <p><span>Trạng thái thanh toán:</span> {{ $order->payment_status_label }}</p>
             </div>
 
             @if($orderItems->isNotEmpty())
@@ -92,6 +97,66 @@
                     <span>Tổng thanh toán</span>
                     <strong>{{ number_format($order->total) }}₫</strong>
                 </div>
+            </div>
+
+            <div class="payment-instruction-card {{ $isBankTransfer ? 'is-bank' : 'is-cod' }}">
+                @if($isBankTransfer)
+                    <div class="section-heading">
+                        <h2>Thông tin chuyển khoản</h2>
+                        <span>Chờ xác nhận thanh toán</span>
+                    </div>
+                    <div class="payment-instruction-body">
+                        <p class="payment-note">Vui lòng chuyển khoản đúng số tiền và ghi đúng nội dung để cửa hàng đối soát nhanh hơn.</p>
+                        <div class="bank-info-grid">
+                            <div>
+                                <span>Ngân hàng</span>
+                                <strong>{{ $bankTransfer['bank_name'] ?? 'Vietcombank' }}</strong>
+                            </div>
+                            <div>
+                                <span>Chủ tài khoản</span>
+                                <strong>{{ $bankTransfer['account_name'] ?? 'THE GIOI TRAI CAY' }}</strong>
+                            </div>
+                            <div>
+                                <span>Số tài khoản</span>
+                                <strong>{{ $bankTransfer['account_number'] ?? '0123456789' }}</strong>
+                            </div>
+                            <div>
+                                <span>Số tiền</span>
+                                <strong>{{ number_format($order->total) }}₫</strong>
+                            </div>
+                            <div class="bank-info-wide">
+                                <span>Nội dung chuyển khoản</span>
+                                <strong>{{ $order->code }}</strong>
+                            </div>
+                            @if(!empty($bankTransfer['branch']))
+                                <div class="bank-info-wide">
+                                    <span>Chi nhánh</span>
+                                    <strong>{{ $bankTransfer['branch'] }}</strong>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @elseif($isMomo)
+                    <div class="payment-cod-box momo-status-box">
+                        <i class="fa fa-mobile"></i>
+                        <div>
+                            <h2>Thanh toán MoMo sandbox</h2>
+                            @if($order->payment_status === \App\Models\Order::PAYMENT_STATUS_PAID)
+                                <p>MoMo đã xác nhận thanh toán thành công cho đơn hàng này. Cửa hàng sẽ xử lý và giao hàng theo thông tin bạn đã cung cấp.</p>
+                            @else
+                                <p>Đơn hàng đã được tạo nhưng MoMo chưa xác nhận thanh toán. Nếu bạn đã thanh toán, vui lòng chờ hệ thống đối soát hoặc liên hệ hotline kèm mã đơn <strong>{{ $order->code }}</strong>.</p>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    <div class="payment-cod-box">
+                        <i class="fa fa-truck"></i>
+                        <div>
+                            <h2>Thanh toán khi nhận hàng</h2>
+                            <p>Bạn sẽ thanh toán <strong>{{ number_format($order->total) }}₫</strong> cho nhân viên giao hàng sau khi đơn được xác nhận và giao tới địa chỉ đã đăng ký.</p>
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <div class="support-box">
@@ -198,6 +263,7 @@
 
     .order-items-card,
     .order-total-card,
+    .payment-instruction-card,
     .support-box {
         max-width: 680px;
         margin: 0 auto 16px;
@@ -309,6 +375,107 @@
         font-size: 22px;
     }
 
+    .payment-instruction-card {
+        border: 1px solid #dcebd1;
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .payment-instruction-card.is-bank .section-heading {
+        background: #f5fbef;
+    }
+
+    .payment-instruction-body {
+        padding: 14px;
+    }
+
+    .payment-note {
+        color: #5d6659;
+        font-size: 13px;
+        line-height: 1.55;
+        margin: 0 0 12px;
+    }
+
+    .bank-info-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .bank-info-grid > div {
+        border: 1px solid #e5eadf;
+        border-radius: 9px;
+        background: #fbfdf9;
+        padding: 10px 12px;
+    }
+
+    .bank-info-grid span,
+    .bank-info-grid strong {
+        display: block;
+    }
+
+    .bank-info-grid span {
+        color: #75806f;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .bank-info-grid strong {
+        color: #1f2e1d;
+        font-size: 15px;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+
+    .bank-info-grid .bank-info-wide {
+        grid-column: 1 / -1;
+    }
+
+    .bank-info-wide strong {
+        color: #5f922b;
+        font-size: 18px;
+        letter-spacing: .5px;
+    }
+
+    .payment-cod-box {
+        align-items: center;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 48px minmax(0, 1fr);
+        padding: 16px;
+    }
+
+    .payment-cod-box i {
+        align-items: center;
+        background: #edf8e2;
+        border-radius: 50%;
+        color: #6bab22;
+        display: flex;
+        font-size: 22px;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+    }
+
+    .momo-status-box i {
+        background: #fff0f8;
+        color: #b0006d;
+    }
+
+    .payment-cod-box h2 {
+        color: #2f2f2f;
+        font-size: 18px;
+        margin: 0 0 5px;
+    }
+
+    .payment-cod-box p {
+        color: #5d6659;
+        font-size: 13px;
+        line-height: 1.55;
+        margin: 0;
+    }
+
     .support-box {
         display: flex;
         align-items: center;
@@ -411,6 +578,10 @@
             margin-bottom: 2px;
         }
 
+        .bank-info-grid {
+            grid-template-columns: 1fr;
+        }
+
         .section-heading,
         .order-item,
         .support-box {
@@ -429,6 +600,10 @@
         .support-box,
         .support-actions {
             flex-direction: column;
+        }
+
+        .payment-cod-box {
+            align-items: flex-start;
         }
 
         .support-actions,

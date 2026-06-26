@@ -196,6 +196,27 @@
     .cart-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .cart-table th:nth-child(1),
+    .cart-table td:nth-child(1) {
+        width: 52%;
+    }
+
+    .cart-table th:nth-child(2),
+    .cart-table td:nth-child(2) {
+        width: 28%;
+    }
+
+    .cart-table th:nth-child(3),
+    .cart-table td:nth-child(3) {
+        width: 14%;
+    }
+
+    .cart-table th:nth-child(4),
+    .cart-table td:nth-child(4) {
+        width: 6%;
     }
 
     .cart-table thead th {
@@ -250,25 +271,41 @@
     .qty-form {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        justify-content: center;
+        gap: 10px;
+        min-width: 178px;
     }
 
     .qty-form input {
-        width: 60px;
+        width: 76px;
         text-align: center;
-        height: 32px;
+        height: 40px;
         border: 1px solid #ddd;
-        border-radius: 6px;
+        border-radius: 8px;
+        color: #24331f;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 40px;
+        padding: 0 8px;
+        -moz-appearance: textfield;
+    }
+
+    .qty-form input::-webkit-outer-spin-button,
+    .qty-form input::-webkit-inner-spin-button {
+        margin: 0;
+        -webkit-appearance: none;
     }
 
     .qty-form button {
-        height: 32px;
+        height: 40px;
         border: 0;
-        border-radius: 6px;
-        padding: 0 10px;
+        border-radius: 8px;
+        padding: 0 14px;
         background: #7fbe3b;
         color: #fff;
-        font-size: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
     .line-total {

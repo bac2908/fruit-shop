@@ -39,4 +39,11 @@ return [
     // Keep empty by default, then append slugs if you map additional detail products from reference site.
     'gear_detail_slugs' => [
     ],
+
+    'bank_transfer' => [
+        'bank_name' => env('SHOP_BANK_NAME', 'Vietcombank'),
+        'account_name' => env('SHOP_BANK_ACCOUNT_NAME', 'THE GIOI TRAI CAY'),
+        'account_number' => env('SHOP_BANK_ACCOUNT_NUMBER', '0123456789'),
+        'branch' => env('SHOP_BANK_BRANCH', ''),
+    ],
 ];

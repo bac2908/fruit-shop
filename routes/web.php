@@ -105,6 +105,10 @@ Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.
 Route::post('/cart/coupon/use/{coupon}', [CartController::class, 'useCoupon'])->middleware('auth')->name('cart.coupon.use');
 Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 Route::get('/checkout', [CartController::class, 'checkout'])->middleware('auth')->name('checkout');
+Route::post('/checkout/shipping', [CartController::class, 'storeCheckoutShipping'])->middleware('auth')->name('checkout.shipping');
+Route::get('/checkout/payment', [CartController::class, 'payment'])->middleware('auth')->name('checkout.payment');
 Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->middleware('auth')->name('checkout.place');
+Route::get('/checkout/momo/return/{code}/{token?}', [CartController::class, 'momoReturn'])->name('checkout.momo.return');
+Route::post('/checkout/momo/ipn', [CartController::class, 'momoIpn'])->name('checkout.momo.ipn');
 Route::get('/checkout/thank-you/{code}/{token?}', [CartController::class, 'thankYou'])->name('checkout.thankyou');
 Route::get('/search', [ProductController::class, 'search'])->name('search');
