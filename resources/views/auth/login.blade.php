@@ -67,7 +67,7 @@
                             <i class="fa fa-lock" aria-hidden="true"></i>
                             <input id="password" type="password" name="password" autocomplete="current-password" maxlength="72" required>
                             <button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Hiện mật khẩu">
-                                <i class="fa fa-eye" aria-hidden="true"></i>
+                                <i class="fa fa-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>

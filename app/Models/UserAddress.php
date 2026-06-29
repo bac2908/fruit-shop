@@ -14,6 +14,8 @@ class UserAddress extends Model
         'ward',
         'district',
         'province',
+        'province_code',
+        'ward_code',
         'is_default',
     ];
 

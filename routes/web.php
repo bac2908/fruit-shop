@@ -9,6 +9,8 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,23 +53,25 @@ Route::middleware('auth')->prefix('account')->name('account.')->group(function (
 	Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('addresses.store');
 	Route::patch('/addresses/{address}/default', [ProfileController::class, 'setDefaultAddress'])->name('addresses.default');
 	Route::delete('/addresses/{address}', [ProfileController::class, 'destroyAddress'])->name('addresses.destroy');
+	Route::patch('/orders/{order}/cancel', [ProfileController::class, 'cancelOrder'])->name('orders.cancel');
+	Route::post('/orders/{order}/returns', [ProfileController::class, 'requestReturn'])->name('orders.returns.store');
 	Route::post('/wishlist/{product}', [ProfileController::class, 'toggleWishlist'])->name('wishlist.toggle');
 	Route::delete('/wishlist/{item}', [ProfileController::class, 'removeWishlist'])->name('wishlist.remove');
 });
 
 // Admin FE-first routes (UI only, BE data wiring in the next phase)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-	Route::get('/', function () {
-		return view('admin.dashboard');
-	})->name('dashboard');
+	Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
 	Route::get('/products', function () {
 		return view('admin.products');
 	})->name('products');
 
-	Route::get('/orders', function () {
-		return view('admin.orders');
-	})->name('orders');
+	Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
+	Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
+	Route::patch('/orders/{order}/shipping', [AdminOrderController::class, 'updateShipping'])->name('orders.shipping');
+	Route::patch('/orders/cancellations/{cancellationRequest}/approve', [AdminOrderController::class, 'approveCancellation'])->name('orders.cancellations.approve');
+	Route::patch('/orders/cancellations/{cancellationRequest}/reject', [AdminOrderController::class, 'rejectCancellation'])->name('orders.cancellations.reject');
 
 	Route::get('/customers', function () {
 		return view('admin.customers');

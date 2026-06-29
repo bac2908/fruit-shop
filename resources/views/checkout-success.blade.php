@@ -6,17 +6,21 @@
 @php
     $orderItems = collect($order->items ?? []);
     $totalQuantity = $orderItems->sum('qty');
-    $statusLabels = [
-        'pending' => 'Đang chờ xác nhận',
-        'confirmed' => 'Đã xác nhận',
-        'shipping' => 'Đang giao hàng',
-        'done' => 'Hoàn tất',
-        'cancelled' => 'Đã hủy',
-    ];
-    $statusText = $statusLabels[$order->status] ?? 'Đang chờ xác nhận';
+    $statusText = $order->status_label;
     $bankTransfer = config('shop.bank_transfer', []);
     $isBankTransfer = $order->payment_method === \App\Models\Order::PAYMENT_METHOD_BANK_TRANSFER;
     $isMomo = $order->payment_method === \App\Models\Order::PAYMENT_METHOD_MOMO;
+    $orderTimeline = $order->trackingTimeline();
+    $latestCancellationRequest = $order->latest_cancellation_request;
+    $cancellationReasons = \App\Models\OrderCancellationRequest::reasonLabels();
+    $statusDescriptions = [
+        \App\Models\Order::STATUS_PENDING => 'Shop đang kiểm tra tồn kho, địa chỉ giao hàng và thanh toán trước khi xử lý đơn.',
+        \App\Models\Order::STATUS_CONFIRMED => 'Đơn đã được hệ thống xác nhận vì sản phẩm còn hàng và tồn kho đã được giữ cho bạn.',
+        \App\Models\Order::STATUS_SHIPPING => 'Đơn đã rời shop và đang được giao tới địa chỉ bạn đã cung cấp.',
+        \App\Models\Order::STATUS_DONE => 'Đơn đã hoàn tất. Cảm ơn bạn đã mua hàng tại Thế Giới Trái Cây.',
+        \App\Models\Order::STATUS_CANCELLED => 'Đơn đã được hủy. Nếu cần hỗ trợ thêm, bạn có thể liên hệ shop bằng mã đơn này.',
+    ];
+    $statusDescription = $statusDescriptions[$order->status] ?? 'Shop đang xử lý đơn hàng của bạn.';
 @endphp
 
 <section class="bread_crumb py-4">
@@ -39,7 +43,7 @@
                 <div>
                     <span class="status-pill">{{ $statusText }}</span>
                     <h1>Cảm ơn bạn đã đặt hàng</h1>
-                    <p>Mã đơn hàng của bạn là <strong>{{ $order->code }}</strong>. Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
+                    <p>Mã đơn hàng của bạn là <strong>{{ $order->code }}</strong>. {{ $statusDescription }}</p>
                 </div>
             </div>
 
@@ -48,10 +52,46 @@
                 <p><span>Điện thoại:</span> {{ $order->customer_phone ?: 'Chưa cung cấp' }}</p>
                 <p><span>Email:</span> {{ $order->customer_email ?: 'Chưa cung cấp' }}</p>
                 <p><span>Địa chỉ:</span> {{ $order->shipping_address }}</p>
+                <p><span>Giao hàng:</span> {{ $order->delivery_method_label }}{{ $order->shipping_delivery_eta ? ' · ' . $order->shipping_delivery_eta : '' }}</p>
+                <p><span>Phí ship:</span> {{ $order->shipping_fee_status_label }}</p>
                 <p><span>Số sản phẩm:</span> {{ $totalQuantity }} sản phẩm</p>
                 <p><span>Thanh toán:</span> {{ $order->payment_method_label }}</p>
                 <p><span>Trạng thái thanh toán:</span> {{ $order->payment_status_label }}</p>
             </div>
+
+            <div class="order-tracking-card">
+                <div class="section-heading">
+                    <h2>Theo dõi đơn hàng</h2>
+                    <span>{{ $order->status_label }}</span>
+                </div>
+                <ol class="order-timeline">
+                    @foreach($orderTimeline as $step)
+                        <li class="{{ $step['done'] ? 'is-done' : '' }} {{ $step['current'] ? 'is-current' : '' }}">
+                            <span class="timeline-dot"></span>
+                            <div>
+                                <strong>{{ $step['label'] }}</strong>
+                                <p>{{ $step['description'] }}</p>
+                                @if($step['time'])
+                                    <small>{{ $step['time']->format('d/m/Y H:i') }}</small>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+
+            @if($latestCancellationRequest)
+                <div class="cancellation-status-card">
+                    <strong>Yêu cầu hủy: {{ $latestCancellationRequest->status_label }}</strong>
+                    <p>Lý do: {{ $latestCancellationRequest->reason_label }}</p>
+                    @if($latestCancellationRequest->note)
+                        <p>Ghi chú của bạn: {{ $latestCancellationRequest->note }}</p>
+                    @endif
+                    @if($latestCancellationRequest->admin_note)
+                        <p>Phản hồi từ shop: {{ $latestCancellationRequest->admin_note }}</p>
+                    @endif
+                </div>
+            @endif
 
             @if($orderItems->isNotEmpty())
                 <div class="order-items-card">
@@ -91,7 +131,7 @@
                 @endif
                 <div>
                     <span>Phí giao hàng</span>
-                    <strong>{{ number_format($order->shipping_fee) }}₫</strong>
+                    <strong>{{ $order->shipping_fee_status === \App\Models\Order::SHIPPING_FEE_STATUS_ESTIMATED ? 'Tạm tính ' : '' }}{{ (int) $order->shipping_fee > 0 ? number_format($order->shipping_fee) . '₫' : 'Miễn phí' }}</strong>
                 </div>
                 <div class="grand-total">
                     <span>Tổng thanh toán</span>
@@ -100,6 +140,16 @@
             </div>
 
             <div class="payment-instruction-card {{ $isBankTransfer ? 'is-bank' : 'is-cod' }}">
+                @if($order->shipping_delivery_note)
+                    <div class="fresh-shipping-note {{ $order->requiresShippingConfirmation() ? 'is-estimated' : 'is-confirmed' }}">
+                        <i class="fa fa-leaf"></i>
+                        <div>
+                            <strong>{{ $order->requiresShippingConfirmation() ? 'Đơn hàng tươi cần shop xác nhận' : 'Giao nhanh hàng tươi' }}</strong>
+                            <p>{{ $order->shipping_delivery_note }}</p>
+                        </div>
+                    </div>
+                @endif
+
                 @if($isBankTransfer)
                     <div class="section-heading">
                         <h2>Thông tin chuyển khoản</h2>
@@ -173,6 +223,27 @@
             <div class="action-row">
                 <a href="{{ route('products.index') }}" class="btn-go-shop">Tiếp tục mua sắm</a>
                 <a href="{{ route('home') }}" class="btn-go-home">Về trang chủ</a>
+                @if(auth()->check() && (int) auth()->id() === (int) $order->user_id)
+                    @if($order->isCustomerCancellable() || $order->isCustomerCancellationRequestable())
+                        <details class="success-cancel-details">
+                            <summary>{{ $order->isCustomerCancellable() ? 'Hủy đơn hàng' : 'Yêu cầu hủy đơn' }}</summary>
+                            <form method="post" action="{{ route('account.orders.cancel', $order) }}" class="success-cancel-form" onsubmit="return confirm('Bạn chắc chắn muốn gửi hủy đơn {{ $order->code }}?');">
+                                @csrf
+                                @method('PATCH')
+                                <select name="reason" required>
+                                    <option value="">Chọn lý do</option>
+                                    @foreach($cancellationReasons as $reasonValue => $reasonLabel)
+                                        <option value="{{ $reasonValue }}">{{ $reasonLabel }}</option>
+                                    @endforeach
+                                </select>
+                                <textarea name="note" rows="2" maxlength="500" placeholder="Ghi chú thêm nếu cần"></textarea>
+                                <button type="submit">{{ $order->isCustomerCancellable() ? 'Xác nhận hủy' : 'Gửi yêu cầu' }}</button>
+                            </form>
+                        </details>
+                    @elseif($order->hasPendingCancellationRequest())
+                        <span class="success-cancel-pending">Đang chờ shop duyệt hủy</span>
+                    @endif
+                @endif
             </div>
         </div>
     </div>
@@ -262,12 +333,114 @@
     }
 
     .order-items-card,
+    .order-tracking-card,
+    .cancellation-status-card,
     .order-total-card,
     .payment-instruction-card,
     .support-box {
         max-width: 680px;
         margin: 0 auto 16px;
         text-align: left;
+    }
+
+    .order-tracking-card {
+        border: 1px solid #dcebd1;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .order-timeline {
+        list-style: none;
+        margin: 0;
+        padding: 14px 16px 16px;
+    }
+
+    .order-timeline li {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: 11px;
+        padding: 0 0 16px;
+        position: relative;
+    }
+
+    .order-timeline li:last-child {
+        padding-bottom: 0;
+    }
+
+    .order-timeline li::before {
+        background: #e3ebdc;
+        content: '';
+        height: 100%;
+        left: 8px;
+        position: absolute;
+        top: 18px;
+        width: 2px;
+    }
+
+    .order-timeline li:last-child::before {
+        display: none;
+    }
+
+    .timeline-dot {
+        background: #fff;
+        border: 2px solid #d0dcc8;
+        border-radius: 50%;
+        height: 18px;
+        position: relative;
+        width: 18px;
+        z-index: 1;
+    }
+
+    .order-timeline li.is-done .timeline-dot {
+        background: #73b62b;
+        border-color: #73b62b;
+        box-shadow: inset 0 0 0 4px #fff;
+    }
+
+    .order-timeline li.is-current .timeline-dot {
+        background: #f7941e;
+        border-color: #f7941e;
+    }
+
+    .order-timeline strong {
+        color: #24361d;
+        display: block;
+        font-size: 14px;
+        margin-bottom: 3px;
+    }
+
+    .order-timeline p {
+        color: #65715f;
+        font-size: 13px;
+        line-height: 1.45;
+        margin: 0;
+    }
+
+    .order-timeline small {
+        color: #8b9485;
+        display: block;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .cancellation-status-card {
+        background: #fffaf0;
+        border: 1px solid #f3d59b;
+        border-radius: 12px;
+        padding: 13px 14px;
+    }
+
+    .cancellation-status-card strong {
+        color: #8a6200;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .cancellation-status-card p {
+        color: #685d45;
+        font-size: 13px;
+        margin: 4px 0 0;
     }
 
     .order-items-card {
@@ -380,6 +553,51 @@
         border-radius: 12px;
         background: #fff;
         overflow: hidden;
+    }
+
+    .fresh-shipping-note {
+        align-items: flex-start;
+        background: #f5fbef;
+        border-bottom: 1px solid #dcebd1;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 38px minmax(0, 1fr);
+        padding: 13px 14px;
+    }
+
+    .fresh-shipping-note.is-estimated {
+        background: #fffaf0;
+        border-bottom-color: #f3d59b;
+    }
+
+    .fresh-shipping-note i {
+        align-items: center;
+        background: #e8f5db;
+        border-radius: 50%;
+        color: #5f922b;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+    }
+
+    .fresh-shipping-note.is-estimated i {
+        background: #fff0d8;
+        color: #a66a00;
+    }
+
+    .fresh-shipping-note strong {
+        color: #26351f;
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .fresh-shipping-note p {
+        color: #5d6659;
+        font-size: 13px;
+        line-height: 1.45;
+        margin: 0;
     }
 
     .payment-instruction-card.is-bank .section-heading {
@@ -554,6 +772,97 @@
         background: #fff;
     }
 
+    .success-cancel-form {
+        margin: 0;
+    }
+
+    .success-cancel-form button {
+        background: #fff3f0;
+        border: 1px solid #ffd0c7;
+        border-radius: 999px;
+        color: #b73f30;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        height: 40px;
+        padding: 0 18px;
+    }
+
+    .success-cancel-form button:hover {
+        background: #ffe8e3;
+    }
+
+    .success-cancel-details {
+        position: relative;
+    }
+
+    .success-cancel-details summary {
+        align-items: center;
+        background: #fff3f0;
+        border: 1px solid #ffd0c7;
+        border-radius: 999px;
+        color: #b73f30;
+        cursor: pointer;
+        display: inline-flex;
+        font-weight: 700;
+        height: 40px;
+        padding: 0 18px;
+    }
+
+    .success-cancel-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .success-cancel-details .success-cancel-form {
+        background: #fffaf8;
+        border: 1px solid #ffd0c7;
+        border-radius: 12px;
+        box-shadow: 0 16px 32px rgba(80, 33, 20, 0.14);
+        display: grid;
+        gap: 9px;
+        margin-top: 9px;
+        min-width: 280px;
+        padding: 12px;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        z-index: 6;
+    }
+
+    .success-cancel-form select,
+    .success-cancel-form textarea {
+        border: 1px solid #e8c7bd;
+        border-radius: 8px;
+        color: #2a3523;
+        font: inherit;
+        font-size: 13px;
+        outline: none;
+        padding: 9px 10px;
+        width: 100%;
+    }
+
+    .success-cancel-form textarea {
+        min-height: 66px;
+        resize: vertical;
+    }
+
+    .success-cancel-details .success-cancel-form button {
+        width: 100%;
+    }
+
+    .success-cancel-pending {
+        align-items: center;
+        background: #fff8e3;
+        border: 1px solid #f2d58a;
+        border-radius: 999px;
+        color: #8a6500;
+        display: inline-flex;
+        font-weight: 700;
+        height: 40px;
+        padding: 0 18px;
+    }
+
     @media (max-width: 767px) {
         .success-card {
             padding: 18px 14px;
@@ -609,7 +918,23 @@
         .support-actions,
         .support-actions a,
         .btn-go-shop,
-        .btn-go-home {
+        .btn-go-home,
+        .success-cancel-details,
+        .success-cancel-details summary,
+        .success-cancel-pending,
+        .success-cancel-form,
+        .success-cancel-form button {
+            width: 100%;
+        }
+
+        .success-cancel-details summary,
+        .success-cancel-pending {
+            justify-content: center;
+        }
+
+        .success-cancel-details .success-cancel-form {
+            min-width: 0;
+            position: static;
             width: 100%;
         }
     }

@@ -117,8 +117,8 @@
 							<div class="item-policy d-flex align-items-center">
 								<a href="#"><img src="//theme.hstatic.net/200000157781/1001036201/14/policy1.png?v=1061" alt=""></a>
 								<div class="info">
-									<a href="#">Miễn phí vận chuyển</a>
-									<p>Đơn hàng từ 500k</p>
+									<a href="{{ route('page.shipping.payment') }}">Giao nhanh TP.HCM</a>
+									<p>30 - 90 phút, tỉnh xác nhận riêng</p>
 								</div>
 							</div>
 							<div class="item-policy d-flex align-items-center">

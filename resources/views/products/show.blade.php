@@ -108,8 +108,8 @@
         ],
         [
             'icon' => 'fa-truck',
-            'title' => 'Giao nhanh nội thành',
-            'text' => 'Hỗ trợ giao nhanh trong ngày tại TP.HCM với đội xe lạnh chuyên dụng.',
+            'title' => 'Giao nhanh TP.HCM',
+            'text' => 'TP.HCM giao nhanh 30 - 90 phút; đơn tỉnh được shop xác nhận đóng gói và tuyến vận chuyển trước khi giao.',
         ],
         [
             'icon' => 'fa-gift',

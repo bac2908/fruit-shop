@@ -13,6 +13,9 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserVoucher;
 use App\Services\MomoPaymentService;
+use App\Services\OrderAutomationService;
+use App\Services\ShippingFeeService;
+use App\Services\VietnamAddressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +28,7 @@ class CartController extends Controller
     public function index()
     {
         $cartItems = $this->getCartItems();
-        $summary = $this->getCartSummary($cartItems);
+        $summary = $this->getCartSummary($cartItems, false, session('checkout_shipping', []));
         $totalQuantity = $cartItems->sum('quantity');
 
         return view('cart', [
@@ -207,7 +210,7 @@ class CartController extends Controller
         return redirect()->route($redirectRoute)->with('success', 'Da bo ma giam gia.');
     }
 
-    public function checkout()
+    public function checkout(VietnamAddressService $addressService)
     {
         $cartItems = $this->getCartItems();
         $user = auth()->user()->loadMissing('addresses');
@@ -220,8 +223,18 @@ class CartController extends Controller
             return redirect()->route('cart')->with('error', $error);
         }
 
-        $summary = $this->getCartSummary($cartItems);
         $defaultAddress = $user->addresses->firstWhere('is_default', true) ?: $user->addresses->first();
+        $summaryAddress = session('checkout_shipping', []);
+
+        if (empty($summaryAddress['province_code']) && $defaultAddress) {
+            $summaryAddress = [
+                'province_code' => $defaultAddress->province_code,
+                'ward_code' => $defaultAddress->ward_code,
+                'ward' => $defaultAddress->ward,
+            ];
+        }
+
+        $summary = $this->getCartSummary($cartItems, false, $summaryAddress);
 
         return view('checkout', [
             'cartItems' => $cartItems,
@@ -230,10 +243,13 @@ class CartController extends Controller
             'user' => $user,
             'defaultAddress' => $defaultAddress,
             'checkoutShipping' => session('checkout_shipping', []),
+            'vietnamProvinces' => $addressService->provincesForSelect(),
+            'vietnamAddressDataUrl' => asset('data/vietnam-addresses.json'),
+            'shippingRules' => app(ShippingFeeService::class)->frontendRules(),
         ]);
     }
 
-    public function storeCheckoutShipping(Request $request)
+    public function storeCheckoutShipping(Request $request, VietnamAddressService $addressService)
     {
         $user = $request->user();
 
@@ -246,7 +262,7 @@ class CartController extends Controller
             return redirect()->route('cart')->with('error', $error);
         }
 
-        session(['checkout_shipping' => $this->validateCheckoutShipping($request, $user)]);
+        session(['checkout_shipping' => $this->validateCheckoutShipping($request, $user, $addressService)]);
 
         return redirect()->route('checkout.payment');
     }
@@ -270,7 +286,7 @@ class CartController extends Controller
             return redirect()->route('checkout')->with('error', 'Vui long kiem tra thong tin giao hang truoc khi chon thanh toan.');
         }
 
-        $summary = $this->getCartSummary($cartItems);
+        $summary = $this->getCartSummary($cartItems, false, $checkoutShipping);
 
         return view('checkout-payment', [
             'cartItems' => $cartItems,
@@ -282,7 +298,7 @@ class CartController extends Controller
         ]);
     }
 
-    public function placeOrder(Request $request, MomoPaymentService $momoPayment)
+    public function placeOrder(Request $request, MomoPaymentService $momoPayment, OrderAutomationService $orderAutomation)
     {
         $user = $request->user();
         $checkoutShipping = session('checkout_shipping');
@@ -319,10 +335,11 @@ class CartController extends Controller
 
         $momoPayUrl = null;
 
-        $order = DB::transaction(function () use ($validated, $cartItems, $user, $momoPayment, &$momoPayUrl) {
+        $order = DB::transaction(function () use ($validated, $cartItems, $user, $momoPayment, $orderAutomation, &$momoPayUrl) {
             $cartItems = $this->lockAndValidateCartItems($cartItems);
-            $summary = $this->getCartSummary($cartItems, true);
+            $summary = $this->getCartSummary($cartItems, true, $validated);
             $summary = $this->lockAndValidateCoupon($summary);
+            $shippingQuote = $summary['shipping_quote'];
 
             $order = Order::query()->create([
                 'code' => $this->generateOrderCode(),
@@ -332,9 +349,15 @@ class CartController extends Controller
                 'customer_phone' => $validated['customer_phone'] ?? null,
                 'customer_email' => $validated['customer_email'],
                 'shipping_address' => $validated['shipping_address'],
+                'shipping_province_code' => $validated['province_code'],
+                'shipping_ward_code' => $validated['ward_code'],
                 'customer_note' => $validated['notes'] ?? null,
+                'admin_note' => !empty($shippingQuote['requires_confirmation'])
+                    ? 'Đơn hàng tươi giao tỉnh/khu vực đặc biệt: phí ship đang là tạm tính, cần shop xác nhận đóng gói và tuyến giao trước khi xử lý.'
+                    : null,
                 'subtotal' => (int) $summary['subtotal'],
                 'shipping_fee' => (int) $summary['shipping_fee'],
+                'shipping_fee_status' => $shippingQuote['fee_status'] ?? Order::SHIPPING_FEE_STATUS_ESTIMATED,
                 'discount_total' => (int) $summary['discount_total'],
                 'total' => (int) $summary['total'],
                 'coupon_code' => $summary['coupon'] ? $summary['coupon']->code : null,
@@ -342,6 +365,9 @@ class CartController extends Controller
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => Order::PAYMENT_STATUS_UNPAID,
                 'shipping_status' => Order::SHIPPING_STATUS_PENDING,
+                'shipping_delivery_method' => $shippingQuote['delivery_method'] ?? null,
+                'shipping_delivery_eta' => $shippingQuote['eta'] ?? null,
+                'shipping_delivery_note' => $shippingQuote['message'] ?? null,
             ]);
 
             foreach ($cartItems as $item) {
@@ -382,6 +408,14 @@ class CartController extends Controller
                 'note' => 'Don hang moi duoc tao.',
                 'created_at' => now(),
             ]);
+
+            if ($validated['payment_method'] !== Order::PAYMENT_METHOD_MOMO && empty($shippingQuote['requires_confirmation'])) {
+                $orderAutomation->autoConfirmAfterStockReserved(
+                    $order,
+                    null,
+                    'He thong tu dong xac nhan vi checkout da giu du ton kho.'
+                );
+            }
 
             if ($summary['coupon']) {
                 CouponUsage::query()->create([
@@ -434,7 +468,13 @@ class CartController extends Controller
         ]);
     }
 
-    public function momoReturn(Request $request, string $code, ?string $token = null, MomoPaymentService $momoPayment)
+    public function momoReturn(
+        Request $request,
+        string $code,
+        ?string $token = null,
+        MomoPaymentService $momoPayment,
+        OrderAutomationService $orderAutomation
+    )
     {
         $order = Order::query()
             ->where('code', $code)
@@ -444,7 +484,7 @@ class CartController extends Controller
             abort(404);
         }
 
-        $paid = $this->applyMomoPaymentResult($order, $request->query(), $momoPayment);
+        $paid = $this->applyMomoPaymentResult($order, $request->query(), $momoPayment, $orderAutomation);
         $flashType = $paid ? 'success' : 'error';
         $flashMessage = $paid
             ? 'Thanh toán MoMo thành công.'
@@ -458,7 +498,7 @@ class CartController extends Controller
             ->with($flashType, $flashMessage);
     }
 
-    public function momoIpn(Request $request, MomoPaymentService $momoPayment)
+    public function momoIpn(Request $request, MomoPaymentService $momoPayment, OrderAutomationService $orderAutomation)
     {
         $payload = $request->all();
         $orderId = (string) ($payload['orderId'] ?? '');
@@ -471,7 +511,7 @@ class CartController extends Controller
             ], 404);
         }
 
-        $this->applyMomoPaymentResult($order, $payload, $momoPayment);
+        $this->applyMomoPaymentResult($order, $payload, $momoPayment, $orderAutomation);
 
         return response()->json([
             'resultCode' => 0,
@@ -482,7 +522,7 @@ class CartController extends Controller
     public function thankYou(string $code, ?string $token = null)
     {
         $order = Order::query()
-            ->with(['items', 'items.product'])
+            ->with(['items', 'items.product', 'statusHistories', 'cancellationRequests'])
             ->where('code', $code)
             ->firstOrFail();
 
@@ -529,10 +569,15 @@ class CartController extends Controller
         })->filter()->values();
     }
 
-    private function getCartSummary(Collection $cartItems, bool $throwOnInvalidCoupon = false): array
+    private function getCartSummary(Collection $cartItems, bool $throwOnInvalidCoupon = false, ?array $shippingAddress = null): array
     {
         $subtotal = (int) $cartItems->sum('line_total');
-        $shippingFee = 0;
+        $shippingQuote = app(ShippingFeeService::class)->quote(
+            $subtotal,
+            $shippingAddress['province_code'] ?? null,
+            $shippingAddress['ward'] ?? null
+        );
+        $shippingFee = (int) $shippingQuote['fee'];
         $coupon = $this->resolveCoupon($subtotal, $throwOnInvalidCoupon);
         $discountTotal = $coupon ? min($coupon->calculateDiscount($subtotal), $subtotal) : 0;
         $total = max(0, $subtotal + $shippingFee - $discountTotal);
@@ -540,6 +585,7 @@ class CartController extends Controller
         return [
             'subtotal' => $subtotal,
             'shipping_fee' => $shippingFee,
+            'shipping_quote' => $shippingQuote,
             'discount_total' => $discountTotal,
             'total' => $total,
             'coupon' => $coupon,
@@ -698,13 +744,14 @@ class CartController extends Controller
         return $summary;
     }
 
-    private function validateCheckoutShipping(Request $request, User $user): array
+    private function validateCheckoutShipping(Request $request, User $user, VietnamAddressService $addressService): array
     {
         $request->merge([
             'customer_name' => $this->cleanTextInput($request->input('customer_name')),
             'customer_phone' => $this->normalizeVietnamPhone($request->input('customer_phone')),
             'customer_email' => $this->normalizeEmail($request->input('customer_email')),
-            'shipping_address' => $this->cleanTextInput($request->input('shipping_address')),
+            'address_line' => $this->cleanTextInput($request->input('address_line')),
+            'delivery_area' => $this->cleanTextInput($request->input('delivery_area'), true),
             'notes' => $this->cleanTextInput($request->input('notes'), true),
         ]);
 
@@ -712,7 +759,10 @@ class CartController extends Controller
             'customer_name' => ['required', 'string', 'min:2', 'max:120', 'not_regex:/[<>]/'],
             'customer_phone' => ['required', 'string', 'regex:/^\+84[0-9]{9}$/'],
             'customer_email' => ['nullable', 'email', 'max:120'],
-            'shipping_address' => ['required', 'string', 'min:5', 'max:255', 'not_regex:/[<>]/'],
+            'address_line' => ['required', 'string', 'min:5', 'max:255', 'not_regex:/[<>]/'],
+            'delivery_area' => ['nullable', 'string', 'max:120', 'not_regex:/[<>]/'],
+            'province_code' => ['required', 'string', 'max:20'],
+            'ward_code' => ['required', 'string', 'max:20'],
             'notes' => ['nullable', 'string', 'max:1000', 'not_regex:/[<>]/'],
             'save_address' => ['nullable', 'boolean'],
             'set_default_address' => ['nullable', 'boolean'],
@@ -722,13 +772,28 @@ class CartController extends Controller
             'customer_phone.required' => 'Vui lòng nhập số điện thoại nhận hàng.',
             'customer_phone.regex' => 'Số điện thoại cần theo định dạng 0xxxxxxxxx hoặc +84xxxxxxxxx.',
             'customer_email.email' => 'Email nhận hàng không hợp lệ.',
-            'shipping_address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
-            'shipping_address.min' => 'Địa chỉ giao hàng cần có ít nhất 5 ký tự.',
-            'shipping_address.not_regex' => 'Địa chỉ giao hàng không được chứa ký tự HTML.',
+            'address_line.required' => 'Vui lòng nhập số nhà, tên đường hoặc toà nhà.',
+            'address_line.min' => 'Địa chỉ cụ thể cần có ít nhất 5 ký tự.',
+            'address_line.not_regex' => 'Địa chỉ cụ thể không được chứa ký tự HTML.',
+            'delivery_area.not_regex' => 'Khu vực giao hàng không được chứa ký tự HTML.',
+            'province_code.required' => 'Vui lòng chọn Tỉnh/Thành.',
+            'ward_code.required' => 'Vui lòng chọn Phường/Xã.',
             'notes.not_regex' => 'Ghi chú không được chứa ký tự HTML.',
         ]);
 
+        $resolvedAddress = $addressService->resolve($validated['province_code'], $validated['ward_code']);
         $validated['customer_email'] = strtolower(trim((string) ($validated['customer_email'] ?? $user->email)));
+        $validated['province'] = $resolvedAddress['province_name'];
+        $validated['ward'] = $resolvedAddress['ward_name'];
+        $validated['province_code'] = $resolvedAddress['province_code'];
+        $validated['ward_code'] = $resolvedAddress['ward_code'];
+        $validated['district'] = $validated['delivery_area'] ?? null;
+        $validated['shipping_address'] = $this->formatShippingAddress(
+            $validated['address_line'],
+            $validated['district'],
+            $validated['ward'],
+            $validated['province']
+        );
         $validated['save_address'] = $request->boolean('save_address') || $request->boolean('set_default_address');
         $validated['set_default_address'] = $request->boolean('set_default_address');
 
@@ -748,12 +813,14 @@ class CartController extends Controller
                 'user_id' => $user->id,
                 'recipient_name' => $validated['customer_name'],
                 'phone' => $validated['customer_phone'],
-                'address_line' => $validated['shipping_address'],
+                'address_line' => $validated['address_line'],
+                'province_code' => $validated['province_code'],
+                'ward_code' => $validated['ward_code'],
             ],
             [
-                'ward' => null,
-                'district' => null,
-                'province' => null,
+                'ward' => $validated['ward'],
+                'district' => $validated['district'],
+                'province' => $validated['province'],
                 'is_default' => $shouldDefault,
             ]
         );
@@ -805,6 +872,16 @@ class CartController extends Controller
         return $cleaned;
     }
 
+    private function formatShippingAddress(string $addressLine, ?string $deliveryArea, string $ward, string $province): string
+    {
+        return collect([
+            $addressLine,
+            $ward,
+            $deliveryArea,
+            $province,
+        ])->filter()->implode(', ');
+    }
+
     private function normalizeEmail($value): ?string
     {
         $email = Str::lower(trim((string) $value));
@@ -812,7 +889,12 @@ class CartController extends Controller
         return $email === '' ? null : $email;
     }
 
-    private function applyMomoPaymentResult(Order $order, array $payload, MomoPaymentService $momoPayment): bool
+    private function applyMomoPaymentResult(
+        Order $order,
+        array $payload,
+        MomoPaymentService $momoPayment,
+        OrderAutomationService $orderAutomation
+    ): bool
     {
         if ($order->payment_method !== Order::PAYMENT_METHOD_MOMO) {
             return false;
@@ -837,6 +919,15 @@ class CartController extends Controller
                 'payment_status' => Order::PAYMENT_STATUS_PAID,
                 'paid_at' => now(),
             ])->save();
+        }
+
+        $order->refresh();
+        if (!$order->requiresShippingConfirmation()) {
+            $orderAutomation->autoConfirmAfterStockReserved(
+                $order,
+                null,
+                'He thong tu dong xac nhan sau khi MoMo bao thanh toan thanh cong.'
+            );
         }
 
         return true;

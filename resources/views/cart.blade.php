@@ -3,6 +3,11 @@
 @section('title', 'Giỏ hàng - Thế Giới Trái Cây')
 
 @section('content')
+@php
+    $shippingQuote = $summary['shipping_quote'] ?? [];
+    $shippingPending = (bool) ($shippingQuote['is_pending'] ?? true);
+    $shippingFee = (int) ($summary['shipping_fee'] ?? 0);
+@endphp
 <section class="bread_crumb py-4">
     <div class="container">
         <div class="row">
@@ -131,8 +136,21 @@
                         </li>
                         <li>
                             <span>Phí giao hàng</span>
-                            <strong>{{ number_format($summary['shipping_fee'] ?? 0) }}₫</strong>
+                            <strong>
+                                @if($shippingPending)
+                                    Tính ở bước giao hàng
+                                @elseif($shippingFee > 0)
+                                    {{ number_format($shippingFee) }}₫
+                                @else
+                                    Miễn phí
+                                @endif
+                            </strong>
                         </li>
+                        @if(!empty($shippingQuote['message']))
+                            <li class="summary-note">
+                                <span>{{ $shippingQuote['message'] }}</span>
+                            </li>
+                        @endif
                         <li class="total">
                             <span>Tổng cộng</span>
                             <strong>{{ number_format($summary['total'] ?? 0) }}₫</strong>
@@ -405,6 +423,14 @@
     .summary-list li.total strong {
         color: #f7941e;
         font-size: 20px;
+    }
+
+    .summary-list li.summary-note {
+        display: block;
+        color: #7a8674;
+        font-size: 12px;
+        line-height: 1.4;
+        margin-top: -4px;
     }
 
     .btn-checkout,

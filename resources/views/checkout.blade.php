@@ -6,14 +6,17 @@
 @php
     $addresses = $user->addresses ?? collect();
     $checkoutShipping = $checkoutShipping ?? [];
-    $defaultShippingAddress = $defaultAddress
-        ? collect([
-            $defaultAddress->address_line,
-            $defaultAddress->ward,
-            $defaultAddress->district,
-            $defaultAddress->province,
-        ])->filter()->implode(', ')
-        : '';
+    $provinceOptions = $vietnamProvinces ?? [];
+    $addressDataUrl = $vietnamAddressDataUrl ?? asset('data/vietnam-addresses.json');
+    $selectedProvinceCode = old('province_code', $checkoutShipping['province_code'] ?? optional($defaultAddress)->province_code);
+    $selectedWardCode = old('ward_code', $checkoutShipping['ward_code'] ?? optional($defaultAddress)->ward_code);
+    $addressLineValue = old('address_line', $checkoutShipping['address_line'] ?? optional($defaultAddress)->address_line);
+    $deliveryAreaValue = old('delivery_area', $checkoutShipping['district'] ?? optional($defaultAddress)->district);
+    $shippingRules = $shippingRules ?? [];
+    $shippingQuote = $summary['shipping_quote'] ?? [];
+    $shippingPending = (bool) ($shippingQuote['is_pending'] ?? true);
+    $shippingFee = (int) ($summary['shipping_fee'] ?? 0);
+    $shippingEstimated = ($shippingQuote['fee_status'] ?? '') === 'estimated';
 @endphp
 
 <section class="checkout-page">
@@ -64,6 +67,10 @@
                                             value="{{ $address->id }}"
                                             data-name="{{ $address->recipient_name }}"
                                             data-phone="{{ $address->phone }}"
+                                            data-address-line="{{ $address->address_line }}"
+                                            data-delivery-area="{{ $address->district }}"
+                                            data-province-code="{{ $address->province_code }}"
+                                            data-ward-code="{{ $address->ward_code }}"
                                             data-address="{{ $fullAddress }}"
                                             {{ optional($defaultAddress)->id === $address->id ? 'selected' : '' }}
                                         >
@@ -122,18 +129,54 @@
                     </div>
 
                     <div class="checkout-field">
-                        <label for="shipping_address">Địa chỉ giao hàng *</label>
+                        <label for="address_line">Số nhà, tên đường, toà nhà *</label>
                         <input
-                            id="shipping_address"
+                            id="address_line"
                             type="text"
-                            name="shipping_address"
-                            value="{{ old('shipping_address', $checkoutShipping['shipping_address'] ?? $defaultShippingAddress) }}"
-                            class="@error('shipping_address') is-invalid @enderror"
+                            name="address_line"
+                            value="{{ $addressLineValue }}"
+                            class="@error('address_line') is-invalid @enderror"
+                            placeholder="VD: 74 Trần Thái Tông, hẻm/căn hộ/tầng nếu có"
                             required
                         >
-                        @error('shipping_address')
+                        @error('address_line')
                             <small>{{ $message }}</small>
                         @enderror
+                    </div>
+
+                    <div class="checkout-grid checkout-address-grid">
+                        <div class="checkout-field">
+                            <label for="province_code">Tỉnh/Thành *</label>
+                            <div class="checkout-select-wrap">
+                                <select id="province_code" name="province_code" class="@error('province_code') is-invalid @enderror" required>
+                                    <option value="">Chọn Tỉnh/Thành</option>
+                                    @foreach($provinceOptions as $province)
+                                        <option value="{{ $province['code'] }}" {{ (string) $selectedProvinceCode === (string) $province['code'] ? 'selected' : '' }}>{{ $province['name'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('province_code')
+                                <small>{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <div class="checkout-field">
+                            <label for="ward_code">Phường/Xã/Đặc khu *</label>
+                            <div class="checkout-select-wrap">
+                                <select id="ward_code" name="ward_code" data-selected="{{ $selectedWardCode }}" class="@error('ward_code') is-invalid @enderror" required>
+                                    <option value="">Chọn Phường/Xã</option>
+                                </select>
+                            </div>
+                            @error('ward_code')
+                                <small>{{ $message }}</small>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <input id="delivery_area" type="hidden" name="delivery_area" value="{{ $deliveryAreaValue }}">
+
+                    <div class="checkout-field">
+                        <small>Không cần nhập Quận/Huyện. Địa chỉ đang dùng dữ liệu hành chính mới: Tỉnh/Thành và Phường/Xã/Đặc khu.</small>
                     </div>
 
                     <div class="checkout-field">
@@ -222,13 +265,22 @@
                     </div>
                     <div>
                         <span>Phí vận chuyển</span>
-                        <strong>{{ (int) ($summary['shipping_fee'] ?? 0) > 0 ? number_format($summary['shipping_fee'], 0, ',', '.') . '₫' : '—' }}</strong>
+                        <strong id="checkoutShippingFee">
+                            @if($shippingPending)
+                                —
+                            @elseif($shippingFee > 0)
+                                {{ $shippingEstimated ? 'Tạm tính ' : '' }}{{ number_format($shippingFee, 0, ',', '.') }}₫
+                            @else
+                                Miễn phí
+                            @endif
+                        </strong>
                     </div>
+                    <small id="checkoutShippingNote" class="checkout-shipping-note">{{ $shippingQuote['message'] ?? 'Chọn Tỉnh/Thành để tính phí giao hàng.' }}</small>
                 </div>
 
                 <div class="checkout-grand-total">
                     <span>Tổng cộng</span>
-                    <strong><small>VND</small> {{ number_format($summary['total'] ?? 0, 0, ',', '.') }}₫</strong>
+                    <strong><small>VND</small> <span id="checkoutGrandTotal">{{ number_format($summary['total'] ?? 0, 0, ',', '.') }}₫</span></strong>
                 </div>
             </div>
         </aside>
@@ -743,6 +795,14 @@
         font-weight: 500;
     }
 
+    .checkout-shipping-note {
+        color: #778270;
+        display: block;
+        font-size: 12px;
+        line-height: 1.4;
+        margin-top: -2px;
+    }
+
     .checkout-grand-total {
         padding-top: 18px;
     }
@@ -861,15 +921,143 @@
 <script>
     (function () {
         var select = document.getElementById('saved_address_id');
-        if (!select) {
+        var provinceSelect = document.getElementById('province_code');
+        var wardSelect = document.getElementById('ward_code');
+        var addressDataUrl = @json($addressDataUrl);
+        var shippingRules = @json($shippingRules);
+        var subtotal = Number(@json((int) ($summary['subtotal'] ?? 0)));
+        var discountTotal = Number(@json((int) ($summary['discount_total'] ?? 0)));
+        var addressData = [];
+        var selectedWardCode = wardSelect ? (wardSelect.getAttribute('data-selected') || '') : '';
+
+        if (!provinceSelect || !wardSelect) {
             return;
         }
 
         var nameInput = document.getElementById('customer_name');
         var phoneInput = document.getElementById('customer_phone');
-        var addressInput = document.getElementById('shipping_address');
+        var addressLineInput = document.getElementById('address_line');
+        var deliveryAreaInput = document.getElementById('delivery_area');
+        var shippingFeeOutput = document.getElementById('checkoutShippingFee');
+        var shippingNoteOutput = document.getElementById('checkoutShippingNote');
+        var grandTotalOutput = document.getElementById('checkoutGrandTotal');
+
+        function formatVnd(value) {
+            return new Intl.NumberFormat('vi-VN').format(Math.max(0, Number(value) || 0)) + '₫';
+        }
+
+        function selectedWardName() {
+            if (!wardSelect || wardSelect.selectedIndex < 0) {
+                return '';
+            }
+
+            return wardSelect.options[wardSelect.selectedIndex].textContent || '';
+        }
+
+        function hasRemoteSurcharge(wardName) {
+            var keywords = shippingRules.remote_keywords || [];
+            var normalizedWard = (wardName || '').toLocaleLowerCase('vi-VN');
+
+            return keywords.some(function (keyword) {
+                return keyword && normalizedWard.indexOf(String(keyword).toLocaleLowerCase('vi-VN')) !== -1;
+            });
+        }
+
+        function updateShippingQuote() {
+            if (!shippingFeeOutput || !grandTotalOutput) {
+                return;
+            }
+
+            var provinceCode = provinceSelect.value || '';
+            var rate = (shippingRules.province_rates || {})[provinceCode];
+
+            if (!provinceCode) {
+                shippingFeeOutput.textContent = '—';
+                if (shippingNoteOutput) {
+                    shippingNoteOutput.textContent = 'Chọn Tỉnh/Thành để tính phí giao hàng.';
+                }
+                grandTotalOutput.textContent = formatVnd(subtotal - discountTotal);
+                return;
+            }
+
+            var baseFee = rate ? Number(rate.fee || 0) : Number(shippingRules.default_fee || 0);
+            var zoneName = rate ? rate.zone_name : (shippingRules.default_zone_name || 'Khu vực toàn quốc');
+            var surcharge = hasRemoteSurcharge(selectedWardName()) ? Number(shippingRules.remote_ward_surcharge || 0) : 0;
+            var rawFee = baseFee + surcharge;
+            var freeThreshold = Number(shippingRules.free_threshold || 0);
+            var isLocalExpress = provinceCode === String(shippingRules.local_express_province_code || '79') && surcharge === 0;
+            var isFree = isLocalExpress && freeThreshold > 0 && subtotal >= freeThreshold;
+            var finalFee = isFree ? 0 : rawFee;
+            var isEstimated = !isLocalExpress;
+
+            shippingFeeOutput.textContent = finalFee > 0 ? (isEstimated ? 'Tạm tính ' : '') + formatVnd(finalFee) : 'Miễn phí';
+            grandTotalOutput.textContent = formatVnd(subtotal + finalFee - discountTotal);
+
+            if (shippingNoteOutput) {
+                if (isLocalExpress) {
+                    shippingNoteOutput.textContent = isFree
+                        ? 'Giao nhanh ' + (shippingRules.local_express_eta || '30 - 90 phút') + ' tại TP.HCM. Miễn phí vận chuyển cho đơn từ ' + formatVnd(freeThreshold) + '.'
+                        : 'Giao nhanh ' + (shippingRules.local_express_eta || '30 - 90 phút') + ' tại TP.HCM. Phí đã chốt theo khu vực.';
+                } else if (surcharge > 0) {
+                    shippingNoteOutput.textContent = zoneName + ' + phụ phí khu vực đặc biệt. Shop sẽ xác nhận lại khả năng giao hàng và phí cuối cùng trước khi xử lý.';
+                } else {
+                    shippingNoteOutput.textContent = zoneName + '. Phí đang là tạm tính cho đơn hàng tỉnh; shop sẽ xác nhận đóng gói, thời gian và phí cuối cùng trước khi giao.';
+                }
+            }
+        }
+
+        function findProvince(provinceCode) {
+            return addressData.find(function (province) {
+                return String(province.Code) === String(provinceCode);
+            });
+        }
+
+        function populateWards(provinceCode, wardCode) {
+            wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+            wardSelect.disabled = true;
+
+            var province = findProvince(provinceCode);
+            if (!province || !Array.isArray(province.Wards)) {
+                return;
+            }
+
+            province.Wards.forEach(function (ward) {
+                var option = document.createElement('option');
+                option.value = ward.Code;
+                option.textContent = ward.FullName;
+                if (String(ward.Code) === String(wardCode || '')) {
+                    option.selected = true;
+                }
+                wardSelect.appendChild(option);
+            });
+
+            wardSelect.disabled = false;
+            updateShippingQuote();
+        }
+
+        function loadAddressData(callback) {
+            fetch(addressDataUrl)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    addressData = Array.isArray(data) ? data : [];
+                    populateWards(provinceSelect.value, selectedWardCode);
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                })
+                .catch(function () {
+                    wardSelect.innerHTML = '<option value="">Không tải được dữ liệu Phường/Xã</option>';
+                    wardSelect.disabled = true;
+                });
+        }
 
         function fillAddress() {
+            if (!select) {
+                return;
+            }
+
             var option = select.options[select.selectedIndex];
             if (!option || !option.value) {
                 return;
@@ -883,12 +1071,44 @@
                 phoneInput.value = option.getAttribute('data-phone') || '';
             }
 
-            if (addressInput) {
-                addressInput.value = option.getAttribute('data-address') || '';
+            if (addressLineInput) {
+                addressLineInput.value = option.getAttribute('data-address-line') || '';
+            }
+
+            if (deliveryAreaInput) {
+                deliveryAreaInput.value = option.getAttribute('data-delivery-area') || '';
+            }
+
+            if (provinceSelect) {
+                provinceSelect.value = option.getAttribute('data-province-code') || '';
+                selectedWardCode = option.getAttribute('data-ward-code') || '';
+                populateWards(provinceSelect.value, selectedWardCode);
+                updateShippingQuote();
             }
         }
 
-        select.addEventListener('change', fillAddress);
+        provinceSelect.addEventListener('change', function () {
+            selectedWardCode = '';
+            if (deliveryAreaInput) {
+                deliveryAreaInput.value = '';
+            }
+            populateWards(provinceSelect.value, '');
+            updateShippingQuote();
+        });
+
+        wardSelect.addEventListener('change', function () {
+            if (deliveryAreaInput) {
+                deliveryAreaInput.value = '';
+            }
+            updateShippingQuote();
+        });
+
+        if (select) {
+            select.addEventListener('change', fillAddress);
+        }
+
+        loadAddressData();
+        updateShippingQuote();
     })();
 </script>
 @endpush

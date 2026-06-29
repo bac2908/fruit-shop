@@ -68,7 +68,7 @@
                             <i class="fa fa-lock" aria-hidden="true"></i>
                             <input id="reset-password" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" data-password-strength required>
                             <button type="button" class="auth-password-toggle" data-password-toggle="reset-password" aria-label="Hiện mật khẩu">
-                                <i class="fa fa-eye" aria-hidden="true"></i>
+                                <i class="fa fa-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div class="auth-strength" data-strength-meter aria-live="polite">
@@ -87,7 +87,7 @@
                             <i class="fa fa-check-circle-o" aria-hidden="true"></i>
                             <input id="reset-password-confirmation" type="password" name="password_confirmation" autocomplete="new-password" minlength="8" maxlength="72" required>
                             <button type="button" class="auth-password-toggle" data-password-toggle="reset-password-confirmation" aria-label="Hiện mật khẩu">
-                                <i class="fa fa-eye" aria-hidden="true"></i>
+                                <i class="fa fa-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>

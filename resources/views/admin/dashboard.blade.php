@@ -123,7 +123,7 @@
     </section>
 
     <div class="hero-note reveal" style="--delay: 60ms;">
-        FE da hoan thien theo yeu cau. So lieu trong dashboard dang o mode trinh dien UI va se duoc map truc tiep tu MySQL o pha BE tiep theo.
+        Dashboard dang doc du lieu that tu MySQL. Don moi co ton kho se duoc he thong tu xac nhan, admin chi can theo doi va xu ly ngoai le.
     </div>
 
     <section class="stats-grid reveal" style="--delay: 120ms;">
@@ -156,7 +156,7 @@
                     <h2 class="panel-title">Do thi doanh thu 7 ngay</h2>
                     <p class="panel-sub">Theo doi xu huong va phan bo doanh thu theo ngay.</p>
                 </div>
-                <span class="tag">Realtime mock</span>
+                <span class="tag">MySQL realtime</span>
             </div>
 
             <div class="chart-shell">
@@ -249,7 +249,7 @@
                             <td colspan="4">
                                 <div class="empty-box">
                                     <i class="ri-database-2-line"></i>
-                                    <div>Chua map du lieu don hang. Bang da san sang cho ket noi BE.</div>
+                                    <div>Chua co don hang nao trong database.</div>
                                 </div>
                             </td>
                         </tr>
@@ -282,7 +282,7 @@
                 @else
                     <div class="empty-box">
                         <i class="ri-box-3-line"></i>
-                        <div>Danh sach ton kho sap het se hien thi tai day sau khi noi BE.</div>
+                        <div>Chua co san pham nao cham nguong ton kho thap.</div>
                     </div>
                 @endif
             </div>

@@ -220,18 +220,20 @@ class PageController extends Controller
                     [
                         'heading' => 'Phạm vi và thời gian giao hàng',
                         'paragraphs' => [
-                            'Chúng tôi phục vụ giao nhanh tại TP.HCM và hỗ trợ gửi đi tỉnh qua đối tác vận chuyển phù hợp.',
+                            'Hàng tươi được ưu tiên giao nhanh tại TP.HCM. Các đơn ngoài TP.HCM sẽ được shop kiểm tra khả năng đóng gói, tuyến vận chuyển và thời gian nhận hàng trước khi xử lý.',
                         ],
                         'list' => [
-                            'Nội thành: giao nhanh theo khung giờ.',
-                            'Ngoại thành/tỉnh: thời gian theo tuyến vận chuyển.',
+                            'TP.HCM: giao nhanh dự kiến 30 - 90 phút tùy khu vực và thời điểm đặt hàng.',
+                            'Tỉnh/Thành khác: phí trên website là tạm tính, shop sẽ xác nhận lại trước khi giao.',
+                            'Khu vực đặc biệt/đặc khu/hải đảo: cần shop xác nhận riêng về phí và thời gian.',
                             'Đơn cao điểm lễ/tết có thể cần xác nhận thêm.',
                         ],
                     ],
                     [
                         'heading' => 'Phí giao hàng',
                         'paragraphs' => [
-                            'Phí giao được tính theo khoảng cách, thời điểm và chính sách ưu đãi hiện hành. Một số đơn đủ điều kiện có thể được miễn phí giao hàng.',
+                            'Phí giao hàng tại TP.HCM được chốt tự động theo khu vực và có thể miễn phí khi đơn đạt điều kiện khuyến mãi.',
+                            'Với đơn giao tỉnh, phí hiển thị là tạm tính để khách tham khảo. Shop sẽ xác nhận phí cuối cùng, phương án đóng gói và thời gian giao trước khi xử lý đơn hàng.',
                         ],
                     ],
                     [

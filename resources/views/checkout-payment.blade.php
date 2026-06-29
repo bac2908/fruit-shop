@@ -5,6 +5,10 @@
 @section('content')
 @php
     $selectedPaymentMethod = $selectedPaymentMethod ?? \App\Models\Order::PAYMENT_METHOD_COD;
+    $shippingQuote = $summary['shipping_quote'] ?? [];
+    $shippingPending = (bool) ($shippingQuote['is_pending'] ?? false);
+    $shippingFee = (int) ($summary['shipping_fee'] ?? 0);
+    $shippingEstimated = ($shippingQuote['fee_status'] ?? '') === 'estimated';
 @endphp
 
 <section class="checkout-payment-page">
@@ -35,6 +39,14 @@
                         <strong>{{ $checkoutShipping['customer_name'] ?? 'Khách hàng' }}</strong>
                         <span>{{ $checkoutShipping['customer_phone'] ?? 'Chưa có số điện thoại' }}</span>
                         <span>{{ $checkoutShipping['shipping_address'] ?? 'Chưa có địa chỉ giao hàng' }}</span>
+                        @if(!empty($shippingQuote['delivery_method_label']) || !empty($shippingQuote['eta']))
+                            <small class="shipping-review-note">
+                                {{ $shippingQuote['delivery_method_label'] ?? 'Giao hàng' }}
+                                @if(!empty($shippingQuote['eta']))
+                                    · {{ $shippingQuote['eta'] }}
+                                @endif
+                            </small>
+                        @endif
                     </div>
                     <a href="{{ route('checkout') }}">Sửa</a>
                 </div>
@@ -152,8 +164,19 @@
                     </div>
                     <div>
                         <span>Phí vận chuyển</span>
-                        <strong>{{ (int) ($summary['shipping_fee'] ?? 0) > 0 ? number_format($summary['shipping_fee'], 0, ',', '.') . '₫' : '—' }}</strong>
+                        <strong>
+                            @if($shippingPending)
+                                —
+                            @elseif($shippingFee > 0)
+                                {{ $shippingEstimated ? 'Tạm tính ' : '' }}{{ number_format($shippingFee, 0, ',', '.') }}₫
+                            @else
+                                Miễn phí
+                            @endif
+                        </strong>
                     </div>
+                    @if(!empty($shippingQuote['message']))
+                        <small class="payment-shipping-note">{{ $shippingQuote['message'] }}</small>
+                    @endif
                 </div>
 
                 <div class="payment-grand-total">
@@ -288,6 +311,14 @@
     .shipping-review span {
         color: #66705f;
         font-size: 13px;
+    }
+
+    .shipping-review-note {
+        color: #4f7f18;
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 4px;
     }
 
     .shipping-review a {
@@ -573,6 +604,14 @@
         color: #555f50;
         font-size: 14px;
         font-weight: 500;
+    }
+
+    .payment-shipping-note {
+        color: #778270;
+        display: block;
+        font-size: 12px;
+        line-height: 1.4;
+        margin-top: -2px;
     }
 
     .payment-grand-total {

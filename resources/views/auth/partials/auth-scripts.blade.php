@@ -9,16 +9,23 @@
                     return;
                 }
 
+                function syncPasswordIcon() {
+                    var isVisible = input.type === 'text';
+                    button.setAttribute('aria-label', isVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+
+                    if (icon) {
+                        icon.classList.toggle('fa-eye', isVisible);
+                        icon.classList.toggle('fa-eye-slash', !isVisible);
+                    }
+                }
+
+                syncPasswordIcon();
+
                 button.addEventListener('click', function () {
                     var shouldShow = input.type === 'password';
 
                     input.type = shouldShow ? 'text' : 'password';
-                    button.setAttribute('aria-label', shouldShow ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
-
-                    if (icon) {
-                        icon.classList.toggle('fa-eye', !shouldShow);
-                        icon.classList.toggle('fa-eye-slash', shouldShow);
-                    }
+                    syncPasswordIcon();
                 });
             });
         }

@@ -15,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('shop:cancel-expired-bank-transfers')->hourly();
+        $schedule->command('shop:alert-low-stock')->dailyAt('08:00');
     }
 
     /**

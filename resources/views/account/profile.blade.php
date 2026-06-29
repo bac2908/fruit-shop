@@ -16,13 +16,16 @@
         'female' => 'Nữ',
         'other' => 'Khác',
     ];
-    $statusLabels = [
-        'pending' => 'Chờ xác nhận',
-        'confirmed' => 'Đã xác nhận',
-        'shipping' => 'Đang giao',
-        'done' => 'Hoàn tất',
-        'cancelled' => 'Đã hủy',
-    ];
+    $statusLabels = \App\Models\Order::statusLabels();
+    $cancellationReasons = $cancellationReasons ?? \App\Models\OrderCancellationRequest::reasonLabels();
+    $returnReasons = $returnReasons ?? \App\Models\OrderReturnRequest::reasonLabels();
+    $returnTypes = $returnTypes ?? \App\Models\OrderReturnRequest::typeLabels();
+    $refundMethods = $refundMethods ?? \App\Models\OrderReturnRequest::refundMethodLabels();
+    $returnWindowHours = $returnWindowHours ?? (int) config('shop.returns.request_window_hours', 24);
+    $provinceOptions = $vietnamProvinces ?? [];
+    $addressDataUrl = $vietnamAddressDataUrl ?? asset('data/vietnam-addresses.json');
+    $selectedAddressProvinceCode = old('province_code');
+    $selectedAddressWardCode = old('ward_code');
 
     $defaultAddress = $user->addresses->firstWhere('is_default', true) ?: $user->addresses->first();
     $latestOrder = $orders->first();
@@ -90,6 +93,14 @@
                 </div>
             @endif
 
+            @if(session('success'))
+                <div class="account-alert account-alert-success">{{ session('success') }}</div>
+            @endif
+
+            @if(session('error'))
+                <div class="account-alert account-alert-error">{{ session('error') }}</div>
+            @endif
+
             <nav class="account-tabs" aria-label="Khu vực tài khoản">
                 <button type="button" class="account-tab {{ $activeTab === 'overview' ? 'is-active' : '' }}" data-account-tab="overview">
                     <i class="fa fa-dashboard" aria-hidden="true"></i>
@@ -148,7 +159,7 @@
                         @if($latestOrder)
                             <strong>{{ $latestOrder->code }}</strong>
                             <p>{{ number_format((int) $latestOrder->total, 0, ',', '.') }}₫</p>
-                            <p>{{ $statusLabels[$latestOrder->status] ?? $latestOrder->status }}</p>
+                            <p>{{ $latestOrder->status_label }}</p>
                         @else
                             <p>Chưa có đơn hàng nào.</p>
                             <a href="{{ route('products.index') }}" class="account-link-button">Mua sản phẩm</a>
@@ -323,16 +334,23 @@
                                 <input id="address_line" type="text" name="address_line" value="{{ old('address_line') }}" maxlength="255" required>
                             </div>
                             <div class="account-field">
-                                <label for="ward">Phường/Xã</label>
-                                <input id="ward" type="text" name="ward" value="{{ old('ward') }}" maxlength="120">
+                                <label for="profile_province_code">Tỉnh/Thành</label>
+                                <select id="profile_province_code" name="province_code" required>
+                                    <option value="">Chọn Tỉnh/Thành</option>
+                                    @foreach($provinceOptions as $province)
+                                        <option value="{{ $province['code'] }}" {{ (string) $selectedAddressProvinceCode === (string) $province['code'] ? 'selected' : '' }}>{{ $province['name'] }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="account-field">
-                                <label for="district">Quận/Huyện</label>
-                                <input id="district" type="text" name="district" value="{{ old('district') }}" maxlength="120">
+                                <label for="profile_ward_code">Phường/Xã/Đặc khu</label>
+                                <select id="profile_ward_code" name="ward_code" data-selected="{{ $selectedAddressWardCode }}" required>
+                                    <option value="">Chọn Phường/Xã</option>
+                                </select>
                             </div>
-                            <div class="account-field">
-                                <label for="province">Tỉnh/Thành</label>
-                                <input id="province" type="text" name="province" value="{{ old('province') }}" maxlength="120">
+                            <input id="district" type="hidden" name="district" value="{{ old('district') }}">
+                            <div class="account-field account-field-wide">
+                                <small>Không cần nhập Quận/Huyện. Địa chỉ mới chỉ dùng Tỉnh/Thành và Phường/Xã/Đặc khu theo dữ liệu hành chính hiện tại.</small>
                             </div>
                         </div>
                         <label class="account-checkbox">
@@ -350,21 +368,93 @@
                         <div>
                             <h2>Lịch sử đơn hàng</h2>
                             <p>{{ number_format((int) $orderSummary['active_orders']) }} đơn đang xử lý, {{ number_format((int) $orderSummary['completed_orders']) }} đơn đã hoàn tất.</p>
+                            <p class="account-help-text">Nếu sản phẩm còn hàng, hệ thống sẽ tự xác nhận đơn và giữ tồn kho cho bạn. Đơn đã xác nhận vẫn có thể gửi yêu cầu hủy trước khi giao hàng. Đơn đã hoàn tất có thể gửi đổi trả/hoàn tiền trong {{ $returnWindowHours }} giờ sau khi nhận hàng.</p>
                         </div>
                     </div>
 
                     <div class="account-list">
                         @forelse($orders as $order)
-                            <a href="{{ route('checkout.thankyou', ['code' => $order->code, 'token' => $order->public_token]) }}" class="account-row account-row-large">
-                                <span>
-                                    <strong>{{ $order->code }}</strong>
-                                    <small>{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : '' }}</small>
-                                </span>
-                                <span>
-                                    <strong>{{ number_format((int) $order->total, 0, ',', '.') }}₫</strong>
-                                    <small>{{ $statusLabels[$order->status] ?? $order->status }}</small>
-                                </span>
-                            </a>
+                            @php
+                                $latestCancellationRequest = $order->latest_cancellation_request;
+                                $latestReturnRequest = $order->latest_return_request;
+                                $returnDeadline = $order->returnRequestDeadline();
+                            @endphp
+                            <div class="account-order-row">
+                                <a href="{{ route('checkout.thankyou', ['code' => $order->code, 'token' => $order->public_token]) }}" class="account-row account-row-large">
+                                    <span>
+                                        <strong>{{ $order->code }}</strong>
+                                        <small>{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : '' }}</small>
+                                    </span>
+                                    <span>
+                                        <strong>{{ number_format((int) $order->total, 0, ',', '.') }}₫</strong>
+                                        <small>{{ $order->status_label }} · {{ $order->payment_status_label }}</small>
+                                        @if($latestCancellationRequest)
+                                            <small>Yêu cầu hủy: {{ $latestCancellationRequest->status_label }} · {{ $latestCancellationRequest->reason_label }}</small>
+                                        @endif
+                                        @if($latestReturnRequest)
+                                            <small>Đổi trả: {{ $latestReturnRequest->status_label }} · {{ $latestReturnRequest->type_label }}</small>
+                                        @elseif($order->isReturnRequestable() && $returnDeadline)
+                                            <small>Đổi trả đến {{ $returnDeadline->format('d/m/Y H:i') }}</small>
+                                        @endif
+                                    </span>
+                                </a>
+                                <div class="account-order-actions">
+                                    @if($order->isCustomerCancellable() || $order->isCustomerCancellationRequestable())
+                                        <details class="account-cancel-details">
+                                            <summary>{{ $order->isCustomerCancellable() ? 'Hủy đơn' : 'Yêu cầu hủy' }}</summary>
+                                            <form method="post" action="{{ route('account.orders.cancel', $order) }}" class="account-cancel-form" onsubmit="return confirm('Bạn chắc chắn muốn gửi hủy đơn {{ $order->code }}?');">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="reason" required>
+                                                    <option value="">Chọn lý do</option>
+                                                    @foreach($cancellationReasons as $reasonValue => $reasonLabel)
+                                                        <option value="{{ $reasonValue }}">{{ $reasonLabel }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <textarea name="note" rows="2" maxlength="500" placeholder="Ghi chú thêm nếu cần"></textarea>
+                                                <button type="submit">{{ $order->isCustomerCancellable() ? 'Xác nhận hủy' : 'Gửi yêu cầu' }}</button>
+                                            </form>
+                                        </details>
+                                    @elseif($order->hasPendingCancellationRequest())
+                                        <span class="account-cancel-state">Đang chờ duyệt hủy</span>
+                                    @endif
+
+                                    @if($order->isReturnRequestable())
+                                        <details class="account-return-details">
+                                            <summary>Đổi trả</summary>
+                                            <form method="post" action="{{ route('account.orders.returns.store', $order) }}" enctype="multipart/form-data" class="account-return-form" onsubmit="return confirm('Gửi yêu cầu đổi trả/hoàn tiền cho đơn {{ $order->code }}?');">
+                                                @csrf
+                                                <select name="type" required>
+                                                    <option value="">Hình thức xử lý</option>
+                                                    @foreach($returnTypes as $typeValue => $typeLabel)
+                                                        <option value="{{ $typeValue }}">{{ $typeLabel }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <select name="reason" required>
+                                                    <option value="">Lý do</option>
+                                                    @foreach($returnReasons as $reasonValue => $reasonLabel)
+                                                        <option value="{{ $reasonValue }}">{{ $reasonLabel }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <textarea name="note" rows="3" maxlength="800" required placeholder="Mô tả tình trạng sản phẩm, thời điểm nhận hàng, mong muốn đổi/hoàn tiền"></textarea>
+                                                <input type="file" name="evidence" accept="image/png,image/jpeg,image/webp">
+                                                <select name="refund_method">
+                                                    <option value="">Cách nhận hoàn tiền nếu chọn hoàn tiền</option>
+                                                    @foreach($refundMethods as $methodValue => $methodLabel)
+                                                        <option value="{{ $methodValue }}">{{ $methodLabel }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <textarea name="refund_account" rows="2" maxlength="255" placeholder="VD: Vietcombank - 0123456789 - Nguyen Van A, hoặc số MoMo"></textarea>
+                                                <small>Ảnh bằng chứng giúp shop xử lý nhanh hơn. Trái cây tươi cần phản hồi sớm trong {{ $returnWindowHours }} giờ.</small>
+                                                <a href="{{ route('page.return') }}" target="_blank" rel="noopener">Xem chính sách đổi trả</a>
+                                                <button type="submit">Gửi yêu cầu</button>
+                                            </form>
+                                        </details>
+                                    @elseif($order->hasPendingReturnRequest())
+                                        <span class="account-return-state">Đang chờ xử lý đổi trả</span>
+                                    @endif
+                                </div>
+                            </div>
                         @empty
                             <div class="account-empty">Bạn chưa có đơn hàng nào.</div>
                         @endforelse
@@ -688,6 +778,12 @@
         color: #9c341f;
     }
 
+    .account-alert-success {
+        background: #f1fae9;
+        border: 1px solid #cfe7bd;
+        color: #456d18;
+    }
+
     .account-overview-grid {
         display: grid;
         gap: 14px;
@@ -890,6 +986,224 @@
         background: #f8fbf4;
         color: #273d20;
         text-decoration: none;
+    }
+
+    .account-help-text {
+        color: #728068 !important;
+        font-size: 13px !important;
+        max-width: 720px;
+    }
+
+    .account-order-row {
+        align-items: center;
+        border: 1px solid #e3ebdc;
+        border-radius: 8px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        padding: 0;
+    }
+
+    .account-order-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+        padding-right: 12px;
+    }
+
+    .account-order-row .account-row {
+        border: 0;
+        min-width: 0;
+    }
+
+    .account-cancel-form {
+        margin: 0;
+        padding-right: 12px;
+    }
+
+    .account-cancel-form button {
+        background: #fff3f0;
+        border: 1px solid #ffd0c7;
+        border-radius: 999px;
+        color: #b73f30;
+        font-size: 12px;
+        font-weight: 800;
+        min-height: 32px;
+        padding: 0 12px;
+        white-space: nowrap;
+    }
+
+    .account-cancel-form button:hover {
+        background: #ffe8e3;
+    }
+
+    .account-cancel-details {
+        padding-right: 12px;
+        position: relative;
+    }
+
+    .account-cancel-details summary {
+        align-items: center;
+        background: #fff3f0;
+        border: 1px solid #ffd0c7;
+        border-radius: 999px;
+        color: #b73f30;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        min-height: 32px;
+        padding: 0 12px;
+        white-space: nowrap;
+    }
+
+    .account-cancel-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .account-cancel-details .account-cancel-form {
+        background: #fffaf8;
+        border: 1px solid #ffd0c7;
+        border-radius: 10px;
+        box-shadow: 0 14px 28px rgba(80, 33, 20, 0.12);
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+        min-width: 260px;
+        padding: 10px;
+        position: absolute;
+        right: 12px;
+        top: 100%;
+        z-index: 4;
+    }
+
+    .account-cancel-form select,
+    .account-cancel-form textarea {
+        border: 1px solid #e8c7bd;
+        border-radius: 8px;
+        color: #2a3523;
+        font: inherit;
+        font-size: 12px;
+        outline: none;
+        padding: 8px 10px;
+        width: 100%;
+    }
+
+    .account-cancel-form textarea {
+        min-height: 62px;
+        resize: vertical;
+    }
+
+    .account-cancel-state {
+        align-items: center;
+        background: #fff8e3;
+        border: 1px solid #f2d58a;
+        border-radius: 999px;
+        color: #8a6500;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        margin-right: 12px;
+        min-height: 32px;
+        padding: 0 12px;
+        white-space: nowrap;
+    }
+
+    .account-return-details {
+        position: relative;
+    }
+
+    .account-return-details summary {
+        align-items: center;
+        background: #eef8e7;
+        border: 1px solid #cce4b7;
+        border-radius: 999px;
+        color: #48731e;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        min-height: 32px;
+        padding: 0 12px;
+        white-space: nowrap;
+    }
+
+    .account-return-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .account-return-form {
+        background: #fbfff8;
+        border: 1px solid #cce4b7;
+        border-radius: 10px;
+        box-shadow: 0 14px 28px rgba(47, 86, 24, 0.13);
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+        min-width: 320px;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        z-index: 6;
+    }
+
+    .account-return-form select,
+    .account-return-form textarea,
+    .account-return-form input[type="file"] {
+        background: #fff;
+        border: 1px solid #d7e7cc;
+        border-radius: 8px;
+        color: #2a3523;
+        font: inherit;
+        font-size: 12px;
+        outline: none;
+        padding: 8px 10px;
+        width: 100%;
+    }
+
+    .account-return-form textarea {
+        min-height: 64px;
+        resize: vertical;
+    }
+
+    .account-return-form small,
+    .account-return-form a {
+        color: #66745f;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .account-return-form a {
+        color: #5f8e1f;
+        font-weight: 800;
+    }
+
+    .account-return-form button {
+        background: #6fae25;
+        border: 0;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+        min-height: 34px;
+        padding: 0 12px;
+    }
+
+    .account-return-state {
+        align-items: center;
+        background: #eef8e7;
+        border: 1px solid #cce4b7;
+        border-radius: 999px;
+        color: #48731e;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        min-height: 32px;
+        padding: 0 12px;
+        white-space: nowrap;
     }
 
     .account-row-large span {
@@ -1366,6 +1680,7 @@
     }
 
     body .account-page .account-row,
+    body .account-page .account-order-row,
     body .account-page .account-address,
     body .account-page .account-voucher,
     body .account-page .account-product,
@@ -1378,6 +1693,107 @@
     body .account-page .account-row {
         min-height: 48px !important;
         padding: 0 14px !important;
+    }
+
+    body .account-page .account-order-row {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        min-height: 62px !important;
+        padding: 0 !important;
+    }
+
+    body .account-page .account-order-row .account-row {
+        background: transparent !important;
+        border: 0 !important;
+        min-height: 60px !important;
+    }
+
+    body .account-page .account-cancel-form {
+        margin: 0 !important;
+        padding-right: 14px !important;
+    }
+
+    body .account-page .account-cancel-form button {
+        background: #fff3f0 !important;
+        border: 1px solid #ffd0c7 !important;
+        border-radius: 999px !important;
+        color: #b73f30 !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        min-height: 32px !important;
+        padding: 0 12px !important;
+    }
+
+    body .account-page .account-cancel-details {
+        padding-right: 14px !important;
+        position: relative !important;
+    }
+
+    body .account-page .account-cancel-details summary {
+        background: #fff3f0 !important;
+        border: 1px solid #ffd0c7 !important;
+        border-radius: 999px !important;
+        color: #b73f30 !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        min-height: 32px !important;
+        padding: 0 12px !important;
+        white-space: nowrap !important;
+    }
+
+    body .account-page .account-cancel-details .account-cancel-form {
+        background: #fffaf8 !important;
+        border: 1px solid #ffd0c7 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 14px 28px rgba(80, 33, 20, 0.12) !important;
+        display: grid !important;
+        gap: 8px !important;
+        margin-top: 8px !important;
+        min-width: 270px !important;
+        padding: 10px !important;
+        position: absolute !important;
+        right: 14px !important;
+        top: 100% !important;
+        z-index: 8 !important;
+    }
+
+    body .account-page .account-cancel-form select,
+    body .account-page .account-cancel-form textarea {
+        background: #fff !important;
+        border: 1px solid #e8c7bd !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        color: #26351f !important;
+        font-size: 12px !important;
+        min-height: 36px !important;
+        outline: none !important;
+        padding: 8px 10px !important;
+        width: 100% !important;
+    }
+
+    body .account-page .account-cancel-form textarea {
+        min-height: 62px !important;
+        resize: vertical !important;
+    }
+
+    body .account-page .account-cancel-details .account-cancel-form button {
+        width: 100% !important;
+    }
+
+    body .account-page .account-cancel-state {
+        background: #fff8e3 !important;
+        border: 1px solid #f2d58a !important;
+        border-radius: 999px !important;
+        color: #8a6500 !important;
+        display: inline-flex !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        margin-right: 14px !important;
+        min-height: 32px !important;
+        padding: 0 12px !important;
+        white-space: nowrap !important;
     }
 
     body .account-page .account-voucher {
@@ -1522,6 +1938,37 @@
         body .account-page .account-voucher-action button {
             width: 100% !important;
         }
+
+        body .account-page .account-order-row {
+            grid-template-columns: 1fr !important;
+            padding-bottom: 12px !important;
+        }
+
+        body .account-page .account-cancel-form {
+            padding: 0 14px !important;
+        }
+
+        body .account-page .account-cancel-form button {
+            width: 100% !important;
+        }
+
+        body .account-page .account-cancel-details {
+            padding: 0 14px !important;
+        }
+
+        body .account-page .account-cancel-details summary,
+        body .account-page .account-cancel-state {
+            justify-content: center !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+
+        body .account-page .account-cancel-details .account-cancel-form {
+            margin-top: 10px !important;
+            min-width: 0 !important;
+            position: static !important;
+            width: 100% !important;
+        }
     }
 </style>
 @endpush
@@ -1546,6 +1993,73 @@
             button.addEventListener('click', function () {
                 activate(button.getAttribute('data-account-tab'));
             });
+        });
+
+        var provinceSelect = document.getElementById('profile_province_code');
+        var wardSelect = document.getElementById('profile_ward_code');
+        var addressDataUrl = @json($addressDataUrl);
+        var selectedWardCode = wardSelect ? (wardSelect.getAttribute('data-selected') || '') : '';
+        var addressData = [];
+
+        if (!provinceSelect || !wardSelect) {
+            return;
+        }
+
+        function findProvince(provinceCode) {
+            return addressData.find(function (province) {
+                return String(province.Code) === String(provinceCode);
+            });
+        }
+
+        function populateWards(provinceCode, wardCode) {
+            wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+            wardSelect.disabled = true;
+
+            var province = findProvince(provinceCode);
+            if (!province || !Array.isArray(province.Wards)) {
+                return;
+            }
+
+            province.Wards.forEach(function (ward) {
+                var option = document.createElement('option');
+                option.value = ward.Code;
+                option.textContent = ward.FullName;
+                if (String(ward.Code) === String(wardCode || '')) {
+                    option.selected = true;
+                }
+                wardSelect.appendChild(option);
+            });
+
+            wardSelect.disabled = false;
+        }
+
+        fetch(addressDataUrl)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                addressData = Array.isArray(data) ? data : [];
+                populateWards(provinceSelect.value, selectedWardCode);
+            })
+            .catch(function () {
+                wardSelect.innerHTML = '<option value="">Không tải được dữ liệu Phường/Xã</option>';
+                wardSelect.disabled = true;
+            });
+
+        provinceSelect.addEventListener('change', function () {
+            selectedWardCode = '';
+            var districtInput = document.getElementById('district');
+            if (districtInput) {
+                districtInput.value = '';
+            }
+            populateWards(provinceSelect.value, '');
+        });
+
+        wardSelect.addEventListener('change', function () {
+            var districtInput = document.getElementById('district');
+            if (districtInput) {
+                districtInput.value = '';
+            }
         });
     })();
 </script>
