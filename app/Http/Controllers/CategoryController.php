@@ -31,7 +31,8 @@ class CategoryController extends Controller
                     $q->where('is_active', true)
                         ->withCount([
                             'products as active_products_count' => function ($productQuery) {
-                                $productQuery->where('is_active', true);
+                                $productQuery->where('is_active', true)
+                                    ->withOrderablePrice();
                             },
                         ])
                         ->orderBy('sort_order')
@@ -70,7 +71,8 @@ class CategoryController extends Controller
                     },
                     'category',
                 ])
-                ->where('is_active', true);
+                ->where('is_active', true)
+                ->withOrderablePrice();
 
             if ($collectionSlugs->isNotEmpty()) {
                 $productsQuery->whereIn('slug', $collectionSlugs->all());
@@ -87,21 +89,21 @@ class CategoryController extends Controller
             if ($request->has('price')) {
                 $priceFilter = (string) $request->get('price');
                 if ($priceFilter === 'over-1000000') {
-                    $productsQuery->where(DB::raw('IFNULL(sale_price, price)'), '>', 1000000);
+                    $productsQuery->where($this->orderablePriceExpression(), '>', 1000000);
                 } else {
                     $range = explode('-', $priceFilter);
                     if (count($range) === 2 && is_numeric($range[0]) && is_numeric($range[1])) {
-                        $productsQuery->whereBetween(DB::raw('IFNULL(sale_price, price)'), [(int) $range[0], (int) $range[1]]);
+                        $productsQuery->whereBetween($this->orderablePriceExpression(), [(int) $range[0], (int) $range[1]]);
                     }
                 }
             }
 
             switch ((string) $request->get('sort', 'default')) {
                 case 'price-asc':
-                    $productsQuery->orderBy(DB::raw('IFNULL(sale_price, price)'), 'asc');
+                    $productsQuery->orderBy($this->orderablePriceExpression(), 'asc');
                     break;
                 case 'price-desc':
-                    $productsQuery->orderBy(DB::raw('IFNULL(sale_price, price)'), 'desc');
+                    $productsQuery->orderBy($this->orderablePriceExpression(), 'desc');
                     break;
                 case 'alpha-asc':
                     $productsQuery->orderBy('name', 'asc');
@@ -127,7 +129,8 @@ class CategoryController extends Controller
                     },
                     'category',
                 ])
-                ->where('is_active', true);
+                ->where('is_active', true)
+                ->withOrderablePrice();
 
             if ($featuredSlugs->isNotEmpty()) {
                 $featuredQuery
@@ -173,5 +176,10 @@ class CategoryController extends Controller
         $featuredProducts = $this->productService->getFeaturedProducts(5);
 
         return view('products.index', compact('category', 'products', 'allCategories', 'featuredProducts', 'selectedTag', 'childTags'));
+    }
+
+    private function orderablePriceExpression()
+    {
+        return DB::raw('CASE WHEN sale_price > 0 AND (price <= 0 OR sale_price < price) THEN sale_price ELSE price END');
     }
 }

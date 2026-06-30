@@ -18,7 +18,7 @@
     <meta property="og:description" content="{{ $metaDescription }}">
     <meta property="og:url" content="{{ $canonicalUrl }}">
     <meta property="og:image" content="{{ $product->primary_image_url }}">
-    <meta property="product:price:amount" content="{{ (int) ($product->sale_price && $product->sale_price < $product->price ? $product->sale_price : $product->price) }}">
+    <meta property="product:price:amount" content="{{ (int) $product->orderable_price }}">
     <meta property="product:price:currency" content="VND">
 @endpush
 
@@ -50,14 +50,16 @@
 
     $basePrice = (int) ($product->price ?? 0);
     $salePrice = (int) ($product->sale_price ?? 0);
-    $isSalePrice = $salePrice > 0 && $basePrice > 0 && $salePrice < $basePrice;
-    $displayPrice = $isSalePrice ? $salePrice : $basePrice;
+    $displayPrice = (int) $product->orderable_price;
+    $isSalePrice = $basePrice > 0 && $salePrice > 0 && $salePrice < $basePrice;
     $displayComparePrice = $isSalePrice ? $basePrice : null;
     $discountPercent = ($isSalePrice && $basePrice > 0)
         ? (int) round((($basePrice - $salePrice) / $basePrice) * 100)
         : 0;
-    $isContactPrice = !$isSalePrice && $displayPrice <= 0;
-    $canOrderProduct = (bool) $product->is_active && (int) $product->stock > 0 && !$isContactPrice && $displayPrice > 0;
+    $isContactPrice = $displayPrice <= 0;
+    $isCustomOrder = (bool) $product->is_custom_order_product;
+    $canOrderProduct = (bool) $product->is_active && (int) $product->stock > 0 && !$isContactPrice && $displayPrice > 0 && !$isCustomOrder;
+    $consultUrl = route('contact.page', ['product' => $product->name]);
     $sku = trim((string) $product->getAttribute('sku'));
 
     $summaryText = trim((string) ($product->short_desc ?? ''));
@@ -190,9 +192,9 @@
 
                                 <div class="pdx-price-line">
                                     @if($isContactPrice)
-                                        <span class="pdx-price">Liên hệ</span>
+                                        <span class="pdx-price">Đang cập nhật giá</span>
                                     @else
-                                        <span class="pdx-price">{{ number_format($displayPrice, 0, ',', '.') }}₫</span>
+                                        <span class="pdx-price">{{ $isCustomOrder ? 'Từ ' : '' }}{{ number_format($displayPrice, 0, ',', '.') }}₫</span>
                                         @if($displayComparePrice)
                                             <span class="pdx-price-old">{{ number_format($displayComparePrice, 0, ',', '.') }}₫</span>
                                         @endif
@@ -204,6 +206,10 @@
 
                                 @if($summaryText !== '')
                                     <p class="pdx-summary">{{ $summaryText }}</p>
+                                @endif
+
+                                @if($isCustomOrder && !$isContactPrice)
+                                    <p class="pdx-custom-note">Giá trên là mức tham khảo cho mẫu cơ bản. Shop sẽ xác nhận lại theo loại trái cây, kích thước, ngân sách và thời điểm giao.</p>
                                 @endif
 
                                 @if($canOrderProduct)
@@ -219,11 +225,11 @@
                                                     @php
                                                         $variantBase = (int) ($variantProduct->price ?? 0);
                                                         $variantSale = (int) ($variantProduct->sale_price ?? 0);
-                                                        $variantCurrent = ($variantSale > 0 && $variantSale < $variantBase) ? $variantSale : $variantBase;
+                                                        $variantCurrent = (int) $variantProduct->orderable_price;
                                                         $variantLabel = trim((string) ($variantProduct->unit ?: $variantProduct->name));
                                                     @endphp
                                                     <option value="{{ route('products.show', $variantProduct->slug) }}" {{ $variantProduct->id === $product->id ? 'selected' : '' }}>
-                                                        {{ $variantLabel }} - {{ $variantCurrent > 0 ? number_format($variantCurrent, 0, ',', '.') . '₫' : 'Liên hệ' }}
+                                                        {{ $variantLabel }} - {{ $variantCurrent > 0 ? number_format($variantCurrent, 0, ',', '.') . '₫' : 'Đang cập nhật giá' }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -252,9 +258,13 @@
                                 @else
                                     <div class="pdx-buy-form pdx-buy-disabled">
                                         <p class="pdx-unavailable-message">
-                                            {{ $product->stock <= 0 ? 'San pham dang tam het hang.' : 'San pham dang cho cap nhat gia ban.' }}
+                                            @if($isCustomOrder && !$isContactPrice)
+                                                Sản phẩm này được làm theo yêu cầu, vui lòng gửi thông tin để shop tư vấn mẫu phù hợp.
+                                            @else
+                                                {{ $product->stock <= 0 ? 'Sản phẩm đang tạm hết hàng.' : 'Sản phẩm đang chờ cập nhật giá bán.' }}
+                                            @endif
                                         </p>
-                                        <a href="{{ route('contact.page') }}" class="pdx-btn pdx-btn-secondary">Lien he tu van</a>
+                                        <a href="{{ $consultUrl }}" class="pdx-btn pdx-btn-secondary">Liên hệ tư vấn</a>
                                     </div>
                                 @endif
 
@@ -334,7 +344,7 @@
                                 @php
                                     $featuredPrice = (int) ($featured->price ?? 0);
                                     $featuredSale = (int) ($featured->sale_price ?? 0);
-                                    $featuredCurrent = ($featuredSale > 0 && $featuredSale < $featuredPrice) ? $featuredSale : $featuredPrice;
+                                    $featuredCurrent = (int) $featured->orderable_price;
                                     $featuredOld = ($featuredSale > 0 && $featuredSale < $featuredPrice) ? $featuredPrice : null;
                                 @endphp
                                 <a class="pdx-featured-item" href="{{ route('products.show', $featured->slug) }}" title="{{ $featured->name }}">
@@ -345,7 +355,7 @@
                                             @if($featuredCurrent > 0)
                                                 <span class="current">{{ number_format($featuredCurrent, 0, ',', '.') }}₫</span>
                                             @else
-                                                <span class="current">Liên hệ</span>
+                                                <span class="current">Đang cập nhật giá</span>
                                             @endif
 
                                             @if($featuredOld)
@@ -665,6 +675,18 @@
     margin: 0 0 14px;
     color: #555;
     line-height: 1.75;
+}
+
+.pdx-custom-note {
+    background: #f4faeb;
+    border: 1px solid #d8ebbf;
+    border-radius: 8px;
+    color: #496b22;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.55;
+    margin: 0 0 14px;
+    padding: 10px 12px;
 }
 
 .pdx-buy-form {

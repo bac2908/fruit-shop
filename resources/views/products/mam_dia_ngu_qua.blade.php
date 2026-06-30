@@ -318,8 +318,12 @@
                                 @foreach(collect($featuredProducts ?? [])->take(6) as $fp)
                                     @php
                                         $miniThumb = $fp->primary_image_url;
-                                        $miniSale = $fp->sale_price && $fp->sale_price > 0 && $fp->sale_price < $fp->price;
-                                        $miniContact = !$miniSale && (int) $fp->price <= 0;
+                                        $miniBase = (int) ($fp->price ?? 0);
+                                        $miniSalePrice = (int) ($fp->sale_price ?? 0);
+                                        $miniSale = $miniBase > 0 && $miniSalePrice > 0 && $miniSalePrice < $miniBase;
+                                        $miniCurrent = (int) $fp->orderable_price;
+                                        $miniMissingPrice = $miniCurrent <= 0;
+                                        $miniCustomOrder = (bool) $fp->is_custom_order_product;
                                     @endphp
                                     <div class="row row-noGutter">
                                         <div class="col-sm-12">
@@ -338,13 +342,13 @@
                                                     </h3>
 
                                                     <div class="price-box">
-                                                        @if($miniContact)
-                                                            <span class="special-price"><span class="price product-price">Liên hệ</span></span>
+                                                        @if($miniMissingPrice)
+                                                            <span class="special-price"><span class="price product-price">Đang cập nhật giá</span></span>
                                                         @elseif($miniSale)
-                                                            <span class="price"><span class="price product-price">{{ number_format($fp->sale_price) }}₫</span></span>
-                                                            <span class="old-price"><del class="sale-price">{{ number_format($fp->price) }}₫</del></span>
+                                                            <span class="price"><span class="price product-price">{{ $miniCustomOrder ? 'Từ ' : '' }}{{ number_format($miniSalePrice) }}₫</span></span>
+                                                            <span class="old-price"><del class="sale-price">{{ number_format($miniBase) }}₫</del></span>
                                                         @else
-                                                            <span class="price"><span class="price product-price">{{ number_format($fp->price) }}₫</span></span>
+                                                            <span class="price"><span class="price product-price">{{ $miniCustomOrder ? 'Từ ' : '' }}{{ number_format($miniCurrent) }}₫</span></span>
                                                         @endif
                                                     </div>
                                                 </div>

@@ -411,8 +411,12 @@
 								@foreach($featuredProducts as $fp)
 									@php
 										$featuredThumbUrl = $fp->thumb_url;
-										$featuredSale = $fp->sale_price && $fp->sale_price > 0 && $fp->sale_price < $fp->price;
-										$featuredContact = !$featuredSale && (int) $fp->price <= 0;
+										$featuredBase = (int) ($fp->price ?? 0);
+										$featuredSalePrice = (int) ($fp->sale_price ?? 0);
+										$featuredSale = $featuredBase > 0 && $featuredSalePrice > 0 && $featuredSalePrice < $featuredBase;
+										$featuredCurrent = (int) $fp->orderable_price;
+										$featuredMissingPrice = $featuredCurrent <= 0;
+										$featuredCustomOrder = (bool) $fp->is_custom_order_product;
 									@endphp
 									<div class="row row-noGutter">
 										<div class="col-sm-12">
@@ -429,13 +433,13 @@
 														</a>
 													</h3>
 													<div class="price-box">
-														@if($featuredContact)
-															<span class="special-price"><span class="price product-price">Liên hệ</span></span>
+														@if($featuredMissingPrice)
+															<span class="special-price"><span class="price product-price">Đang cập nhật giá</span></span>
 														@elseif($featuredSale)
-															<span class="price"><span class="price product-price">{{ number_format($fp->sale_price) }}₫</span></span>
-															<span class="old-price"><del class="sale-price">{{ number_format($fp->price) }}₫</del></span>
+															<span class="price"><span class="price product-price">{{ $featuredCustomOrder ? 'Từ ' : '' }}{{ number_format($featuredSalePrice) }}₫</span></span>
+															<span class="old-price"><del class="sale-price">{{ number_format($featuredBase) }}₫</del></span>
 														@else
-															<span class="price"><span class="price product-price">{{ number_format($fp->price) }}₫</span></span>
+															<span class="price"><span class="price product-price">{{ $featuredCustomOrder ? 'Từ ' : '' }}{{ number_format($featuredCurrent) }}₫</span></span>
 														@endif
 													</div>
 												</div>

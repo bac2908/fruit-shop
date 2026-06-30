@@ -31,30 +31,43 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="contact-form-box">
-                        <form class="contact-form" onsubmit="return false;">
+                        <form class="contact-form" method="post" action="{{ route('contact.submit') }}">
+                            @csrf
                             <p class="error-fills"></p>
 
                             <div class="form-signup form_contact clearfix">
                                 <div class="row row-8Gutter">
                                     <div class="col-md-12">
                                         <fieldset class="form-group">
-                                            <input type="text" placeholder="Họ tên*" class="form-control form-control-lg" required>
+                                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Họ tên*" class="form-control form-control-lg @error('name') is-invalid @enderror" required>
+                                            @error('name')
+                                                <small class="contact-field-error">{{ $message }}</small>
+                                            @enderror
                                         </fieldset>
                                     </div>
                                     <div class="col-md-12">
                                         <fieldset class="form-group">
-                                            <input type="email" placeholder="Email*" class="form-control form-control-lg" required>
+                                            <input type="email" name="email" value="{{ old('email') }}" placeholder="Email*" class="form-control form-control-lg @error('email') is-invalid @enderror" required>
+                                            @error('email')
+                                                <small class="contact-field-error">{{ $message }}</small>
+                                            @enderror
                                         </fieldset>
                                     </div>
                                     <div class="col-md-12">
                                         <fieldset class="form-group">
-                                            <input type="tel" placeholder="Điện thoại*" class="form-control form-control-lg" required>
+                                            <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="Điện thoại" class="form-control form-control-lg @error('phone') is-invalid @enderror">
+                                            @error('phone')
+                                                <small class="contact-field-error">{{ $message }}</small>
+                                            @enderror
                                         </fieldset>
                                     </div>
                                 </div>
 
                                 <fieldset class="form-group">
-                                    <textarea placeholder="Nhập nội dung*" class="form-control form-control-lg" rows="6" required></textarea>
+                                    <textarea name="message" placeholder="Nhập nội dung*" class="form-control form-control-lg @error('message') is-invalid @enderror" rows="6" required>{{ old('message', $suggestedMessage ?? '') }}</textarea>
+                                    @error('message')
+                                        <small class="contact-field-error">{{ $message }}</small>
+                                    @enderror
                                 </fieldset>
 
                                 <div>
@@ -89,7 +102,7 @@
                                 <i class="fa fa-envelope"></i>
                                 <div class="info">
                                     <label>Email</label>
-                                    <a href="mailto:bacnguyen2921@gmail.com">bacnguyen2921@gmail.com</a>
+                                    <a href="mailto:{{ config('mail.from.address') }}">{{ config('mail.from.address') }}</a>
                                 </div>
                             </div>
                         </div>
@@ -169,6 +182,17 @@
         font-size: 13px;
         color: #555;
         background: #fff;
+    }
+
+    .contact-form-box .form-control.is-invalid {
+        border-color: #e85c4a;
+    }
+
+    .contact-field-error {
+        color: #c0392b;
+        display: block;
+        font-size: 12px;
+        margin-top: 4px;
     }
 
     .contact-form-box textarea.form-control {

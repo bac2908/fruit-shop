@@ -2,12 +2,19 @@
 
 @php
     $discount = 0;
-	$isSalePrice = $product->price > 0 && $product->sale_price > 0 && $product->sale_price < $product->price;
-	$isContactPrice = !$isSalePrice && (int) $product->price <= 0;
+	$basePrice = (int) ($product->price ?? 0);
+	$salePrice = (int) ($product->sale_price ?? 0);
+	$orderablePrice = (int) ($product->orderable_price ?? 0);
+	$isSalePrice = $basePrice > 0 && $salePrice > 0 && $salePrice < $basePrice;
+	$isMissingPrice = $orderablePrice <= 0;
+	$isOutOfStock = (int) ($product->stock ?? 0) <= 0;
 	$hasGearDetail = (bool) ($product->has_gear_detail ?? false);
+	$isCustomOrder = (bool) ($product->is_custom_order_product ?? false);
+	$canQuickAdd = !$isMissingPrice && !$isOutOfStock && !$hasGearDetail && !$isCustomOrder;
+	$consultUrl = route('contact.page', ['product' => $product->name]);
 
 	if ($isSalePrice) {
-        $discount = round((($product->price - $product->sale_price) / $product->price) * 100);
+        $discount = round((($basePrice - $salePrice) / $basePrice) * 100);
     }
 	$imgUrl = $product->primary_image_url;
 	$productShowUrl = route('products.show', $product->slug);
@@ -24,7 +31,7 @@
 		@endif
 
 		<div class="product-action hidden-md hidden-sm hidden-xs clearfix">
-			@if(!$isContactPrice && !$hasGearDetail)
+			@if($canQuickAdd)
 				<form action="{{ route('cart.add') }}" method="post" class="variants form-nut-grid margin-bottom-0" data-id="product-{{ $product->id }}">
 					<div>
 						@csrf
@@ -41,7 +48,11 @@
 			@else
 				<div class="variants form-nut-grid margin-bottom-0" data-id="product-{{ $product->id }}">
 					<div>
-						@if(!$isContactPrice && $hasGearDetail)
+						@if(!$isMissingPrice && !$isOutOfStock && $isCustomOrder)
+							<a href="{{ $consultUrl }}" class="btn-cart btn btn-primary left-to" title="Tư vấn đặt mẫu">
+								<i class="fa fa-comments"></i>
+							</a>
+						@elseif(!$isMissingPrice && !$isOutOfStock && $hasGearDetail)
 							<a href="{{ $productShowUrl }}" class="btn-cart btn btn-primary left-to" title="Chọn sản phẩm">
 								<i class="fa fa-gear"></i>
 							</a>
@@ -59,21 +70,27 @@
 		<h3 class="product-name"><a href="{{ $productShowUrl }}" title="{{ $product->name }}">{{ $product->name }}</a></h3>
 
 		<div class="price-box clearfix">
-			@if($isContactPrice)
+			@if($isMissingPrice)
 				<div class="special-price clearfix">
-					<span class="price product-price">Liên hệ</span>
+					<span class="price product-price">Đang cập nhật giá</span>
 				</div>
 			@elseif($isSalePrice)
 				<div class="special-price">
-					<span class="price product-price">{{ number_format($product->sale_price, 0, ',', '.') }}₫</span>
+					<span class="price product-price">{{ $isCustomOrder ? 'Từ ' : '' }}{{ number_format($salePrice, 0, ',', '.') }}₫</span>
 				</div>
 				<div class="old-price">
-					<span class="price product-price-old">{{ number_format($product->price, 0, ',', '.') }}₫</span>
+					<span class="price product-price-old">{{ number_format($basePrice, 0, ',', '.') }}₫</span>
 				</div>
 			@else
 				<div class="special-price">
-					<span class="price product-price">{{ number_format($product->price, 0, ',', '.') }}₫</span>
+					<span class="price product-price">{{ $isCustomOrder ? 'Từ ' : '' }}{{ number_format($orderablePrice, 0, ',', '.') }}₫</span>
 				</div>
+			@endif
+			@if($isCustomOrder && !$isMissingPrice)
+				<div class="product-stock-note">Đặt theo yêu cầu</div>
+			@endif
+			@if($isOutOfStock)
+				<div class="product-stock-note">Tạm hết hàng</div>
 			@endif
 		</div>
 	</div>

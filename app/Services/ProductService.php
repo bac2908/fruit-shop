@@ -18,7 +18,8 @@ class ProductService
                     $q->orderBy('sort_order');
                 },
             ])
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->withOrderablePrice();
 
         // Filter by Category
         if ($request->has('category')) {
@@ -99,19 +100,19 @@ class ProductService
         if ($request->has('price')) {
             $range = explode('-', $request->price);
             if (count($range) == 2) {
-                $query->whereBetween(DB::raw('IFNULL(sale_price, price)'), [$range[0], $range[1]]);
+                $query->whereBetween($this->orderablePriceExpression(), [$range[0], $range[1]]);
             } elseif ($request->price == 'over-1000000') {
-                $query->where(DB::raw('IFNULL(sale_price, price)'), '>', 1000000);
+                $query->where($this->orderablePriceExpression(), '>', 1000000);
             }
         }
 
         // Sort
         switch ($request->get('sort')) {
             case 'price-asc':
-                $query->orderBy(DB::raw('IFNULL(sale_price, price)'), 'asc');
+                $query->orderBy($this->orderablePriceExpression(), 'asc');
                 break;
             case 'price-desc':
-                $query->orderBy(DB::raw('IFNULL(sale_price, price)'), 'desc');
+                $query->orderBy($this->orderablePriceExpression(), 'desc');
                 break;
             case 'alpha-asc':
                 $query->orderBy('name', 'asc');
@@ -149,6 +150,7 @@ class ProductService
     public function search($query)
     {
         return Product::where('is_active', true)
+            ->withOrderablePrice()
             ->where('name', 'like', "%$query%")
             ->paginate(12);
     }
@@ -164,6 +166,7 @@ class ProductService
     {
         return Product::query()
             ->where('is_active', true)
+            ->withOrderablePrice()
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
@@ -173,6 +176,7 @@ class ProductService
     {
         $baseQuery = Product::query()
             ->where('is_active', true)
+            ->withOrderablePrice()
             ->where('id', '!=', $product->id);
 
         if ($product->category_id) {
@@ -190,6 +194,7 @@ class ProductService
 
             $extra = Product::query()
                 ->where('is_active', true)
+                ->withOrderablePrice()
                 ->whereNotIn('id', $excludeIds)
                 ->orderByDesc('id')
                 ->limit($limit - $related->count())
@@ -239,6 +244,11 @@ class ProductService
             ->concat($options)
             ->unique('id')
             ->values();
+    }
+
+    private function orderablePriceExpression()
+    {
+        return DB::raw('CASE WHEN sale_price > 0 AND (price <= 0 OR sale_price < price) THEN sale_price ELSE price END');
     }
 
     private function normalizeProductBaseName(string $name): string

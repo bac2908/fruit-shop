@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -60,7 +61,67 @@ class Product extends Model
      */
     public function getActualPriceAttribute()
     {
-        return $this->sale_price ?? $this->price;
+        return $this->orderable_price;
+    }
+
+    public function getOrderablePriceAttribute(): int
+    {
+        $basePrice = (int) ($this->price ?? 0);
+        $salePrice = (int) ($this->sale_price ?? 0);
+
+        if ($salePrice > 0 && ($basePrice <= 0 || $salePrice < $basePrice)) {
+            return $salePrice;
+        }
+
+        return $basePrice;
+    }
+
+    public function getHasOrderablePriceAttribute(): bool
+    {
+        return $this->orderable_price > 0;
+    }
+
+    public function getIsCustomOrderProductAttribute(): bool
+    {
+        $category = $this->relationLoaded('category') ? $this->category : null;
+        $text = Str::lower(Str::ascii(implode(' ', [
+            (string) $this->name,
+            (string) $this->slug,
+            (string) optional($category)->name,
+            (string) optional($category)->slug,
+        ])));
+
+        foreach ($this->customOrderKeywords() as $keyword) {
+            if (Str::contains($text, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function customOrderKeywords(): array
+    {
+        return [
+            'gio qua',
+            'gio-qua',
+            'hop qua',
+            'hop-qua',
+            'set qua',
+            'set-qua',
+            'mam ngu qua',
+            'mam-ngu-qua',
+            'mam qua cuoi',
+            'mam-qua-cuoi',
+            'mam cung',
+            'mam-cung',
+            'qua cuoi',
+            'qua-cuoi',
+            'luc giac',
+            'luc-giac',
+            'kinh le',
+            'kinh-le',
+        ];
     }
 
     /**
@@ -100,14 +161,19 @@ class Product extends Model
         return $query->where('stock', '>', 0);
     }
 
+    public function scopeWithOrderablePrice($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('price', '>', 0)
+                ->orWhere('sale_price', '>', 0);
+        });
+    }
+
     public function scopeOrderable($query)
     {
         return $query->active()
             ->inStock()
-            ->where(function ($q) {
-                $q->where('price', '>', 0)
-                    ->orWhere('sale_price', '>', 0);
-            });
+            ->withOrderablePrice();
     }
 
     public function scopeOnSale($query)

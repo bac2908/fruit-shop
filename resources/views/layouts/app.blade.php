@@ -779,6 +779,7 @@
 		.product-box:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #8bc34a; }
 		.product-thumbnail img { width: 100%; height: auto; object-fit: cover; }
 		.product-name a { color: #333 !important; font-size: 14px; font-weight: 700; text-decoration: none; display: block; margin-top: 10px; height: 40px; overflow: hidden; }
+		.product-stock-note { color: #9a3f20; font-size: 12px; font-weight: 700; margin-top: 4px; }
 
 		.product-action { display: none; position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; }
 		.product-box:hover .product-action { display: block; }
