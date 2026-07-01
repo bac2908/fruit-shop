@@ -3,10 +3,6 @@
 @section('content')
 <h1 class="hidden">Thế Giới Trái Cây -Trái cây Việt nam loại 1 & nhập khẩu cao cấp</h1>
 
-@php
-	$assetBaseUrl = preg_replace('#^https?:#', '', rtrim(config('app.url'), '/'));
-@endphp
-
 {{-- Section 1: Slider & Sidebar --}}
 <section class="awe-section-1" id="awe-section-1">
 	<div class="section_category_slider">
@@ -14,30 +10,30 @@
 			<h2 class="hidden">Slider and Category</h2>
 			<div class="row">
 				<div class="col-md-9 col-md-push-3 px-md-4 px-0 mt-md-5 mb-5">
-					<div class="home-slider owl-carousel" data-lg-items='1' data-md-items='1' data-sm-items='1' data-autoplay='true' data-autoplaytimeout='4000' data-xs-items="1" data-margin='0' data-nav="true">
+					<div class="home-slider owl-carousel" style="background-image: url('{{ asset('images/sliders/banner_custom_1.jpg') }}');" data-lg-items='1' data-md-items='1' data-sm-items='1' data-autoplay='true' data-autoplaytimeout='4000' data-xs-items="1" data-margin='0' data-nav="true">
 						<div class="item">
 							<a href="{{ route('products.show', 'thanh-tra-thai-lan') }}" class="clearfix">
-								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_1.jpg" alt="Thanh Trà Thái lan - Thế giới trái cây">
+								<img src="{{ asset('images/sliders/banner_custom_1.jpg') }}" alt="Thanh Trà Thái lan - Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'may-indo') }}" class="clearfix">
-								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_2.jpg" alt="Mây Indo- Thế giới trái cây">
+								<img src="{{ asset('images/sliders/banner_custom_2.jpg') }}" alt="Mây Indo- Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'nho-xanh-uc-btm-sweetglobe') }}" class="clearfix">
-								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_3.jpg" alt="Nho xanh Úc - Thế giới trái cây">
+								<img src="{{ asset('images/sliders/banner_custom_3.jpg') }}" alt="Nho xanh Úc - Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'mang-cut-da-cam-thai-lan') }}" class="clearfix">
-								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_4.jpg" alt="Măng cụt Thái Lan - Thế giới trái cây">
+								<img src="{{ asset('images/sliders/banner_custom_4.jpg') }}" alt="Măng cụt Thái Lan - Thế giới trái cây">
 							</a>
 						</div>
 						<div class="item">
 							<a href="{{ route('products.show', 'vu-sua-tim') }}" class="clearfix">
-								<img src="{{ $assetBaseUrl }}/images/sliders/banner_custom_5.jpg" alt="Vú sữa Tím Mica - Thế giới trái cây">
+								<img src="{{ asset('images/sliders/banner_custom_5.jpg') }}" alt="Vú sữa Tím Mica - Thế giới trái cây">
 							</a>
 						</div>
 					</div>

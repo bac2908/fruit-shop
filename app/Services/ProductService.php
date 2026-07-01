@@ -149,10 +149,31 @@ class ProductService
 
     public function search($query)
     {
-        return Product::where('is_active', true)
+        $query = trim((string) $query);
+        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $query) . '%';
+        $prefixLike = str_replace(['%', '_'], ['\%', '\_'], $query) . '%';
+
+        return Product::query()
+            ->with([
+                'category',
+                'images' => function ($q) {
+                    $q->orderBy('sort_order');
+                },
+            ])
+            ->where('is_active', true)
             ->withOrderablePrice()
-            ->where('name', 'like', "%$query%")
-            ->paginate(12);
+            ->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('slug', 'like', $like)
+                    ->orWhereHas('category', function ($categoryQuery) use ($like) {
+                        $categoryQuery->where('name', 'like', $like)
+                            ->orWhere('slug', 'like', $like);
+                    });
+            })
+            ->orderByRaw('CASE WHEN name LIKE ? THEN 0 WHEN name LIKE ? THEN 1 ELSE 2 END', [$prefixLike, $like])
+            ->orderByDesc('id')
+            ->paginate(12)
+            ->appends(['q' => $query]);
     }
 
     public function getCategories()

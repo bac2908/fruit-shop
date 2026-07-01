@@ -117,4 +117,5 @@ Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->mid
 Route::get('/checkout/momo/return/{code}/{token?}', [CartController::class, 'momoReturn'])->name('checkout.momo.return');
 Route::post('/checkout/momo/ipn', [CartController::class, 'momoIpn'])->name('checkout.momo.ipn');
 Route::get('/checkout/thank-you/{code}/{token?}', [CartController::class, 'thankYou'])->name('checkout.thankyou');
+Route::get('/search/suggestions', [ProductController::class, 'suggestions'])->middleware('throttle:60,1')->name('search.suggestions');
 Route::get('/search', [ProductController::class, 'search'])->name('search');
