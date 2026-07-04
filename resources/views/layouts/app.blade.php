@@ -40,6 +40,9 @@
 		$headerCartCount = collect(session('cart', []))->sum(function ($item) {
 			return (int) ($item['quantity'] ?? 0);
 		});
+		$shippingPolicyUrl = route('page.shipping.payment');
+		$contactUrl = route('contact.page');
+		$cartUrl = route('cart');
 	@endphp
 	<header class="header">
 	<div class="topbar-mobile hidden-lg hidden-md text-center text-md-left">
@@ -105,7 +108,7 @@
 				<div class="col-xs-12 col-md-3">
 					<div class="logo">
 						<a href="{{ route('home') }}" class="logo-wrapper">
-							<img src="//theme.hstatic.net/200000157781/1001036201/14/logo.png?v=1061" alt="logo Thế Giới Trái Cây">
+							<img src="https://theme.hstatic.net/200000157781/1001036201/14/logo.png?v=1061" alt="logo Thế Giới Trái Cây">
 						</a>
 					</div>
 				</div>
@@ -115,24 +118,30 @@
 					<div class="header-right d-flex align-items-center justify-content-between">
 						<div class="policy d-flex justify-content-around flex-1">
 							<div class="item-policy d-flex align-items-center">
-								<a href="#"><img src="//theme.hstatic.net/200000157781/1001036201/14/policy1.png?v=1061" alt=""></a>
+								<a href="{{ $shippingPolicyUrl }}" class="policy-icon-link" aria-label="Xem chính sách giao hàng">
+									<img src="https://theme.hstatic.net/200000157781/1001036201/14/policy1.png?v=1061" alt="Giao nhanh TP.HCM">
+								</a>
 								<div class="info">
-									<a href="{{ route('page.shipping.payment') }}">Giao nhanh TP.HCM</a>
-									<p>30 - 90 phút, tỉnh xác nhận riêng</p>
+									<a href="{{ $shippingPolicyUrl }}" class="policy-title">Giao nhanh TP.HCM</a>
+									<a href="{{ $shippingPolicyUrl }}" class="policy-desc">30 - 90 phút, tỉnh xác nhận riêng</a>
 								</div>
 							</div>
 							<div class="item-policy d-flex align-items-center">
-								<a href="#"><img src="//theme.hstatic.net/200000157781/1001036201/14/policy2.png?v=1061" alt=""></a>
+								<a href="{{ $contactUrl }}" class="policy-icon-link" aria-label="Liên hệ hỗ trợ khách hàng">
+									<img src="https://theme.hstatic.net/200000157781/1001036201/14/policy2.png?v=1061" alt="Hỗ trợ khách hàng">
+								</a>
 								<div class="info">
-								<a href="#">Hỗ trợ 24/7</a>
-									<p>Hotline: 0333499426</p>
+									<a href="{{ $contactUrl }}" class="policy-title">Hỗ trợ 24/7</a>
+									<a href="tel:0333499426" class="policy-desc">Hotline: 0333499426</a>
 								</div>
 							</div>
 							<div class="item-policy d-flex align-items-center">
-								<a href="#"><img src="//theme.hstatic.net/200000157781/1001036201/14/policy3.png?v=1061" alt=""></a>
+								<a href="{{ $contactUrl }}" class="policy-icon-link" aria-label="Xem giờ làm việc của cửa hàng">
+									<img src="https://theme.hstatic.net/200000157781/1001036201/14/policy3.png?v=1061" alt="Giờ làm việc">
+								</a>
 								<div class="info">
-								<a href="#">Giờ làm việc</a>
-									<p>T2 - CN (7:00-19:00)</p>
+									<a href="{{ $contactUrl }}" class="policy-title">Giờ làm việc</a>
+									<a href="{{ $contactUrl }}" class="policy-desc">T2 - CN (7:00-19:00)</a>
 								</div>
 							</div>
 						</div>
@@ -140,7 +149,7 @@
 						<div class="top-cart-contain">
 							<div class="mini-cart">
 								<div class="heading-cart">
-									<a href="{{ route('cart') }}" class="d-flex align-items-center">
+									<a href="{{ $cartUrl }}" class="d-flex align-items-center" aria-label="Mở giỏ hàng">
 										<div class="icon relative" style="background: #ff9800; color: #fff; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center;">
 											<i class="fa fa-shopping-bag" style="margin-right: 8px;"></i>
 										<span class="label" style="font-weight: bold;">Giỏ hàng ({{ $headerCartCount }})</span>
@@ -570,11 +579,46 @@
 
 		/* Header */
 		.header-content { padding: 20px 0; background: #fff; }
-		.item-policy { padding: 0 15px; }
-		.item-policy .info a { font-weight: bold; color: #333; font-size: 14px; }
+		.header-right { gap: 14px; min-width: 0; }
+		.header-right .policy {
+			align-items: center;
+			display: grid !important;
+			flex: 1 1 auto;
+			gap: 14px;
+			grid-template-columns: minmax(210px, 1.2fr) minmax(150px, .85fr) minmax(155px, .9fr);
+			justify-content: initial !important;
+			min-width: 0;
+		}
+		.item-policy { min-width: 0; padding: 0; }
+		.item-policy .policy-icon-link { display: inline-flex; align-items: center; flex: 0 0 auto; }
+		.item-policy .policy-icon-link img { height: 38px; width: 38px; object-fit: contain; }
+		.item-policy .info { min-width: 0; padding-left: 10px; }
+		.item-policy .info a { text-decoration: none; }
+		.item-policy .info .policy-title { display: block; font-weight: bold; color: #333; font-size: 14px; line-height: 1.3; white-space: nowrap; word-break: keep-all; }
+		.item-policy .info .policy-desc { display: block; font-size: 12px; color: #666; line-height: 1.35; margin-top: 2px; white-space: normal; word-break: normal; overflow-wrap: normal; }
+		.item-policy:hover .policy-title,
+		.item-policy .policy-title:hover,
+		.item-policy .policy-desc:hover { color: #76b82a; }
 		.item-policy .info p { font-size: 12px; color: #666; margin: 0; }
+		.top-cart-contain { flex: 0 0 180px; }
+		.heading-cart a { justify-content: flex-end; text-decoration: none; }
 		.icon.relative { background: #ff9800 !important; color: #fff !important; padding: 10px 20px; border-radius: 25px; transition: 0.3s; }
+		.heading-cart .icon.relative { justify-content: center; min-width: 170px; white-space: nowrap; }
 		.icon.relative:hover { background: #e68a00 !important; }
+
+		@media (min-width: 992px) and (max-width: 1199px) {
+			.header-right { gap: 10px; }
+			.header-right .policy {
+				gap: 10px;
+				grid-template-columns: minmax(180px, 1.2fr) minmax(128px, .85fr) minmax(132px, .9fr);
+			}
+			.item-policy .policy-icon-link img { height: 34px; width: 34px; }
+			.item-policy .info { padding-left: 8px; }
+			.item-policy .info .policy-title { font-size: 13px; }
+			.item-policy .info .policy-desc { font-size: 11px; }
+			.top-cart-contain { flex-basis: 155px; }
+			.heading-cart .icon.relative { min-width: 150px; padding-left: 14px; padding-right: 14px; }
+		}
 
 		/* Nav - Sticky fallback using fixed when scrolled */
 		nav {
