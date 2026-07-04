@@ -100,6 +100,7 @@ Route::get('/collections/{slug}/{tag}', [CategoryController::class, 'show'])->na
 Route::get('/collections/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 
 // Trang chi tiết sản phẩm
+Route::get('/products/{slug}/quick-view', [ProductController::class, 'quickView'])->name('products.quick-view');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
 // Các trang khác (Giỏ hàng, Tìm kiếm...)

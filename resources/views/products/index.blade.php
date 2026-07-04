@@ -822,6 +822,8 @@ function filterItemInList(inputElement) {
 		display: block;
 		text-align: left;
 		margin-top: 10px;
+		transform: none;
+		pointer-events: auto;
 	}
 
 	.open-filters {

@@ -248,6 +248,74 @@
 		@yield('content')
 	</main>
 
+	<div class="quick-view-overlay" id="quickViewModal" hidden aria-hidden="true">
+		<div class="quick-view-dialog" role="dialog" aria-modal="true" aria-labelledby="quickViewTitle">
+			<button type="button" class="quick-view-close" data-quick-view-close aria-label="Đóng">&times;</button>
+
+			<div class="quick-view-loading" data-qv-loading>
+				<i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i>
+				<span>Đang tải thông tin sản phẩm...</span>
+			</div>
+
+			<div class="quick-view-error" data-qv-error hidden>
+				Không thể tải nhanh sản phẩm lúc này. Vui lòng mở trang chi tiết sản phẩm.
+			</div>
+
+			<div class="quick-view-body" data-qv-body hidden>
+				<div class="quick-view-gallery">
+					<div class="quick-view-image-stage">
+						<img src="" alt="" data-qv-main-image>
+					</div>
+					<div class="quick-view-thumbs" data-qv-thumbs></div>
+				</div>
+
+				<div class="quick-view-info">
+					<a href="#" class="quick-view-category" data-qv-category>Sản phẩm</a>
+					<h2 id="quickViewTitle" data-qv-title>Sản phẩm</h2>
+
+					<div class="quick-view-stock-row">
+						<span class="quick-view-label">Trạng thái:</span>
+						<span class="quick-view-stock" data-qv-stock>Còn hàng</span>
+					</div>
+
+					<div class="quick-view-price-row">
+						<span class="quick-view-price" data-qv-price></span>
+						<span class="quick-view-old-price" data-qv-old-price hidden></span>
+						<span class="quick-view-discount" data-qv-discount hidden></span>
+					</div>
+
+					<p class="quick-view-desc" data-qv-desc></p>
+
+					<div class="quick-view-meta">
+						<div data-qv-sku-row hidden><strong>SKU:</strong> <span data-qv-sku></span></div>
+						<div data-qv-unit-row hidden><strong>Quy cách:</strong> <span data-qv-unit></span></div>
+						<div><strong>Hãng sản xuất:</strong> <span data-qv-manufacturer>Khác</span></div>
+					</div>
+
+					<form action="{{ route('cart.add') }}" method="post" class="quick-view-cart-form" data-qv-form>
+						@csrf
+						<input type="hidden" name="product_id" value="" data-qv-product-id>
+						<div class="quick-view-buy-row">
+							<label for="quickViewQuantity">Số lượng</label>
+							<input id="quickViewQuantity" type="number" name="quantity" min="1" max="99" value="1" data-qv-quantity>
+							<button type="submit" class="quick-view-add-btn">
+								<i class="fa fa-shopping-bag" aria-hidden="true"></i>
+								Thêm vào giỏ hàng
+							</button>
+						</div>
+					</form>
+
+					<div class="quick-view-unavailable" data-qv-unavailable hidden>
+						<p data-qv-unavailable-text></p>
+						<a href="#" class="quick-view-primary-link" data-qv-primary-action> Xem chi tiết </a>
+					</div>
+
+					<a href="#" class="quick-view-detail-link" data-qv-detail-link>Xem chi tiết sản phẩm</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	@if(session('cart_added'))
 		@php
 			$cartAdded = session('cart_added');
@@ -481,6 +549,381 @@
 				flex-basis: 78px;
 				height: 78px;
 				width: 78px;
+			}
+		}
+
+		body.quick-view-open {
+			overflow: hidden;
+		}
+
+		.quick-view-overlay {
+			align-items: center;
+			background: rgba(10, 18, 8, 0.42);
+			display: none;
+			inset: 0;
+			justify-content: center;
+			padding: 44px 20px;
+			position: fixed;
+			z-index: 10080;
+		}
+
+		.quick-view-overlay.is-visible {
+			display: flex;
+		}
+
+		.quick-view-overlay[hidden],
+		.quick-view-loading[hidden],
+		.quick-view-error[hidden],
+		.quick-view-body[hidden],
+		.quick-view-cart-form[hidden],
+		.quick-view-unavailable[hidden],
+		.quick-view-old-price[hidden],
+		.quick-view-discount[hidden],
+		[data-qv-sku-row][hidden],
+		[data-qv-unit-row][hidden] {
+			display: none !important;
+		}
+
+		.quick-view-dialog {
+			background: #fff;
+			border-radius: 6px;
+			box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+			max-height: calc(100vh - 88px);
+			max-width: 1120px;
+			overflow: auto;
+			padding: 30px 36px 34px;
+			position: relative;
+			width: min(1120px, calc(100vw - 40px));
+		}
+
+		.quick-view-close {
+			align-items: center;
+			background: #050505;
+			border: 0;
+			border-radius: 50%;
+			color: #fff;
+			display: inline-flex;
+			font-size: 32px;
+			font-weight: 700;
+			height: 52px;
+			justify-content: center;
+			line-height: 1;
+			position: absolute;
+			right: 12px;
+			top: 12px;
+			width: 52px;
+			z-index: 2;
+		}
+
+		.quick-view-close:hover {
+			background: #6fb62b;
+			color: #fff;
+		}
+
+		.quick-view-loading,
+		.quick-view-error {
+			align-items: center;
+			color: #53604f;
+			display: flex;
+			font-size: 17px;
+			font-weight: 700;
+			gap: 10px;
+			justify-content: center;
+			min-height: 260px;
+			text-align: center;
+		}
+
+		.quick-view-error {
+			background: #fff3f0;
+			border: 1px solid #ffc9be;
+			border-radius: 8px;
+			color: #a7351c;
+			min-height: auto;
+			padding: 16px;
+		}
+
+		.quick-view-body {
+			display: grid;
+			grid-template-columns: minmax(320px, 46%) minmax(0, 1fr);
+			gap: 38px;
+		}
+
+		.quick-view-image-stage {
+			align-items: center;
+			border: 1px solid #e5e5e5;
+			display: flex;
+			height: 440px;
+			justify-content: center;
+			overflow: hidden;
+			background: #fff;
+		}
+
+		.quick-view-image-stage img {
+			display: block;
+			height: 100%;
+			object-fit: contain;
+			width: 100%;
+		}
+
+		.quick-view-thumbs {
+			display: flex;
+			gap: 12px;
+			margin-top: 14px;
+			overflow-x: auto;
+			padding-bottom: 4px;
+		}
+
+		.quick-view-thumb {
+			background: #fff;
+			border: 1px solid #e0e0e0;
+			border-radius: 3px;
+			flex: 0 0 86px;
+			height: 86px;
+			padding: 3px;
+		}
+
+		.quick-view-thumb.is-active,
+		.quick-view-thumb:hover {
+			border-color: #79bd2c;
+		}
+
+		.quick-view-thumb img {
+			display: block;
+			height: 100%;
+			object-fit: cover;
+			width: 100%;
+		}
+
+		.quick-view-info {
+			min-width: 0;
+			padding-top: 18px;
+		}
+
+		.quick-view-category {
+			background: #f4faee;
+			border: 1px solid #d5ecc0;
+			border-radius: 999px;
+			color: #5c981e !important;
+			display: inline-flex;
+			font-size: 13px;
+			font-weight: 700;
+			margin-bottom: 14px;
+			padding: 6px 14px;
+			text-decoration: none !important;
+		}
+
+		.quick-view-info h2 {
+			color: #333;
+			font-family: inherit;
+			font-size: 30px;
+			font-weight: 500;
+			line-height: 1.32;
+			margin: 0 0 18px;
+			padding-right: 62px;
+		}
+
+		.quick-view-stock-row {
+			align-items: center;
+			display: flex;
+			gap: 8px;
+			margin-bottom: 22px;
+		}
+
+		.quick-view-label {
+			color: #555;
+			font-size: 16px;
+		}
+
+		.quick-view-stock {
+			background: #7bbe2b;
+			color: #fff;
+			display: inline-flex;
+			font-size: 15px;
+			font-weight: 700;
+			padding: 4px 10px;
+		}
+
+		.quick-view-stock.is-soldout {
+			background: #a6a6a6;
+		}
+
+		.quick-view-stock:before {
+			content: "\f00c";
+			font-family: FontAwesome;
+			margin-right: 6px;
+		}
+
+		.quick-view-stock.is-soldout:before {
+			content: "\f00d";
+		}
+
+		.quick-view-price-row {
+			align-items: baseline;
+			border-bottom: 1px solid #eeeeee;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-bottom: 24px;
+			padding-bottom: 18px;
+		}
+
+		.quick-view-price {
+			color: #ff9800;
+			font-size: 34px;
+			font-weight: 800;
+			line-height: 1;
+		}
+
+		.quick-view-old-price {
+			color: #9b9b9b;
+			font-size: 17px;
+			text-decoration: line-through;
+		}
+
+		.quick-view-discount {
+			color: #ff9800;
+			font-size: 17px;
+			font-weight: 700;
+		}
+
+		.quick-view-desc {
+			border-bottom: 1px solid #eeeeee;
+			color: #7b7b7b;
+			font-size: 16px;
+			line-height: 1.7;
+			margin: 0 0 18px;
+			padding-bottom: 18px;
+		}
+
+		.quick-view-meta {
+			color: #555;
+			display: grid;
+			font-size: 15px;
+			gap: 8px;
+			margin-bottom: 26px;
+		}
+
+		.quick-view-meta strong {
+			color: #333;
+		}
+
+		.quick-view-buy-row {
+			align-items: center;
+			display: grid;
+			grid-template-columns: auto 68px minmax(220px, 1fr);
+			gap: 12px;
+		}
+
+		.quick-view-buy-row label {
+			color: #333;
+			font-size: 16px;
+			font-weight: 700;
+			margin: 0;
+		}
+
+		.quick-view-buy-row input {
+			border: 1px solid #dddddd;
+			border-radius: 4px;
+			font-size: 17px;
+			height: 48px;
+			text-align: center;
+			width: 68px;
+		}
+
+		.quick-view-add-btn,
+		.quick-view-primary-link {
+			align-items: center;
+			background: #7bbe2b;
+			border: 1px solid #7bbe2b;
+			border-radius: 4px;
+			color: #fff !important;
+			display: inline-flex;
+			font-size: 18px;
+			font-weight: 800;
+			gap: 8px;
+			height: 48px;
+			justify-content: center;
+			padding: 0 28px;
+			text-decoration: none !important;
+		}
+
+		.quick-view-add-btn:hover,
+		.quick-view-primary-link:hover {
+			background: #ff9800;
+			border-color: #ff9800;
+		}
+
+		.quick-view-unavailable {
+			background: #fff8ef;
+			border: 1px solid #ffd8a8;
+			border-radius: 8px;
+			margin-bottom: 16px;
+			padding: 16px;
+		}
+
+		.quick-view-unavailable p {
+			color: #9a3f20;
+			font-size: 15px;
+			font-weight: 700;
+			line-height: 1.6;
+			margin: 0 0 12px;
+		}
+
+		.quick-view-detail-link {
+			color: #5b8d1f !important;
+			display: inline-flex;
+			font-size: 14px;
+			font-weight: 700;
+			margin-top: 18px;
+			text-decoration: none !important;
+		}
+
+		.quick-view-detail-link:hover {
+			color: #ff9800 !important;
+		}
+
+		@media (max-width: 900px) {
+			.quick-view-overlay {
+				align-items: flex-start;
+				padding: 20px 12px;
+			}
+
+			.quick-view-dialog {
+				max-height: calc(100vh - 40px);
+				padding: 22px 18px 24px;
+				width: 100%;
+			}
+
+			.quick-view-close {
+				right: 8px;
+				top: 8px;
+			}
+
+			.quick-view-body {
+				grid-template-columns: 1fr;
+				gap: 20px;
+			}
+
+			.quick-view-image-stage {
+				height: min(360px, 72vw);
+			}
+
+			.quick-view-info {
+				padding-top: 0;
+			}
+
+			.quick-view-info h2 {
+				font-size: 24px;
+				padding-right: 50px;
+			}
+
+			.quick-view-buy-row {
+				grid-template-columns: auto 72px;
+			}
+
+			.quick-view-add-btn {
+				grid-column: 1 / -1;
+				width: 100%;
 			}
 		}
 
@@ -951,13 +1394,22 @@
 		/* Product UI matching */
 		.product-box { border: 1px solid #eee; transition: 0.3s; padding: 10px; background: #fff; border-radius: 10px; margin-bottom: 20px; position: relative; overflow: hidden; }
 		.product-box:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #8bc34a; }
+		.product-thumbnail { position: relative; overflow: hidden; }
+		.product-thumbnail > a { display: block; position: relative; z-index: 1; }
 		.product-thumbnail img { width: 100%; height: auto; object-fit: cover; }
 		.product-name a { color: #333 !important; font-size: 14px; font-weight: 700; text-decoration: none; display: block; margin-top: 10px; height: 40px; overflow: hidden; }
 		.product-stock-note { color: #9a3f20; font-size: 12px; font-weight: 700; margin-top: 4px; }
 
-		.product-action { display: none; position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; }
+		.product-action { display: none; position: absolute; top: 50%; left: 0; right: 0; text-align: center; transform: translateY(-50%); z-index: 30; pointer-events: none; }
 		.product-box:hover .product-action { display: block; }
-		.btn-cart, .btn_view, .product-detail-link { background: #8bc34a; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+		.product-action .variants,
+		.product-action .product-action-links,
+		.product-action .variants > div,
+		.product-action .product-action-links > div { display: inline-flex; align-items: center; justify-content: center; gap: 10px; position: relative; z-index: 31; pointer-events: auto; }
+		.product-action button,
+		.product-action a { position: relative; z-index: 32; pointer-events: auto; cursor: pointer; }
+		.btn-cart, .btn_view, .product-detail-link, .product-action-link { background: #8bc34a; color: #fff; width: 36px; height: 36px; border: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); text-decoration: none; }
+		.btn-cart:hover, .btn_view:hover, .product-detail-link:hover, .product-action-link:hover { background: #ff9800; color: #fff; text-decoration: none; }
 
 		.sale-flash { position: absolute; top: 10px; left: 10px; background: #ff9800; color: #fff; padding: 2px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; z-index: 5; }
 
@@ -1890,6 +2342,289 @@
 					closeModal();
 				}
 			});
+		})();
+
+		// Product quick-view modal.
+		(function() {
+			var modal = document.getElementById('quickViewModal');
+
+			if (!modal) {
+				return;
+			}
+
+			var loading = modal.querySelector('[data-qv-loading]');
+			var errorBox = modal.querySelector('[data-qv-error]');
+			var body = modal.querySelector('[data-qv-body]');
+			var mainImage = modal.querySelector('[data-qv-main-image]');
+			var thumbs = modal.querySelector('[data-qv-thumbs]');
+			var category = modal.querySelector('[data-qv-category]');
+			var title = modal.querySelector('[data-qv-title]');
+			var stock = modal.querySelector('[data-qv-stock]');
+			var price = modal.querySelector('[data-qv-price]');
+			var oldPrice = modal.querySelector('[data-qv-old-price]');
+			var discount = modal.querySelector('[data-qv-discount]');
+			var desc = modal.querySelector('[data-qv-desc]');
+			var skuRow = modal.querySelector('[data-qv-sku-row]');
+			var sku = modal.querySelector('[data-qv-sku]');
+			var unitRow = modal.querySelector('[data-qv-unit-row]');
+			var unit = modal.querySelector('[data-qv-unit]');
+			var manufacturer = modal.querySelector('[data-qv-manufacturer]');
+			var form = modal.querySelector('[data-qv-form]');
+			var productId = modal.querySelector('[data-qv-product-id]');
+			var quantity = modal.querySelector('[data-qv-quantity]');
+			var unavailable = modal.querySelector('[data-qv-unavailable]');
+			var unavailableText = modal.querySelector('[data-qv-unavailable-text]');
+			var primaryAction = modal.querySelector('[data-qv-primary-action]');
+			var detailLink = modal.querySelector('[data-qv-detail-link]');
+			var lastFocusedElement = null;
+
+			function openModal() {
+				modal.hidden = false;
+				modal.setAttribute('aria-hidden', 'false');
+				modal.classList.add('is-visible');
+				document.body.classList.add('quick-view-open');
+			}
+
+			function closeModal() {
+				modal.classList.remove('is-visible');
+				modal.setAttribute('aria-hidden', 'true');
+				modal.hidden = true;
+				document.body.classList.remove('quick-view-open');
+
+				if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+					lastFocusedElement.focus();
+				}
+			}
+
+			function showLoading() {
+				openModal();
+				loading.hidden = false;
+				errorBox.hidden = true;
+				body.hidden = true;
+			}
+
+			function showError() {
+				openModal();
+				loading.hidden = true;
+				errorBox.hidden = false;
+				body.hidden = true;
+			}
+
+			function selectImage(imageUrl, button) {
+				if (!imageUrl || !mainImage) {
+					return;
+				}
+
+				mainImage.src = imageUrl;
+				mainImage.alt = title ? title.textContent : '';
+
+				if (thumbs) {
+					thumbs.querySelectorAll('.quick-view-thumb').forEach(function(item) {
+						item.classList.toggle('is-active', item === button);
+					});
+				}
+			}
+
+			function renderThumbs(images, productName) {
+				if (!thumbs) {
+					return;
+				}
+
+				thumbs.innerHTML = '';
+
+				(images || []).forEach(function(imageUrl, index) {
+					var button = document.createElement('button');
+					var image = document.createElement('img');
+
+					button.type = 'button';
+					button.className = 'quick-view-thumb' + (index === 0 ? ' is-active' : '');
+					button.setAttribute('aria-label', 'Xem ảnh ' + (index + 1));
+					image.src = imageUrl;
+					image.alt = productName + ' - ảnh ' + (index + 1);
+
+					button.appendChild(image);
+					button.addEventListener('click', function() {
+						selectImage(imageUrl, button);
+					});
+					thumbs.appendChild(button);
+				});
+			}
+
+			function unavailableMessage(product) {
+				if (!product.stock || !product.stock.in_stock) {
+					return 'Sản phẩm đang tạm hết hàng. Bạn có thể xem chi tiết hoặc liên hệ shop để được báo khi có hàng.';
+				}
+
+				if (product.price && product.price.is_contact_price) {
+					return 'Sản phẩm đang chờ cập nhật giá bán. Vui lòng mở trang chi tiết hoặc liên hệ shop để được tư vấn.';
+				}
+
+				if (product.is_custom_order) {
+					return 'Sản phẩm này làm theo yêu cầu, shop cần tư vấn mẫu, ngân sách và thời điểm giao trước khi đặt.';
+				}
+
+				if (product.has_gear_detail) {
+					return 'Sản phẩm này cần chọn quy cách hoặc mẫu trước khi thêm vào giỏ hàng.';
+				}
+
+				return 'Sản phẩm chưa thể thêm nhanh vào giỏ. Vui lòng mở trang chi tiết để tiếp tục.';
+			}
+
+			function renderProduct(product) {
+				var images = Array.isArray(product.images) && product.images.length ? product.images : [];
+				var firstImage = images[0] || '';
+				var maxQuantity = Math.max(1, Math.min(99, Number(product.stock && product.stock.quantity ? product.stock.quantity : 99)));
+
+				loading.hidden = true;
+				errorBox.hidden = true;
+				body.hidden = false;
+
+				if (category) {
+					category.textContent = product.category && product.category.name ? product.category.name : 'Sản phẩm';
+					category.href = product.category && product.category.url ? product.category.url : product.url;
+				}
+
+				if (title) {
+					title.textContent = product.name || 'Sản phẩm';
+				}
+
+				if (mainImage) {
+					mainImage.src = firstImage;
+					mainImage.alt = product.name || 'Sản phẩm';
+				}
+
+				renderThumbs(images, product.name || 'Sản phẩm');
+
+				if (stock) {
+					stock.textContent = product.stock && product.stock.label ? product.stock.label : 'Còn hàng';
+					stock.classList.toggle('is-soldout', !(product.stock && product.stock.in_stock));
+				}
+
+				if (price) {
+					price.textContent = product.price && product.price.formatted ? product.price.formatted : '';
+				}
+
+				if (oldPrice) {
+					oldPrice.hidden = !(product.price && product.price.compare_formatted);
+					oldPrice.textContent = product.price && product.price.compare_formatted ? product.price.compare_formatted : '';
+				}
+
+				if (discount) {
+					var discountPercent = Number(product.price && product.price.discount_percent ? product.price.discount_percent : 0);
+					discount.hidden = discountPercent <= 0;
+					discount.textContent = discountPercent > 0 ? '(-' + discountPercent + '%)' : '';
+				}
+
+				if (desc) {
+					desc.textContent = product.description || 'Thông tin sản phẩm đang được cập nhật.';
+				}
+
+				if (skuRow && sku) {
+					skuRow.hidden = !product.sku;
+					sku.textContent = product.sku || '';
+				}
+
+				if (unitRow && unit) {
+					unitRow.hidden = !product.unit;
+					unit.textContent = product.unit || '';
+				}
+
+				if (manufacturer) {
+					manufacturer.textContent = product.manufacturer || 'Khác';
+				}
+
+				if (detailLink) {
+					detailLink.href = product.url || '#';
+				}
+
+				if (productId) {
+					productId.value = product.id || '';
+				}
+
+				if (quantity) {
+					quantity.value = 1;
+					quantity.max = maxQuantity;
+				}
+
+				if (form) {
+					form.hidden = !product.can_add_to_cart;
+				}
+
+				if (unavailable) {
+					unavailable.hidden = !!product.can_add_to_cart;
+				}
+
+				if (unavailableText) {
+					unavailableText.textContent = unavailableMessage(product);
+				}
+
+				if (primaryAction) {
+					primaryAction.href = product.primary_action && product.primary_action.url ? product.primary_action.url : (product.url || '#');
+					primaryAction.textContent = product.primary_action && product.primary_action.label ? product.primary_action.label : 'Xem chi tiết';
+				}
+			}
+
+			function fetchProduct(url) {
+				showLoading();
+
+				fetch(url, {
+					headers: {
+						'Accept': 'application/json',
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				})
+					.then(function(response) {
+						if (!response.ok) {
+							throw new Error('Cannot load quick view');
+						}
+
+						return response.json();
+					})
+					.then(renderProduct)
+					.catch(showError);
+			}
+
+			document.addEventListener('click', function(event) {
+				var trigger = event.target.closest('[data-quick-view-url]');
+
+				if (!trigger) {
+					return;
+				}
+
+				event.preventDefault();
+				event.stopPropagation();
+				lastFocusedElement = trigger;
+				fetchProduct(trigger.getAttribute('data-quick-view-url'));
+			}, true);
+
+			document.querySelectorAll('[data-quick-view-close]').forEach(function(button) {
+				button.addEventListener('click', closeModal);
+			});
+
+			modal.addEventListener('click', function(event) {
+				if (event.target === modal) {
+					closeModal();
+				}
+			});
+
+			document.addEventListener('keydown', function(event) {
+				if (event.key === 'Escape' && !modal.hidden) {
+					closeModal();
+				}
+			});
+
+			if (quantity) {
+				quantity.addEventListener('input', function() {
+					var max = Number(quantity.max || 99);
+					var value = Number(quantity.value || 1);
+
+					if (value < 1) {
+						quantity.value = 1;
+					} else if (value > max) {
+						quantity.value = max;
+					}
+				});
+			}
 		})();
 
 		// Show floating quick-actions only after scrolling down.

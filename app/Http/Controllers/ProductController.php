@@ -8,6 +8,7 @@ use App\Models\SearchHistory;
 use App\Models\WishlistItem;
 use App\Services\AprioriRecommendationService;
 use App\Services\ProductService;
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -63,6 +64,92 @@ class ProductController extends Controller
             'frequentlyBoughtTogether' => $frequentlyBoughtTogether,
             'aprioriStats' => $aprioriStats,
             'isWishlisted' => $isWishlisted,
+        ]);
+    }
+
+    public function quickView($slug)
+    {
+        $product = $this->productService->findBySlug($slug);
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'Không tìm thấy sản phẩm.',
+            ], 404);
+        }
+
+        $images = collect([$product->primary_image_url])
+            ->merge($product->images->pluck('url')->map(function ($url) {
+                $url = trim((string) $url);
+
+                return $url !== '' ? MediaUrl::resolve($url) : null;
+            }))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($images->isEmpty()) {
+            $images = collect(['//theme.hstatic.net/200000157781/1001036201/14/no-image.jpg?v=1064']);
+        }
+
+        $basePrice = (int) ($product->price ?? 0);
+        $salePrice = (int) ($product->sale_price ?? 0);
+        $displayPrice = (int) $product->orderable_price;
+        $isSalePrice = $basePrice > 0 && $salePrice > 0 && $salePrice < $basePrice;
+        $discountPercent = $isSalePrice ? (int) round((($basePrice - $salePrice) / $basePrice) * 100) : 0;
+        $isCustomOrder = (bool) $product->is_custom_order_product;
+        $inStock = (int) $product->stock > 0;
+        $canAddToCart = (bool) $product->is_active
+            && $inStock
+            && $displayPrice > 0
+            && !$isCustomOrder
+            && !(bool) $product->has_gear_detail;
+
+        $descriptionText = trim(preg_replace('/\s+/u', ' ', strip_tags((string) ($product->short_desc ?: $product->description))));
+
+        if ($descriptionText === '') {
+            $descriptionText = 'Thông tin sản phẩm đang được cập nhật.';
+        }
+
+        $category = $product->category;
+        $detailUrl = route('products.show', $product->slug);
+        $consultUrl = route('contact.page', ['product' => $product->name]);
+
+        return response()->json([
+            'id' => $product->id,
+            'name' => $product->name,
+            'url' => $detailUrl,
+            'category' => [
+                'name' => optional($category)->name ?: 'Sản phẩm',
+                'url' => $category ? route('categories.show', $category->slug) : route('products.index'),
+            ],
+            'images' => $images->all(),
+            'price' => [
+                'value' => $displayPrice,
+                'formatted' => $displayPrice > 0
+                    ? ($isCustomOrder ? 'Từ ' : '') . number_format($displayPrice, 0, ',', '.') . 'đ'
+                    : 'Đang cập nhật giá',
+                'compare_formatted' => $isSalePrice ? number_format($basePrice, 0, ',', '.') . 'đ' : null,
+                'discount_percent' => $discountPercent,
+                'is_contact_price' => $displayPrice <= 0,
+            ],
+            'stock' => [
+                'quantity' => (int) $product->stock,
+                'in_stock' => $inStock,
+                'label' => $inStock ? 'Còn hàng' : 'Tạm hết hàng',
+            ],
+            'sku' => trim((string) ($product->sku ?? '')),
+            'unit' => trim((string) ($product->unit ?? '')),
+            'description' => Str::limit($descriptionText, 520),
+            'manufacturer' => 'Khác',
+            'can_add_to_cart' => $canAddToCart,
+            'is_custom_order' => $isCustomOrder,
+            'has_gear_detail' => (bool) $product->has_gear_detail,
+            'primary_action' => [
+                'url' => $isCustomOrder ? $consultUrl : $detailUrl,
+                'label' => $isCustomOrder
+                    ? 'Liên hệ tư vấn'
+                    : ((bool) $product->has_gear_detail ? 'Chọn sản phẩm' : 'Xem chi tiết'),
+            ],
         ]);
     }
 
