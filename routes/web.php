@@ -12,6 +12,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,13 +62,12 @@ Route::middleware('auth')->prefix('account')->name('account.')->group(function (
 	Route::delete('/wishlist/{item}', [ProfileController::class, 'removeWishlist'])->name('wishlist.remove');
 });
 
-// Admin FE-first routes (UI only, BE data wiring in the next phase)
+// Admin operation routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
 	Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-	Route::get('/products', function () {
-		return view('admin.products');
-	})->name('products');
+	Route::get('/products', [AdminProductController::class, 'index'])->name('products');
+	Route::patch('/products/{product}/visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.visibility');
 
 	Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
 	Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
