@@ -55,7 +55,7 @@
                     @csrf
 
                     <div class="payment-method-grid">
-                        <label class="payment-method-option {{ $selectedPaymentMethod === \App\Models\Order::PAYMENT_METHOD_COD ? 'is-selected' : '' }}">
+                        <label class="payment-method-option">
                             <input
                                 type="radio"
                                 name="payment_method"
@@ -69,7 +69,7 @@
                             </span>
                         </label>
 
-                        <label class="payment-method-option {{ $selectedPaymentMethod === \App\Models\Order::PAYMENT_METHOD_BANK_TRANSFER ? 'is-selected' : '' }}">
+                        <label class="payment-method-option">
                             <input
                                 type="radio"
                                 name="payment_method"
@@ -83,7 +83,7 @@
                             </span>
                         </label>
 
-                        <label class="payment-method-option {{ $selectedPaymentMethod === \App\Models\Order::PAYMENT_METHOD_MOMO ? 'is-selected' : '' }}">
+                        <label class="payment-method-option">
                             <input
                                 type="radio"
                                 name="payment_method"
@@ -355,11 +355,15 @@
         width: 1px;
     }
 
-    .payment-method-option:has(input:checked),
-    .payment-method-option.is-selected {
+    .payment-method-option:has(input:checked) {
         background: #f7fcf1;
         border-color: #75b72c;
         box-shadow: 0 0 0 2px rgba(117, 183, 44, 0.12);
+    }
+
+    .payment-method-option:has(input:focus-visible) {
+        outline: 3px solid rgba(45, 135, 184, 0.25);
+        outline-offset: 2px;
     }
 
     .method-icon {

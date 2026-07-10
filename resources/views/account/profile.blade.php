@@ -136,7 +136,7 @@
                             <span>{{ $profilePercent }}%</span>
                         </div>
                         <div class="account-progress" aria-hidden="true">
-                            <span style="width: {{ $profilePercent }}%"></span>
+                           <span style="width: {{ $profilePercent }}%;"></span>
                         </div>
                         <p>{{ $profilePercent >= 85 ? 'Thông tin đã khá đầy đủ.' : 'Bổ sung số điện thoại, avatar hoặc địa chỉ để đặt hàng nhanh hơn.' }}</p>
                         <button type="button" class="account-btn account-btn-light" data-account-tab="profile">Cập nhật hồ sơ</button>
