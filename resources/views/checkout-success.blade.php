@@ -103,15 +103,22 @@
                     <div class="order-items-list">
                         @foreach($orderItems as $item)
                             @php
-                                $itemImage = optional($item->product)->thumb_url ?: '//theme.hstatic.net/200000157781/1001036201/14/no-image.jpg?v=1064';
+                                $isVoucherGift = !$item->product_id && $item->unit === 'quà tặng voucher';
+                                $itemImage = $isVoucherGift && $appliedCoupon
+                                    ? ($appliedCoupon->image_url ?: '//theme.hstatic.net/200000157781/1001036201/14/no-image.jpg?v=1064')
+                                    : (optional($item->product)->thumb_url ?: '//theme.hstatic.net/200000157781/1001036201/14/no-image.jpg?v=1064');
                             @endphp
-                            <div class="order-item">
+                            <div class="order-item {{ $isVoucherGift ? 'is-voucher-gift' : '' }}">
                                 <img src="{{ $itemImage }}" alt="{{ $item->product_name }}">
                                 <div class="order-item-info">
                                     <h3>{{ $item->product_name }}</h3>
-                                    <p>{{ $item->qty }} x {{ number_format($item->unit_price) }}₫{{ $item->unit ? ' / ' . $item->unit : '' }}</p>
+                                    @if($isVoucherGift)
+                                        <p><span class="order-gift-badge">Quà tặng từ {{ $order->coupon_code }}</span></p>
+                                    @else
+                                        <p>{{ $item->qty }} x {{ number_format($item->unit_price) }}₫{{ $item->unit ? ' / ' . $item->unit : '' }}</p>
+                                    @endif
                                 </div>
-                                <strong>{{ number_format($item->line_total) }}₫</strong>
+                                <strong>{{ $isVoucherGift ? 'Miễn phí' : number_format($item->line_total) . '₫' }}</strong>
                             </div>
                         @endforeach
                     </div>
@@ -126,7 +133,11 @@
                 @if((int) $order->discount_total > 0 || $order->coupon_code)
                     <div>
                         <span>Voucher{{ $order->coupon_code ? ' (' . $order->coupon_code . ')' : '' }}</span>
-                        <strong>{{ (int) $order->discount_total > 0 ? '-' . number_format($order->discount_total) . '₫' : 'Đã áp dụng' }}</strong>
+                        <strong>
+                            {{ (int) $order->discount_total > 0
+                                ? '-' . number_format($order->discount_total) . '₫'
+                                : (optional($appliedCoupon)->benefit_label ?: 'Đã áp dụng') }}
+                        </strong>
                     </div>
                 @endif
                 <div>
@@ -514,6 +525,20 @@
     .order-item > strong {
         color: #333;
         white-space: nowrap;
+    }
+
+    .order-item.is-voucher-gift {
+        background: #f7fcef;
+    }
+
+    .order-gift-badge {
+        background: #e7f5d7;
+        border-radius: 4px;
+        color: #4d7d1d;
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 7px;
     }
 
     .order-total-card {

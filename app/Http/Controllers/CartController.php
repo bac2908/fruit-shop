@@ -148,6 +148,14 @@ class CartController extends Controller
 
     public function applyCoupon(Request $request)
     {
+        if (!$request->user()) {
+            session(['url.intended' => route('cart')]);
+
+            return redirect()
+                ->route('login')
+                ->with('error', 'Vui lòng đăng nhập để sử dụng voucher thành viên.');
+        }
+
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:80'],
         ]);
@@ -155,7 +163,7 @@ class CartController extends Controller
         $redirectRoute = $this->resolveCartRedirectRoute($request);
         $cartItems = $this->getCartItems();
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart')->with('error', 'Gio hang dang trong, khong the ap ma giam gia.');
+            return redirect()->route('cart')->with('error', 'Giỏ hàng đang trống, chưa thể áp dụng mã ưu đãi.');
         }
 
         $subtotal = (int) $cartItems->sum('line_total');
@@ -167,7 +175,7 @@ class CartController extends Controller
             ->first();
 
         if (!$coupon) {
-            return redirect()->route($redirectRoute)->with('error', 'Ma giam gia khong hop le hoac da het han.');
+            return redirect()->route($redirectRoute)->with('error', 'Mã ưu đãi không tồn tại hoặc đã hết hạn.');
         }
 
         if ($error = $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
@@ -176,7 +184,10 @@ class CartController extends Controller
 
         session(['cart_coupon_code' => $coupon->code]);
 
-        return redirect()->route($redirectRoute)->with('success', 'Da ap dung voucher ' . $coupon->code . '.');
+        return redirect()->route($redirectRoute)->with(
+            'success',
+            'Đã áp dụng mã ' . $coupon->code . ': ' . $coupon->benefit_label . '.'
+        );
     }
 
     public function useCoupon(Request $request, Coupon $coupon)
@@ -184,7 +195,7 @@ class CartController extends Controller
         $cartItems = $this->getCartItems();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart')->with('error', 'Gio hang dang trong, hay them san pham truoc khi dung voucher.');
+            return redirect()->route('cart')->with('error', 'Giỏ hàng đang trống, hãy thêm sản phẩm trước khi dùng voucher.');
         }
 
         $subtotal = (int) $cartItems->sum('line_total');
@@ -198,7 +209,10 @@ class CartController extends Controller
 
         $redirectRoute = $this->resolveCartRedirectRoute($request);
 
-        return redirect()->route($redirectRoute)->with('success', 'Da chon voucher ' . $coupon->code . ' cho gio hang.');
+        return redirect()->route($redirectRoute)->with(
+            'success',
+            'Đã chọn mã ' . $coupon->code . ': ' . $coupon->benefit_label . '.'
+        );
     }
 
     public function removeCoupon(Request $request)
@@ -207,7 +221,7 @@ class CartController extends Controller
 
         $redirectRoute = $this->resolveCartRedirectRoute($request);
 
-        return redirect()->route($redirectRoute)->with('success', 'Da bo ma giam gia.');
+        return redirect()->route($redirectRoute)->with('success', 'Đã bỏ mã ưu đãi khỏi giỏ hàng.');
     }
 
     public function checkout(VietnamAddressService $addressService)
@@ -400,6 +414,18 @@ class CartController extends Controller
                 ]);
             }
 
+            if ($summary['coupon'] && $summary['coupon']->type === Coupon::TYPE_GIFT) {
+                OrderItem::query()->create([
+                    'order_id' => $order->id,
+                    'product_id' => null,
+                    'product_name' => $summary['coupon']->benefit_label,
+                    'unit' => 'quà tặng voucher',
+                    'unit_price' => 0,
+                    'qty' => 1,
+                    'line_total' => 0,
+                ]);
+            }
+
             OrderStatusHistory::query()->create([
                 'order_id' => $order->id,
                 'user_id' => $user->id,
@@ -532,6 +558,9 @@ class CartController extends Controller
 
         return view('checkout-success', [
             'order' => $order,
+            'appliedCoupon' => $order->coupon_code
+                ? Coupon::query()->where('code', $order->coupon_code)->first()
+                : null,
         ]);
     }
 

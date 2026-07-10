@@ -102,7 +102,7 @@ class Coupon extends Model
         }
 
         if ($this->per_customer_limit && $this->usageCountFor($userId, $email) >= (int) $this->per_customer_limit) {
-            return 'Bạn đã dùng voucher này đủ số lần cho phép.';
+            return 'Mã ' . $this->code . ' đã được tài khoản của bạn sử dụng.';
         }
 
         return null;
@@ -114,6 +114,10 @@ class Coupon extends Model
 
         if (!$userId && !$email) {
             return 0;
+        }
+
+        if (array_key_exists('current_user_usage_count', $this->attributes)) {
+            return (int) $this->attributes['current_user_usage_count'];
         }
 
         return $this->usages()
@@ -131,6 +135,33 @@ class Coupon extends Model
                 }
             })
             ->count();
+    }
+
+    public function hasBeenUsedBy(?int $userId = null, ?string $email = null): bool
+    {
+        if (!$this->per_customer_limit) {
+            return false;
+        }
+
+        return $this->usageCountFor($userId, $email) >= (int) $this->per_customer_limit;
+    }
+
+    public function getBenefitLabelAttribute(): string
+    {
+        if ($this->type === self::TYPE_GIFT) {
+            return $this->title;
+        }
+
+        return $this->discount_label;
+    }
+
+    public function getCustomerLimitLabelAttribute(): string
+    {
+        if ($this->per_customer_limit) {
+            return 'Mỗi tài khoản dùng tối đa ' . number_format((int) $this->per_customer_limit, 0, ',', '.') . ' lần';
+        }
+
+        return 'Không giới hạn số lần dùng theo tài khoản';
     }
 
     public function hasUsableVoucherFor(?int $userId): bool

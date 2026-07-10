@@ -142,7 +142,7 @@
                         <div class="payment-coupon-applied">
                             <div>
                                 <strong>{{ $appliedCoupon->code }}</strong>
-                                <span>{{ $appliedCoupon->discount_label }}</span>
+                                <span>{{ $appliedCoupon->benefit_label }}</span>
                             </div>
                             <form method="post" action="{{ route('cart.coupon.remove') }}">
                                 @csrf
@@ -159,8 +159,12 @@
                         <strong>{{ number_format($summary['subtotal'] ?? 0, 0, ',', '.') }}₫</strong>
                     </div>
                     <div>
-                        <span>Giảm giá</span>
-                        <strong>-{{ number_format($summary['discount_total'] ?? 0, 0, ',', '.') }}₫</strong>
+                        <span>{{ !empty($appliedCoupon) && $appliedCoupon->type === \App\Models\Coupon::TYPE_GIFT ? 'Quà tặng voucher' : 'Giảm giá' }}</span>
+                        <strong>
+                            {{ !empty($appliedCoupon) && $appliedCoupon->type === \App\Models\Coupon::TYPE_GIFT
+                                ? $appliedCoupon->benefit_label
+                                : '-' . number_format($summary['discount_total'] ?? 0, 0, ',', '.') . '₫' }}
+                        </strong>
                     </div>
                     <div>
                         <span>Phí vận chuyển</span>
@@ -608,6 +612,12 @@
         color: #555f50;
         font-size: 14px;
         font-weight: 500;
+    }
+
+    .payment-total-list strong {
+        max-width: 64%;
+        overflow-wrap: anywhere;
+        text-align: right;
     }
 
     .payment-shipping-note {

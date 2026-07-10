@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Product;
+use App\Models\User;
 
 class HomeService
 {
@@ -163,13 +164,29 @@ class HomeService
     /**
      * Get active coupons with images
      */
-    public function getActiveCoupons(int $limit = 6)
+    public function getActiveCoupons(int $limit = 6, ?User $user = null)
     {
-        return Coupon::query()
+        $query = Coupon::query()
             ->with('images')
             ->valid()
             ->where('is_public', true)
-            ->orderByDesc('id')
+            ->whereIn('code', WelcomeVoucherService::CODES);
+
+        if ($user) {
+            $email = strtolower(trim((string) $user->email));
+
+            $query->withCount([
+                'usages as current_user_usage_count' => function ($usageQuery) use ($user, $email) {
+                    $usageQuery->where(function ($customerQuery) use ($user, $email) {
+                        $customerQuery->where('user_id', $user->id)
+                            ->orWhereRaw('LOWER(customer_email) = ?', [$email]);
+                    });
+                },
+            ]);
+        }
+
+        return $query
+            ->orderByRaw("CASE code WHEN 'GIOQUA10' THEN 1 WHEN 'QUYTTHAI1KG' THEN 2 WHEN 'KIWIVANG500' THEN 3 ELSE 4 END")
             ->limit($limit)
             ->get();
     }

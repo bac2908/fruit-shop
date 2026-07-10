@@ -344,6 +344,9 @@
                                 <strong>{{ number_format((int) $order->total, 0, ',', '.') }} VND</strong>
                                 <span class="status-pill {{ $order->payment_status }}">{{ $order->payment_status_label }}</span>
                                 <span class="muted">{{ $order->payment_method_label }}</span>
+                                @if($order->coupon_code)
+                                    <span class="status-pill confirmed">Voucher: {{ $order->coupon_code }}</span>
+                                @endif
                             </span>
                         </td>
                         <td>

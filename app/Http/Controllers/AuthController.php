@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\WelcomeVoucherService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,7 +46,7 @@ class AuthController extends Controller
         return view('auth.forgot-password');
     }
 
-    public function login(Request $request)
+    public function login(Request $request, WelcomeVoucherService $welcomeVouchers)
     {
         $this->normalizeLoginInput($request);
 
@@ -80,13 +81,14 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+        $welcomeVouchers->assignTo($user);
         $this->resetFailedLoginState($user);
         $this->writeSecurityAuditLog($request, 'login_success', $user);
 
         return $this->redirectAfterLogin($request, $user, 'Đăng nhập thành công.');
     }
 
-    public function register(Request $request)
+    public function register(Request $request, WelcomeVoucherService $welcomeVouchers)
     {
         $this->normalizeRegisterInput($request);
 
@@ -125,7 +127,7 @@ class AuthController extends Controller
             'terms.accepted' => 'Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật để tiếp tục.',
         ]);
 
-        $user = DB::transaction(function () use ($request, $validated) {
+        $user = DB::transaction(function () use ($request, $validated, $welcomeVouchers) {
             $phone = $validated['phone'] ?? null;
             $address = $validated['address'] ?? null;
             $payload = [
@@ -142,6 +144,7 @@ class AuthController extends Controller
             }
 
             $user = User::query()->create($payload);
+            $welcomeVouchers->assignTo($user);
 
             if (Schema::hasTable('password_history')) {
                 DB::table('password_history')->insert([
@@ -315,7 +318,7 @@ class AuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function handleGoogleCallback(Request $request)
+    public function handleGoogleCallback(Request $request, WelcomeVoucherService $welcomeVouchers)
     {
         if ($request->filled('error')) {
             return redirect()
@@ -362,7 +365,7 @@ class AuthController extends Controller
                 ->with('error', 'Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau.');
         }
 
-        $user = DB::transaction(function () use ($request, $existingUser, $googleUser, $googleId, $email) {
+        $user = DB::transaction(function () use ($request, $existingUser, $googleUser, $googleId, $email, $welcomeVouchers) {
             $user = $existingUser;
             $isNewUser = !$user;
             $displayName = trim((string) ($googleUser->getName() ?: Str::before($email, '@')));
@@ -388,12 +391,14 @@ class AuthController extends Controller
                 }
 
                 $user = User::query()->create($payload);
+                $welcomeVouchers->assignTo($user);
                 $this->writeSecurityAuditLog($request, 'google_customer_registered', $user, ['email' => $email]);
 
                 return $user;
             }
 
             $user->forceFill($payload)->save();
+            $welcomeVouchers->assignTo($user);
             $this->writeSecurityAuditLog($request, 'google_account_linked', $user, ['email' => $email]);
 
             return $user;

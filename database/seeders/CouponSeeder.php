@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Coupon;
 use App\Models\CouponImage;
+use App\Models\User;
+use App\Services\WelcomeVoucherService;
 
 class CouponSeeder extends Seeder
 {
@@ -20,30 +22,30 @@ class CouponSeeder extends Seeder
 
         $coupons = [
             [
-                'title' => 'Tang ngay 500gr Kiwi vang New Zealand',
+                'title' => 'Tặng 500g Kiwi vàng New Zealand',
                 'code' => 'KIWIVANG500',
                 'type' => Coupon::TYPE_GIFT,
                 'value' => null,
                 'min_order_total' => 500000,
-                'description' => 'Ap dung cho don hang tu 500.000d, qua tang duoc xac nhan khi goi dien.',
+                'description' => 'Nhận miễn phí 500g Kiwi vàng New Zealand khi đơn hàng đạt từ 500.000đ.',
                 'image_url' => '//theme.hstatic.net/200000157781/1001036201/14/icon_coupon_1.png?v=1061',
             ],
             [
-                'title' => 'Tang 1kg Quyt Thai cho don tu 800k',
+                'title' => 'Tặng 1kg Quýt Thái',
                 'code' => 'QUYTTHAI1KG',
                 'type' => Coupon::TYPE_GIFT,
                 'value' => null,
                 'min_order_total' => 800000,
-                'description' => 'Qua tang theo mua, ap dung den khi het so luong khuyen mai.',
+                'description' => 'Nhận miễn phí 1kg Quýt Thái khi đơn hàng đạt từ 800.000đ.',
                 'image_url' => '//theme.hstatic.net/200000157781/1001036201/14/icon_coupon_2.png?v=1061',
             ],
             [
-                'title' => 'Giam 10% cho don gio qua trai cay',
+                'title' => 'Giảm 10% cho đơn hàng',
                 'code' => 'GIOQUA10',
                 'type' => Coupon::TYPE_PERCENT,
                 'value' => 10,
                 'min_order_total' => 300000,
-                'description' => 'Giam toi da 100.000d cho cac don gio qua trai cay.',
+                'description' => 'Giảm 10%, tối đa 100.000đ cho đơn hàng đạt từ 300.000đ.',
                 'image_url' => '//theme.hstatic.net/200000157781/1001036201/14/icon_coupon_3.png?v=1061',
                 'max_discount' => 100000,
             ],
@@ -53,15 +55,20 @@ class CouponSeeder extends Seeder
             $imageUrl = $couponData['image_url'];
             unset($couponData['image_url']);
 
-            $coupon = Coupon::query()->updateOrCreate(
-                ['code' => $couponData['code']],
-                array_merge($couponData, [
-                    'starts_at' => $startsAt,
-                    'ends_at' => $endsAt,
-                    'is_active' => true,
-                    'used_count' => 0,
-                ])
-            );
+            $coupon = Coupon::query()->firstOrNew(['code' => $couponData['code']]);
+            $coupon->fill(array_merge($couponData, [
+                'is_active' => true,
+                'is_public' => true,
+                'per_customer_limit' => 1,
+            ]));
+
+            if (!$coupon->exists) {
+                $coupon->starts_at = $startsAt;
+                $coupon->ends_at = $endsAt;
+                $coupon->used_count = 0;
+            }
+
+            $coupon->save();
 
             CouponImage::query()->updateOrCreate(
                 [
@@ -73,6 +80,15 @@ class CouponSeeder extends Seeder
                 ]
             );
         }
+
+        $welcomeVouchers = app(WelcomeVoucherService::class);
+        User::query()
+            ->where('role', 'customer')
+            ->chunkById(200, function ($users) use ($welcomeVouchers) {
+                foreach ($users as $user) {
+                    $welcomeVouchers->assignTo($user);
+                }
+            });
 
         if ($this->command) {
             $this->command->info('Active coupons seeded/refreshed: ' . count($coupons));

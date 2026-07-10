@@ -115,7 +115,7 @@
                             <div class="coupon-applied">
                                 <div>
                                     <p>Đã áp dụng: <strong>{{ $appliedCoupon->code }}</strong></p>
-                                    <small>{{ $appliedCoupon->discount_label }} · {{ $appliedCoupon->condition_label }}</small>
+                                    <small>{{ $appliedCoupon->benefit_label }} · {{ $appliedCoupon->condition_label }}</small>
                                 </div>
                                 <form method="post" action="{{ route('cart.coupon.remove') }}">
                                     @csrf
@@ -131,8 +131,12 @@
                             <strong>{{ number_format($summary['subtotal'] ?? 0) }}₫</strong>
                         </li>
                         <li>
-                            <span>Giảm giá</span>
-                            <strong>-{{ number_format($summary['discount_total'] ?? 0) }}₫</strong>
+                            <span>{{ !empty($appliedCoupon) && $appliedCoupon->type === \App\Models\Coupon::TYPE_GIFT ? 'Quà tặng voucher' : 'Giảm giá' }}</span>
+                            <strong>
+                                {{ !empty($appliedCoupon) && $appliedCoupon->type === \App\Models\Coupon::TYPE_GIFT
+                                    ? $appliedCoupon->benefit_label
+                                    : '-' . number_format($summary['discount_total'] ?? 0) . '₫' }}
+                            </strong>
                         </li>
                         <li>
                             <span>Phí giao hàng</span>
@@ -412,6 +416,12 @@
         align-items: center;
         margin-bottom: 10px;
         color: #555;
+    }
+
+    .summary-list li > strong {
+        max-width: 58%;
+        overflow-wrap: anywhere;
+        text-align: right;
     }
 
     .summary-list li.total {

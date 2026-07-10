@@ -98,7 +98,12 @@
 			</div>
 			<div class="listCoupon">
 				@forelse($coupons as $coupon)
-				<div class="col-12 col-md-6 col-xl-4 coupon-item">
+				@php
+					$couponUsed = auth()->check()
+						&& $coupon->hasBeenUsedBy(auth()->id(), auth()->user()->email);
+					$couponInfoId = 'coupon-info-' . $coupon->id;
+				@endphp
+				<div class="col-12 col-md-6 col-xl-4 coupon-item {{ $couponUsed ? 'is-used' : '' }}">
 					<div class="coupon-item__inner">
 						<div class="coupon-item__left">
 							<div class="cp-img boxlazy-img">
@@ -108,28 +113,50 @@
 							</div>
 						</div>
 						<div class="coupon-item__right">
-							<button type="button" class="cp-icon" data-toggle="popover" data-container="body" data-placement="bottom" data-popover-content="#cp-tooltip-{{ $loop->index + 1 }}" data-class="coupon-popover" title="{{ $coupon->title }}">
-								<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20" viewBox="0 0 20 20">
-									<defs>
-										<path id="path-{{ $loop->index + 1 }}" d="M8.333 0C3.738 0 0 3.738 0 8.333c0 4.595 3.738 8.334 8.333 8.334 4.595 0 8.334-3.739 8.334-8.334S12.928 0 8.333 0zm0 1.026c4.03 0 7.308 3.278 7.308 7.307 0 4.03-3.278 7.308-7.308 7.308-4.03 0-7.307-3.278-7.307-7.308 0-4.03 3.278-7.307 7.307-7.307zm.096 6.241c-.283 0-.512.23-.512.513v4.359c0 .283.23.513.512.513.284 0 .513-.23.513-.513V7.78c0-.283-.23-.513-.513-.513zm.037-3.114c-.474 0-.858.384-.858.858 0 .473.384.857.858.857s.858-.384.858-.857c0-.474-.384-.858-.858-.858z" />
-									</defs>
-									<g>
-										<use xlink:href="#path-{{ $loop->index + 1 }}" />
-									</g>
-								</svg>
-							</button>
+							<details class="coupon-info">
+								<summary class="cp-icon" aria-label="Xem điều kiện mã {{ $coupon->code }}" aria-controls="{{ $couponInfoId }}">
+									<i class="fa fa-info-circle" aria-hidden="true"></i>
+								</summary>
+								<div class="coupon-info-panel" id="{{ $couponInfoId }}">
+									<strong>Quyền lợi</strong>
+									<span>{{ $coupon->benefit_label }}</span>
+									<strong>Điều kiện</strong>
+									<span>{{ $coupon->condition_label }}</span>
+									<strong>Giới hạn</strong>
+									<span>{{ $coupon->customer_limit_label }}</span>
+								</div>
+							</details>
 							<div class="cp-top">
 								<h3>{{ $coupon->title }}</h3>
-								<p>{{ $coupon->description ?? 'Mã giảm giá đặc biệt' }}</p>
+								<p>{{ $coupon->description ?? $coupon->benefit_label }}</p>
 							</div>
+							<div class="cp-benefit"><i class="fa fa-check-circle"></i> {{ $coupon->condition_label }}</div>
 							<div class="cp-bottom">
 								<div class="cp-bottom-detail">
 									<p>Mã: <strong>{{ $coupon->code }}</strong></p>
-									<p>HSD: {{ $coupon->ends_at ? $coupon->ends_at->format('d/m/Y') : 'Unlimited' }}</p>
+									<p>HSD: {{ $coupon->ends_at ? $coupon->ends_at->format('d/m/Y') : 'Không giới hạn' }}</p>
 								</div>
 								<div class="cp-bottom-btn">
-									<button class="cp-btn button" data-coupon="{{ $coupon->code }}">Sao chép mã</button>
+									@if($couponUsed)
+										<button type="button" class="cp-btn button is-used" disabled>Đã sử dụng</button>
+									@else
+										<button
+											type="button"
+											class="cp-btn button"
+											data-coupon-copy="{{ $coupon->code }}"
+											data-coupon-benefit="{{ $coupon->benefit_label }}"
+										>Sao chép mã</button>
+									@endif
 								</div>
+							</div>
+							<div class="coupon-account-status {{ $couponUsed ? 'is-used' : 'is-ready' }}">
+								@if($couponUsed)
+									Mã này đã được tài khoản của bạn sử dụng
+								@elseif(auth()->check())
+									Dùng được 1 lần cho tài khoản của bạn
+								@else
+									Đăng nhập để sử dụng mã thành viên
+								@endif
 							</div>
 						</div>
 					</div>
@@ -142,6 +169,7 @@
 			</div>
 		</div>
 	</div>
+	<div class="coupon-copy-toast" id="couponCopyToast" role="status" aria-live="polite"></div>
 </section>
 
 {{-- Các Section Sản phẩm động --}}
@@ -397,6 +425,167 @@
 	padding: 10px 14px;
 }
 
+.coupon-item__right {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+	position: relative;
+}
+
+.listCoupon {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.coupon-item {
+	display: flex;
+	margin-bottom: 16px;
+}
+
+.coupon-item__inner {
+	height: 100%;
+	margin-bottom: 0;
+	width: 100%;
+}
+
+.coupon-item__right .cp-bottom {
+	margin-top: auto;
+}
+
+.coupon-info {
+	position: absolute;
+	right: 0;
+	top: 0;
+	z-index: 12;
+}
+
+.coupon-info > summary {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	color: #26331f;
+	cursor: pointer;
+	display: flex;
+	font-size: 20px;
+	height: 30px;
+	justify-content: center;
+	list-style: none;
+	padding: 0;
+	width: 30px;
+}
+
+.coupon-info > summary::-webkit-details-marker {
+	display: none;
+}
+
+.coupon-info > summary:focus-visible {
+	border-radius: 50%;
+	outline: 3px solid rgba(117, 183, 44, 0.3);
+}
+
+.coupon-info-panel {
+	background: #fff;
+	border: 1px solid #dbe8cf;
+	border-radius: 8px;
+	box-shadow: 0 14px 32px rgba(38, 55, 27, 0.2);
+	display: grid;
+	gap: 3px;
+	padding: 14px;
+	position: absolute;
+	right: 0;
+	top: 34px;
+	width: 270px;
+}
+
+.coupon-info-panel strong {
+	color: #3f6d1d;
+	font-size: 12px;
+	margin-top: 6px;
+}
+
+.coupon-info-panel span {
+	color: #53604e;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.coupon-item__right .cp-top {
+	padding-right: 32px;
+}
+
+.coupon-item__right .cp-top p {
+	min-height: 42px;
+}
+
+.cp-benefit {
+	color: #4e7f23;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.4;
+	margin: 7px 0;
+}
+
+.coupon-account-status {
+	border-top: 1px solid #e5ecdf;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.4;
+	margin-top: 10px;
+	padding-top: 8px;
+}
+
+.coupon-account-status.is-ready {
+	color: #4f7f1f;
+}
+
+.coupon-account-status.is-used {
+	color: #777;
+}
+
+.coupon-item.is-used .coupon-item__inner {
+	background: #f5f5f3;
+	border-color: #d8d8d4;
+	box-shadow: none;
+}
+
+.coupon-item.is-used .coupon-item__left,
+.coupon-item.is-used .cp-top,
+.coupon-item.is-used .cp-benefit,
+.coupon-item.is-used .cp-bottom-detail {
+	opacity: 0.65;
+}
+
+.cp-btn.button.is-used,
+.cp-btn.button:disabled {
+	background: #a9afa5;
+	cursor: not-allowed;
+	opacity: 1;
+}
+
+.coupon-copy-toast {
+	background: #22381a;
+	border-radius: 6px;
+	bottom: 24px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+	color: #fff;
+	font-size: 14px;
+	left: 50%;
+	max-width: min(520px, calc(100vw - 32px));
+	opacity: 0;
+	pointer-events: none;
+	position: fixed;
+	transform: translate(-50%, 18px);
+	transition: opacity .2s ease, transform .2s ease;
+	z-index: 9999;
+}
+
+.coupon-copy-toast.is-visible {
+	opacity: 1;
+	padding: 12px 16px;
+	transform: translate(-50%, 0);
+}
+
 .sidebar-category {
 	border-radius: 18px;
 	box-shadow: 0 18px 32px rgba(53, 79, 29, 0.14);
@@ -501,6 +690,73 @@
 			autoplay: true,
 			autoplayTimeout: 4000,
 			navText: ["<i class='fa fa-angle-left'></i>","<i class='fa fa-angle-right'></i>"]
+		});
+
+		function fallbackCopy(text) {
+			var input = document.createElement('textarea');
+			input.value = text;
+			input.setAttribute('readonly', '');
+			input.style.position = 'fixed';
+			input.style.opacity = '0';
+			document.body.appendChild(input);
+			input.select();
+			var copied = document.execCommand('copy');
+			document.body.removeChild(input);
+			return copied;
+		}
+
+		function showCouponToast(message) {
+			var toast = document.getElementById('couponCopyToast');
+			if (!toast) return;
+
+			toast.textContent = message;
+			toast.classList.add('is-visible');
+			window.clearTimeout(toast.hideTimer);
+			toast.hideTimer = window.setTimeout(function() {
+				toast.classList.remove('is-visible');
+			}, 3200);
+		}
+
+		$(document).on('click', '[data-coupon-copy]', async function() {
+			var button = this;
+			var code = button.getAttribute('data-coupon-copy');
+			var benefit = button.getAttribute('data-coupon-benefit') || '';
+			var originalLabel = button.textContent;
+			var copied = false;
+
+			try {
+				if (navigator.clipboard && window.isSecureContext) {
+					await navigator.clipboard.writeText(code);
+					copied = true;
+				} else {
+					copied = fallbackCopy(code);
+				}
+			} catch (error) {
+				copied = fallbackCopy(code);
+			}
+
+			if (!copied) {
+				showCouponToast('Chưa sao chép được mã. Vui lòng thử lại.');
+				return;
+			}
+
+			button.textContent = 'Đã sao chép';
+			showCouponToast('Đã sao chép ' + code + (benefit ? ' - ' + benefit : '') + '. Dán mã tại giỏ hàng hoặc checkout.');
+			window.setTimeout(function() {
+				button.textContent = originalLabel;
+			}, 1800);
+		});
+
+		$('.coupon-info').on('toggle', function() {
+			if (!this.open) return;
+
+			$('.coupon-info').not(this).removeAttr('open');
+		});
+
+		$(document).on('click', function(event) {
+			if (!$(event.target).closest('.coupon-info').length) {
+				$('.coupon-info').removeAttr('open');
+			}
 		});
 	});
 </script>

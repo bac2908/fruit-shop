@@ -515,23 +515,23 @@
                 <section class="account-panel">
                     <div class="account-panel-head">
                         <div>
-                            <h2>Voucher</h2>
-                            <p>{{ number_format($voucherCount) }} mã có thể xem trong tài khoản.</p>
+                            <h2>Voucher của bạn</h2>
+                            <p>{{ number_format($voucherCount) }} mã đã được cấp cho tài khoản.</p>
                         </div>
                     </div>
 
                     @if($personalVouchers->isNotEmpty())
-                        <h3 class="account-section-title">Voucher cá nhân</h3>
+                        <h3 class="account-section-title">Voucher thành viên</h3>
                         <div class="account-voucher-grid">
                             @foreach($personalVouchers as $voucher)
                                 <div class="account-voucher account-voucher-featured">
                                     <div class="account-voucher-main">
-                                        <span class="account-voucher-kicker">Voucher cá nhân</span>
+                                        <span class="account-voucher-kicker">Dành cho tài khoản của bạn</span>
                                         <strong>{{ $voucher->coupon->code }}</strong>
                                         <span>{{ $voucher->coupon->title }}</span>
                                     </div>
                                     <div class="account-voucher-meta">
-                                        <small>{{ $voucher->coupon->discount_label }}</small>
+                                        <small>{{ $voucher->coupon->benefit_label }}</small>
                                         <small>{{ $voucher->coupon->condition_label }}</small>
                                         <small>{{ $voucher->expiry_label }}</small>
                                     </div>
@@ -548,7 +548,7 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="account-empty">Chưa có voucher cá nhân được gán riêng.</div>
+                        <div class="account-empty">Tài khoản chưa có voucher thành viên.</div>
                     @endif
 
                     @if($availableCoupons->isNotEmpty())
@@ -562,7 +562,7 @@
                                         <span>{{ $coupon->title }}</span>
                                     </div>
                                     <div class="account-voucher-meta">
-                                        <small>{{ $coupon->discount_label }}</small>
+                                        <small>{{ $coupon->benefit_label }}</small>
                                         <small>{{ $coupon->condition_label }}</small>
                                         <small>{{ $coupon->expiry_label }}</small>
                                         <small>{{ $coupon->usage_label }}</small>
@@ -586,7 +586,11 @@
                                 <div class="account-row">
                                     <span>{{ $usage->coupon_code }}</span>
                                     <small>{{ $usage->used_at ? $usage->used_at->format('d/m/Y H:i') : 'Đã dùng' }}</small>
-                                    <strong>-{{ number_format((int) $usage->discount_total, 0, ',', '.') }}₫</strong>
+                                    <strong>
+                                        {{ (int) $usage->discount_total > 0
+                                            ? '-' . number_format((int) $usage->discount_total, 0, ',', '.') . '₫'
+                                            : optional($usage->coupon)->benefit_label }}
+                                    </strong>
                                 </div>
                             @endforeach
                         </div>
