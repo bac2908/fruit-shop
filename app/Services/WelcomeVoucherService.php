@@ -9,6 +9,13 @@ use App\Models\UserVoucher;
 
 class WelcomeVoucherService
 {
+    private $notifications;
+
+    public function __construct(CustomerNotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
     public const CODES = [
         'GIOQUA10',
         'QUYTTHAI1KG',
@@ -56,6 +63,8 @@ class WelcomeVoucherService
             if ($voucher->wasRecentlyCreated) {
                 $assigned++;
             }
+
+            $this->notifications->voucherReceived($user, $coupon, $voucher);
         }
 
         return $assigned;

@@ -200,6 +200,17 @@ class AppServiceProvider extends ServiceProvider
             $view->with('sections', $sections);
             $view->with('megaCategories', $megaCategories);
             $view->with('salesPopupProducts', $this->getSalesPopupProducts());
+
+            $headerNotifications = collect();
+            $headerUnreadNotificationCount = 0;
+
+            if (auth()->check() && Schema::hasTable('notifications')) {
+                $headerNotifications = auth()->user()->notifications()->latest()->take(5)->get();
+                $headerUnreadNotificationCount = auth()->user()->unreadNotifications()->count();
+            }
+
+            $view->with('headerNotifications', $headerNotifications);
+            $view->with('headerUnreadNotificationCount', $headerUnreadNotificationCount);
         });
     }
 

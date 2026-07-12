@@ -9,6 +9,7 @@ use App\Models\OrderStatusHistory;
 use App\Services\OrderCancellationService;
 use App\Services\OrderAutomationService;
 use App\Services\OrderNotificationService;
+use App\Services\CustomerNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -41,7 +42,8 @@ class OrderController extends Controller
         Order $order,
         OrderCancellationService $cancellationService,
         OrderAutomationService $orderAutomation,
-        OrderNotificationService $orderNotifications
+        OrderNotificationService $orderNotifications,
+        CustomerNotificationService $customerNotifications
     )
     {
         $request->merge([
@@ -59,7 +61,7 @@ class OrderController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($request, $order, $validated, $cancellationService, $orderAutomation, $orderNotifications) {
+            DB::transaction(function () use ($request, $order, $validated, $cancellationService, $orderAutomation, $orderNotifications, $customerNotifications) {
                 $order = Order::query()
                     ->with(['items', 'cancellationRequests'])
                     ->whereKey($order->id)
@@ -73,6 +75,8 @@ class OrderController extends Controller
 
                     if ($validated['status'] === Order::STATUS_CONFIRMED) {
                         $orderNotifications->notifyOrderConfirmed($order, $request->user()->id);
+                    } else {
+                        $customerNotifications->orderStatusChanged($order->refresh(), $validated['status']);
                     }
 
                     return;
@@ -131,6 +135,8 @@ class OrderController extends Controller
                 if ($validated['status'] === Order::STATUS_CONFIRMED) {
                     $order->refresh();
                     $orderNotifications->notifyOrderConfirmed($order, $request->user()->id);
+                } else {
+                    $customerNotifications->orderStatusChanged($order->refresh(), $validated['status']);
                 }
             });
         } catch (ValidationException $exception) {

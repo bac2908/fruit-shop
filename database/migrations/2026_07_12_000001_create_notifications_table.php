@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateNotificationsTable extends Migration
+{
+    public function up()
+    {
+        if (Schema::hasTable('notifications')) {
+            return;
+        }
+
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable()->index();
+            $table->timestamps();
+
+            $table->index(['notifiable_type', 'notifiable_id', 'created_at'], 'notifications_owner_created_index');
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('notifications');
+    }
+}

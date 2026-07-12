@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\UserVoucher;
 use App\Services\WelcomeVoucherService;
+use App\Services\VoucherSelectionService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -34,6 +35,94 @@ class CouponMemberFlowTest extends TestCase
                 ->whereIn('coupon_id', Coupon::whereIn('code', WelcomeVoucherService::CODES)->pluck('id'))
                 ->count()
         );
+        $this->assertSame(3, $user->notifications()->count());
+
+        $this->actingAs($user)
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertSee('Bạn đã nhận voucher GIOQUA10')
+            ->assertSee('Bạn đã nhận voucher QUYTTHAI1KG')
+            ->assertSee('Bạn đã nhận voucher KIWIVANG500');
+
+        $this->actingAs($user)
+            ->post(route('notifications.read-all'))
+            ->assertRedirect(route('notifications.index'));
+
+        $this->assertSame(0, $user->unreadNotifications()->count());
+    }
+
+    public function test_system_recommends_direct_discount_and_explains_locked_vouchers(): void
+    {
+        $this->ensureWelcomeCoupons();
+        $user = User::factory()->create(['role' => 'customer']);
+        app(WelcomeVoucherService::class)->assignTo($user);
+
+        $options = app(VoucherSelectionService::class)->optionsFor($user, 600000);
+        $best = app(VoucherSelectionService::class)->bestEligible($options);
+        $quytOption = $options->first(function (array $option) {
+            return $option['coupon']->code === 'QUYTTHAI1KG';
+        });
+
+        $this->assertSame('GIOQUA10', optional($best)->code);
+        $this->assertFalse($quytOption['eligible']);
+        $this->assertSame(200000, $quytOption['missing_amount']);
+        $this->assertSame('Mua thêm 200.000đ để sử dụng.', $quytOption['reason']);
+    }
+
+    public function test_customer_cannot_open_another_customers_notification(): void
+    {
+        $this->ensureWelcomeCoupons();
+        $owner = User::factory()->create(['role' => 'customer']);
+        $otherCustomer = User::factory()->create(['role' => 'customer']);
+        app(WelcomeVoucherService::class)->assignTo($owner);
+        $notification = $owner->notifications()->firstOrFail();
+
+        $this->actingAs($otherCustomer)
+            ->post(route('notifications.open', $notification->id))
+            ->assertNotFound();
+
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
+    public function test_cart_automatically_applies_the_recommended_voucher(): void
+    {
+        $this->ensureWelcomeCoupons();
+        $user = User::factory()->create(['role' => 'customer']);
+        app(WelcomeVoucherService::class)->assignTo($user);
+        $category = Category::query()->create([
+            'name' => 'Danh mục tự chọn voucher',
+            'slug' => 'danh-muc-tu-chon-voucher-' . uniqid(),
+            'is_active' => true,
+            'sort_order' => 999,
+        ]);
+        $product = Product::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Giỏ hàng tự chọn voucher',
+            'slug' => 'gio-hang-tu-chon-voucher-' . uniqid(),
+            'sku' => 'AUTO-' . strtoupper(uniqid()),
+            'unit' => 'hộp',
+            'stock' => 10,
+            'price' => 600000,
+            'is_active' => true,
+            'sort_order' => 999,
+        ]);
+
+        $this->actingAs($user)
+            ->withSession([
+                'cart' => [
+                    (string) $product->id => [
+                        'product_id' => $product->id,
+                        'quantity' => 1,
+                    ],
+                ],
+            ])
+            ->get(route('cart'))
+            ->assertOk()
+            ->assertSee('Đã tự động chọn ưu đãi tốt nhất')
+            ->assertSee('Mua thêm 200.000đ để sử dụng.');
+
+        $this->assertSame('GIOQUA10', session('cart_coupon_code'));
+        $this->assertSame('auto', session('cart_coupon_selection_mode'));
     }
 
     public function test_used_voucher_is_rejected_and_shown_as_used(): void
@@ -135,14 +224,16 @@ class CouponMemberFlowTest extends TestCase
             'line_total' => 0,
         ]);
         $this->assertSame(2, OrderItem::where('order_id', $order->id)->count());
+        $this->assertTrue($user->notifications()->where('data->event_key', 'order:' . $order->id . ':placed')->exists());
+        $this->assertTrue($user->notifications()->where('data->event_key', 'order:' . $order->id . ':status:confirmed')->exists());
     }
 
     private function ensureWelcomeCoupons(): void
     {
         $definitions = [
             ['code' => 'GIOQUA10', 'title' => 'Giảm 10% cho đơn hàng', 'type' => Coupon::TYPE_PERCENT, 'value' => 10, 'min_order_total' => 300000, 'max_discount' => 100000],
-            ['code' => 'QUYTTHAI1KG', 'title' => 'Tặng 1kg Quýt Thái', 'type' => Coupon::TYPE_GIFT, 'value' => null, 'min_order_total' => 800000, 'max_discount' => null],
-            ['code' => 'KIWIVANG500', 'title' => 'Tặng 500g Kiwi vàng New Zealand', 'type' => Coupon::TYPE_GIFT, 'value' => null, 'min_order_total' => 500000, 'max_discount' => null],
+            ['code' => 'QUYTTHAI1KG', 'title' => 'Tặng 1kg Quýt Thái', 'type' => Coupon::TYPE_GIFT, 'value' => 110000, 'min_order_total' => 800000, 'max_discount' => null],
+            ['code' => 'KIWIVANG500', 'title' => 'Tặng 500g Kiwi vàng New Zealand', 'type' => Coupon::TYPE_GIFT, 'value' => 90000, 'min_order_total' => 500000, 'max_discount' => null],
         ];
 
         foreach ($definitions as $definition) {

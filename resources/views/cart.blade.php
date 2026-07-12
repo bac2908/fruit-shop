@@ -105,24 +105,12 @@
                     <h2>Tóm tắt đơn hàng</h2>
 
                     <div class="coupon-box">
-                        <form method="post" action="{{ route('cart.coupon.apply') }}" class="coupon-form">
-                            @csrf
-                            <input type="text" name="code" placeholder="Nhập mã voucher" value="{{ old('code') }}">
-                            <button type="submit">Áp dụng</button>
-                        </form>
-
-                        @if(!empty($appliedCoupon))
-                            <div class="coupon-applied">
-                                <div>
-                                    <p>Đã áp dụng: <strong>{{ $appliedCoupon->code }}</strong></p>
-                                    <small>{{ $appliedCoupon->benefit_label }} · {{ $appliedCoupon->condition_label }}</small>
-                                </div>
-                                <form method="post" action="{{ route('cart.coupon.remove') }}">
-                                    @csrf
-                                    <button type="submit">Bỏ mã</button>
-                                </form>
-                            </div>
-                        @endif
+                        <x-vouchers.selector
+                            :options="$summary['voucher_options'] ?? collect()"
+                            :selected="$appliedCoupon"
+                            :selection-mode="$summary['coupon_selection_mode'] ?? null"
+                            redirect="cart"
+                        />
                     </div>
 
                     <ul class="summary-list">

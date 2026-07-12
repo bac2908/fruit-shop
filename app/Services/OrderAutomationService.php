@@ -8,10 +8,15 @@ use App\Models\OrderStatusHistory;
 class OrderAutomationService
 {
     private $notifications;
+    private $customerNotifications;
 
-    public function __construct(OrderNotificationService $notifications)
+    public function __construct(
+        OrderNotificationService $notifications,
+        CustomerNotificationService $customerNotifications
+    )
     {
         $this->notifications = $notifications;
+        $this->customerNotifications = $customerNotifications;
     }
 
     public function autoConfirmAfterStockReserved(Order $order, ?int $actorId = null, ?string $reason = null): bool
@@ -89,6 +94,8 @@ class OrderAutomationService
             'note' => $note,
             'created_at' => now(),
         ]);
+
+        $this->customerNotifications->paymentReceived($order->refresh());
 
         return true;
     }

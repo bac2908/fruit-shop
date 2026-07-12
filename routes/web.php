@@ -9,6 +9,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -49,6 +50,12 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function () {
+	Route::get('/', [NotificationController::class, 'index'])->name('index');
+	Route::post('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
+	Route::post('/{notification}/open', [NotificationController::class, 'open'])->name('open');
+});
 
 Route::middleware('auth')->prefix('account')->name('account.')->group(function () {
 	Route::get('/', [ProfileController::class, 'show'])->name('profile');
@@ -109,6 +116,7 @@ Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+Route::post('/cart/coupon/auto', [CartController::class, 'autoCoupon'])->middleware('auth')->name('cart.coupon.auto');
 Route::post('/cart/coupon/use/{coupon}', [CartController::class, 'useCoupon'])->middleware('auth')->name('cart.coupon.use');
 Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 Route::get('/checkout', [CartController::class, 'checkout'])->middleware('auth')->name('checkout');

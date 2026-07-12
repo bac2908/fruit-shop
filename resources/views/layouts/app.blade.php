@@ -146,15 +146,57 @@
 							</div>
 						</div>
 
-						<div class="top-cart-contain">
-							<div class="mini-cart">
-								<div class="heading-cart">
-									<a href="{{ $cartUrl }}" class="d-flex align-items-center" aria-label="Mở giỏ hàng">
-										<div class="icon relative" style="background: #ff9800; color: #fff; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center;">
-											<i class="fa fa-shopping-bag" style="margin-right: 8px;"></i>
-										<span class="label" style="font-weight: bold;">Giỏ hàng ({{ $headerCartCount }})</span>
+						<div class="header-commerce-actions">
+							@auth
+								<div class="header-notification" data-header-notification>
+									<button type="button" class="header-notification-toggle" data-notification-toggle aria-label="Mở thông báo" aria-expanded="false" title="Thông báo">
+										<i class="fa fa-bell" aria-hidden="true"></i>
+										@if($headerUnreadNotificationCount > 0)
+											<span>{{ $headerUnreadNotificationCount > 99 ? '99+' : $headerUnreadNotificationCount }}</span>
+										@endif
+									</button>
+									<div class="header-notification-menu" data-notification-menu hidden>
+										<div class="header-notification-head">
+											<strong>Thông báo</strong>
+											@if($headerUnreadNotificationCount > 0)<span>{{ $headerUnreadNotificationCount }} chưa đọc</span>@endif
 										</div>
-									</a>
+										<div class="header-notification-list">
+											@forelse($headerNotifications as $headerNotification)
+												@php
+													$notificationData = $headerNotification->data;
+													$notificationIcon = in_array($notificationData['icon'] ?? '', ['ticket', 'shopping-bag', 'check-circle', 'truck', 'gift', 'times-circle', 'credit-card'], true)
+														? $notificationData['icon']
+														: 'bell';
+												@endphp
+												<form method="post" action="{{ route('notifications.open', $headerNotification->id) }}">
+													@csrf
+													<button type="submit" class="header-notification-item {{ $headerNotification->read_at ? '' : 'is-unread' }}">
+														<i class="fa fa-{{ $notificationIcon }}" aria-hidden="true"></i>
+														<span>
+															<strong>{{ $notificationData['title'] ?? 'Thông báo mới' }}</strong>
+															<small>{{ optional($headerNotification->created_at)->diffForHumans() }}</small>
+														</span>
+													</button>
+												</form>
+											@empty
+												<div class="header-notification-empty">Chưa có thông báo mới.</div>
+											@endforelse
+										</div>
+										<a href="{{ route('notifications.index') }}" class="header-notification-all">Xem tất cả thông báo</a>
+									</div>
+								</div>
+							@endauth
+
+							<div class="top-cart-contain">
+								<div class="mini-cart">
+									<div class="heading-cart">
+										<a href="{{ $cartUrl }}" class="d-flex align-items-center" aria-label="Mở giỏ hàng">
+											<div class="icon relative" style="background: #ff9800; color: #fff; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center;">
+												<i class="fa fa-shopping-bag" style="margin-right: 8px;"></i>
+												<span class="label" style="font-weight: bold;">Giỏ hàng ({{ $headerCartCount }})</span>
+											</div>
+										</a>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -173,6 +215,12 @@
 				<span class="cartCount count_item_pr">{{ $headerCartCount }}</span>
 			</div>
 		</div>
+		@auth
+			<a href="{{ route('notifications.index') }}" class="icon-notification-mobile hidden-md hidden-lg" aria-label="Mở thông báo">
+				<i class="fa fa-bell" aria-hidden="true"></i>
+				@if($headerUnreadNotificationCount > 0)<span>{{ $headerUnreadNotificationCount > 99 ? '99+' : $headerUnreadNotificationCount }}</span>@endif
+			</a>
+		@endauth
 	</div>
 	<nav>
 		<div class="container">
@@ -1043,6 +1091,94 @@
 		.item-policy .policy-title:hover,
 		.item-policy .policy-desc:hover { color: #76b82a; }
 		.item-policy .info p { font-size: 12px; color: #666; margin: 0; }
+		.header-commerce-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 8px; }
+		.header-notification { position: relative; }
+		.header-notification-toggle {
+			align-items: center;
+			background: #fff;
+			border: 1px solid #d8e5cf;
+			border-radius: 50%;
+			color: #568c24;
+			display: flex;
+			font-size: 16px;
+			height: 40px;
+			justify-content: center;
+			padding: 0;
+			position: relative;
+			transition: background .18s ease, border-color .18s ease;
+			width: 40px;
+		}
+		.header-notification-toggle:hover,
+		.header-notification-toggle[aria-expanded="true"] { background: #eff8e7; border-color: #86bd52; }
+		.header-notification-toggle > span {
+			align-items: center;
+			background: #ef4444;
+			border: 2px solid #fff;
+			border-radius: 999px;
+			color: #fff;
+			display: flex;
+			font-size: 9px;
+			font-weight: 800;
+			height: 18px;
+			justify-content: center;
+			min-width: 18px;
+			padding: 0 3px;
+			position: absolute;
+			right: -4px;
+			top: -5px;
+		}
+		.header-notification-menu {
+			background: #fff;
+			border: 1px solid #dce6d4;
+			border-radius: 8px;
+			box-shadow: 0 18px 42px rgba(35, 51, 25, .2);
+			overflow: hidden;
+			position: absolute;
+			right: 0;
+			top: 48px;
+			width: 350px;
+			z-index: 10020;
+		}
+		.header-notification-head { align-items: center; border-bottom: 1px solid #edf1e9; display: flex; justify-content: space-between; padding: 13px 15px; }
+		.header-notification-head strong { color: #273820; font-size: 15px; }
+		.header-notification-head span { color: #679b38; font-size: 11px; font-weight: 700; }
+		.header-notification-list form { margin: 0; }
+		.header-notification-item {
+			align-items: center;
+			background: #fff;
+			border: 0;
+			border-bottom: 1px solid #f0f2ed;
+			color: #45513f;
+			display: grid;
+			gap: 10px;
+			grid-template-columns: 32px minmax(0, 1fr);
+			padding: 11px 14px;
+			text-align: left;
+			width: 100%;
+		}
+		.header-notification-item:hover { background: #f6faF2; }
+		.header-notification-item.is-unread { background: #f5fbed; box-shadow: inset 3px 0 #75b72c; }
+		.header-notification-item > i { color: #689f35; font-size: 15px; text-align: center; }
+		.header-notification-item > span { display: block; min-width: 0; }
+		.header-notification-item strong { color: #2e3b29; display: block; font-size: 12px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.header-notification-item small { color: #949c90; display: block; font-size: 10px; margin-top: 3px; }
+		.header-notification-empty { color: #7c8578; font-size: 12px; padding: 28px 15px; text-align: center; }
+		.header-notification-all { color: #4f8124 !important; display: block; font-size: 12px; font-weight: 800; padding: 12px; text-align: center; text-decoration: none !important; }
+		.icon-notification-mobile {
+			align-items: center;
+			background: #fff;
+			border-radius: 50%;
+			color: #5b9427;
+			display: flex;
+			height: 36px;
+			justify-content: center;
+			position: absolute;
+			right: 62px;
+			top: 17px;
+			width: 36px;
+			z-index: 20;
+		}
+		.icon-notification-mobile span { background: #ef4444; border-radius: 999px; color: #fff; font-size: 9px; font-weight: 800; min-width: 16px; padding: 1px 4px; position: absolute; right: -3px; text-align: center; top: -4px; }
 		.top-cart-contain { flex: 0 0 180px; }
 		.heading-cart a { justify-content: flex-end; text-decoration: none; }
 		.icon.relative { background: #ff9800 !important; color: #fff !important; padding: 10px 20px; border-radius: 25px; transition: 0.3s; }
@@ -2961,6 +3097,36 @@
 			showTimer = window.setTimeout(showToast, 1800);
 		})();
 		@endif
+	</script>
+	<script>
+		(function () {
+			var root = document.querySelector('[data-header-notification]');
+			if (!root) return;
+
+			var toggle = root.querySelector('[data-notification-toggle]');
+			var menu = root.querySelector('[data-notification-menu]');
+			if (!toggle || !menu) return;
+
+			function setOpen(open) {
+				toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+				menu.hidden = !open;
+			}
+
+			toggle.addEventListener('click', function () {
+				setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+			});
+
+			document.addEventListener('click', function (event) {
+				if (!root.contains(event.target)) setOpen(false);
+			});
+
+			document.addEventListener('keydown', function (event) {
+				if (event.key === 'Escape') {
+					setOpen(false);
+					toggle.focus();
+				}
+			});
+		})();
 	</script>
 	@stack('scripts')
 <style>

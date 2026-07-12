@@ -131,26 +131,12 @@
                 </div>
 
                 <div class="payment-coupon">
-                    <form method="post" action="{{ route('cart.coupon.apply') }}">
-                        @csrf
-                        <input type="hidden" name="redirect_to" value="payment">
-                        <input type="text" name="code" placeholder="Mã giảm giá" value="{{ old('code') }}">
-                        <button type="submit">Sử dụng</button>
-                    </form>
-
-                    @if(!empty($appliedCoupon))
-                        <div class="payment-coupon-applied">
-                            <div>
-                                <strong>{{ $appliedCoupon->code }}</strong>
-                                <span>{{ $appliedCoupon->benefit_label }}</span>
-                            </div>
-                            <form method="post" action="{{ route('cart.coupon.remove') }}">
-                                @csrf
-                                <input type="hidden" name="redirect_to" value="payment">
-                                <button type="submit">Bỏ mã</button>
-                            </form>
-                        </div>
-                    @endif
+                    <x-vouchers.selector
+                        :options="$summary['voucher_options'] ?? collect()"
+                        :selected="$appliedCoupon"
+                        :selection-mode="$summary['coupon_selection_mode'] ?? null"
+                        redirect="payment"
+                    />
                 </div>
 
                 <div class="payment-total-list">

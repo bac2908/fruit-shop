@@ -164,6 +164,15 @@ class Coupon extends Model
         return 'Không giới hạn số lần dùng theo tài khoản';
     }
 
+    public function benefitValueFor(int $subtotal): int
+    {
+        if ($this->type === self::TYPE_GIFT) {
+            return max(0, (int) $this->value);
+        }
+
+        return max(0, (int) $this->calculateDiscount($subtotal));
+    }
+
     public function hasUsableVoucherFor(?int $userId): bool
     {
         if (!$userId) {

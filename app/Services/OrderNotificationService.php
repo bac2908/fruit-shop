@@ -20,14 +20,23 @@ class OrderNotificationService
     private const HISTORY_CANCELLED_EMAIL_SENT = 'cancelled_email_sent';
     private const HISTORY_CANCELLED_EMAIL_FAILED = 'cancelled_email_failed';
 
+    private $customerNotifications;
+
+    public function __construct(CustomerNotificationService $customerNotifications)
+    {
+        $this->customerNotifications = $customerNotifications;
+    }
+
     public function notifyOrderConfirmed(Order $order, ?int $actorId = null): bool
     {
-        if (!config('shop.order_automation.order_confirmed_email_enabled', true)) {
+        if ($order->status !== Order::STATUS_CONFIRMED) {
             return false;
         }
 
-        if ($order->status !== Order::STATUS_CONFIRMED) {
-            return false;
+        $this->customerNotifications->orderStatusChanged($order, Order::STATUS_CONFIRMED);
+
+        if (!config('shop.order_automation.order_confirmed_email_enabled', true)) {
+            return true;
         }
 
         if ($this->confirmedEmailAlreadySent($order->id)) {
@@ -148,12 +157,14 @@ class OrderNotificationService
 
     public function notifyOrderCancelled(Order $order, ?int $actorId = null, ?string $reason = null): bool
     {
-        if (!config('shop.order_automation.order_cancelled_email_enabled', true)) {
+        if ($order->status !== Order::STATUS_CANCELLED) {
             return false;
         }
 
-        if ($order->status !== Order::STATUS_CANCELLED) {
-            return false;
+        $this->customerNotifications->orderStatusChanged($order, Order::STATUS_CANCELLED);
+
+        if (!config('shop.order_automation.order_cancelled_email_enabled', true)) {
+            return true;
         }
 
         if ($this->cancelledEmailAlreadySent($order->id)) {

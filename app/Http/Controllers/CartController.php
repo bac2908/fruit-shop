@@ -13,9 +13,11 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserVoucher;
 use App\Services\MomoPaymentService;
+use App\Services\CustomerNotificationService;
 use App\Services\OrderAutomationService;
 use App\Services\ShippingFeeService;
 use App\Services\VietnamAddressService;
+use App\Services\VoucherSelectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +74,13 @@ class CartController extends Controller
 
         session(['cart' => $cart]);
 
+        if (session('cart_coupon_selection_mode') !== 'manual') {
+            session([
+                'cart_coupon_selection_mode' => 'auto',
+                'cart_coupon_auto_disabled' => false,
+            ]);
+        }
+
         $cartQuantity = collect($cart)->sum(function ($item) {
             return (int) ($item['quantity'] ?? 0);
         });
@@ -120,6 +129,13 @@ class CartController extends Controller
 
             $cart[$productId]['quantity'] = (int) $validated['quantity'];
             session(['cart' => $cart]);
+
+            if (session('cart_coupon_selection_mode') !== 'manual') {
+                session([
+                    'cart_coupon_selection_mode' => 'auto',
+                    'cart_coupon_auto_disabled' => false,
+                ]);
+            }
         }
 
         return redirect()->route('cart')->with('success', 'Da cap nhat gio hang.');
@@ -138,9 +154,13 @@ class CartController extends Controller
         session(['cart' => $cart]);
 
         if (empty($cart)) {
-            session()->forget('cart_coupon_code');
-            session()->forget('checkout_shipping');
-            session()->forget('checkout_payment_method');
+            session()->forget([
+                'cart_coupon_code',
+                'cart_coupon_selection_mode',
+                'cart_coupon_auto_disabled',
+                'checkout_shipping',
+                'checkout_payment_method',
+            ]);
         }
 
         return redirect()->route('cart')->with('success', 'Da xoa san pham khoi gio hang.');
@@ -182,7 +202,11 @@ class CartController extends Controller
             return redirect()->route($redirectRoute)->with('error', $error);
         }
 
-        session(['cart_coupon_code' => $coupon->code]);
+        session([
+            'cart_coupon_code' => $coupon->code,
+            'cart_coupon_selection_mode' => 'manual',
+            'cart_coupon_auto_disabled' => false,
+        ]);
 
         return redirect()->route($redirectRoute)->with(
             'success',
@@ -192,6 +216,7 @@ class CartController extends Controller
 
     public function useCoupon(Request $request, Coupon $coupon)
     {
+        $redirectRoute = $this->resolveCartRedirectRoute($request);
         $cartItems = $this->getCartItems();
 
         if ($cartItems->isEmpty()) {
@@ -202,12 +227,14 @@ class CartController extends Controller
         $user = $request->user();
 
         if ($error = $coupon->getInvalidReason($subtotal, optional($user)->id, optional($user)->email)) {
-            return redirect()->route('account.profile')->with('error', $error);
+            return redirect()->route($redirectRoute)->with('error', $error);
         }
 
-        session(['cart_coupon_code' => $coupon->code]);
-
-        $redirectRoute = $this->resolveCartRedirectRoute($request);
+        session([
+            'cart_coupon_code' => $coupon->code,
+            'cart_coupon_selection_mode' => 'manual',
+            'cart_coupon_auto_disabled' => false,
+        ]);
 
         return redirect()->route($redirectRoute)->with(
             'success',
@@ -217,11 +244,25 @@ class CartController extends Controller
 
     public function removeCoupon(Request $request)
     {
-        session()->forget('cart_coupon_code');
+        session()->forget(['cart_coupon_code', 'cart_coupon_selection_mode']);
+        session(['cart_coupon_auto_disabled' => true]);
 
         $redirectRoute = $this->resolveCartRedirectRoute($request);
 
         return redirect()->route($redirectRoute)->with('success', 'Đã bỏ mã ưu đãi khỏi giỏ hàng.');
+    }
+
+    public function autoCoupon(Request $request)
+    {
+        session()->forget('cart_coupon_code');
+        session([
+            'cart_coupon_selection_mode' => 'auto',
+            'cart_coupon_auto_disabled' => false,
+        ]);
+
+        $redirectRoute = $this->resolveCartRedirectRoute($request);
+
+        return redirect()->route($redirectRoute)->with('success', 'Hệ thống sẽ tự chọn voucher có giá trị tốt nhất cho đơn hàng.');
     }
 
     public function checkout(VietnamAddressService $addressService)
@@ -312,7 +353,12 @@ class CartController extends Controller
         ]);
     }
 
-    public function placeOrder(Request $request, MomoPaymentService $momoPayment, OrderAutomationService $orderAutomation)
+    public function placeOrder(
+        Request $request,
+        MomoPaymentService $momoPayment,
+        OrderAutomationService $orderAutomation,
+        CustomerNotificationService $customerNotifications
+    )
     {
         $user = $request->user();
         $checkoutShipping = session('checkout_shipping');
@@ -349,7 +395,7 @@ class CartController extends Controller
 
         $momoPayUrl = null;
 
-        $order = DB::transaction(function () use ($validated, $cartItems, $user, $momoPayment, $orderAutomation, &$momoPayUrl) {
+        $order = DB::transaction(function () use ($validated, $cartItems, $user, $momoPayment, $orderAutomation, $customerNotifications, &$momoPayUrl) {
             $cartItems = $this->lockAndValidateCartItems($cartItems);
             $summary = $this->getCartSummary($cartItems, true, $validated);
             $summary = $this->lockAndValidateCoupon($summary);
@@ -435,6 +481,8 @@ class CartController extends Controller
                 'created_at' => now(),
             ]);
 
+            $customerNotifications->orderPlaced($order);
+
             if ($validated['payment_method'] !== Order::PAYMENT_METHOD_MOMO && empty($shippingQuote['requires_confirmation'])) {
                 $orderAutomation->autoConfirmAfterStockReserved(
                     $order,
@@ -480,7 +528,7 @@ class CartController extends Controller
             'checkout_order_token' => $order->public_token,
         ]);
         session()->forget('cart');
-        session()->forget('cart_coupon_code');
+        session()->forget(['cart_coupon_code', 'cart_coupon_selection_mode', 'cart_coupon_auto_disabled']);
         session()->forget('checkout_shipping');
         session()->forget('checkout_payment_method');
 
@@ -601,13 +649,17 @@ class CartController extends Controller
     private function getCartSummary(Collection $cartItems, bool $throwOnInvalidCoupon = false, ?array $shippingAddress = null): array
     {
         $subtotal = (int) $cartItems->sum('line_total');
+        $user = auth()->user();
+        $voucherOptions = $user
+            ? app(VoucherSelectionService::class)->optionsFor($user, $subtotal)
+            : collect();
         $shippingQuote = app(ShippingFeeService::class)->quote(
             $subtotal,
             $shippingAddress['province_code'] ?? null,
             $shippingAddress['ward'] ?? null
         );
         $shippingFee = (int) $shippingQuote['fee'];
-        $coupon = $this->resolveCoupon($subtotal, $throwOnInvalidCoupon);
+        $coupon = $this->resolveCoupon($subtotal, $throwOnInvalidCoupon, $voucherOptions);
         $discountTotal = $coupon ? min($coupon->calculateDiscount($subtotal), $subtotal) : 0;
         $total = max(0, $subtotal + $shippingFee - $discountTotal);
 
@@ -618,12 +670,36 @@ class CartController extends Controller
             'discount_total' => $discountTotal,
             'total' => $total,
             'coupon' => $coupon,
+            'voucher_options' => $voucherOptions,
+            'coupon_selection_mode' => session('cart_coupon_selection_mode'),
         ];
     }
 
-    private function resolveCoupon(int $subtotal, bool $throwOnInvalid = false): ?Coupon
+    private function resolveCoupon(int $subtotal, bool $throwOnInvalid = false, ?Collection $voucherOptions = null): ?Coupon
     {
         $couponCode = trim((string) session('cart_coupon_code', ''));
+        $selectionMode = (string) session('cart_coupon_selection_mode', '');
+        $user = auth()->user();
+
+        if (
+            $user
+            && !session('cart_coupon_auto_disabled', false)
+            && ($couponCode === '' || $selectionMode === 'auto')
+        ) {
+            $voucherOptions = $voucherOptions ?: app(VoucherSelectionService::class)->optionsFor($user, $subtotal);
+            $bestCoupon = app(VoucherSelectionService::class)->bestEligible($voucherOptions);
+
+            if ($bestCoupon) {
+                $couponCode = $bestCoupon->code;
+                session([
+                    'cart_coupon_code' => $couponCode,
+                    'cart_coupon_selection_mode' => 'auto',
+                ]);
+            } else {
+                $couponCode = '';
+                session()->forget(['cart_coupon_code', 'cart_coupon_selection_mode']);
+            }
+        }
 
         if ($couponCode === '') {
             return null;
@@ -632,8 +708,6 @@ class CartController extends Controller
         $coupon = Coupon::query()
             ->whereRaw('LOWER(code) = ?', [Str::lower($couponCode)])
             ->first();
-
-        $user = auth()->user();
 
         if (!$coupon) {
             return $this->handleInvalidSessionCoupon($throwOnInvalid, 'Mã giảm giá không hợp lệ hoặc đã hết hạn.');
@@ -648,7 +722,7 @@ class CartController extends Controller
 
     private function handleInvalidSessionCoupon(bool $throwOnInvalid, string $message): ?Coupon
     {
-        session()->forget('cart_coupon_code');
+        session()->forget(['cart_coupon_code', 'cart_coupon_selection_mode']);
 
         if ($throwOnInvalid) {
             throw ValidationException::withMessages([
@@ -948,6 +1022,8 @@ class CartController extends Controller
                 'payment_status' => Order::PAYMENT_STATUS_PAID,
                 'paid_at' => now(),
             ])->save();
+
+            app(CustomerNotificationService::class)->paymentReceived($order);
         }
 
         $order->refresh();
