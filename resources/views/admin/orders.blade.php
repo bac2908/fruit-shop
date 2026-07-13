@@ -310,7 +310,7 @@
                         <td>
                             <span class="order-code">
                                 <strong>{{ $order->code }}</strong>
-                                <small>{{ optional($order->created_at)->format('d/m/Y H:i') }}</small>
+                                <small>{{ \App\Support\LocalDateTime::format($order->created_at) }}</small>
                                 <a class="admin-order-link" href="{{ route('checkout.thankyou', ['code' => $order->code, 'token' => $order->public_token]) }}" target="_blank" rel="noopener">Xem trang khach</a>
                             </span>
                         </td>

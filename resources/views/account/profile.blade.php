@@ -383,7 +383,7 @@
                                 <a href="{{ route('checkout.thankyou', ['code' => $order->code, 'token' => $order->public_token]) }}" class="account-row account-row-large">
                                     <span>
                                         <strong>{{ $order->code }}</strong>
-                                        <small>{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : '' }}</small>
+                                        <small>{{ \App\Support\LocalDateTime::format($order->created_at, 'd/m/Y H:i', '') }}</small>
                                     </span>
                                     <span>
                                         <strong>{{ number_format((int) $order->total, 0, ',', '.') }}₫</strong>
@@ -394,7 +394,7 @@
                                         @if($latestReturnRequest)
                                             <small>Đổi trả: {{ $latestReturnRequest->status_label }} · {{ $latestReturnRequest->type_label }}</small>
                                         @elseif($order->isReturnRequestable() && $returnDeadline)
-                                            <small>Đổi trả đến {{ $returnDeadline->format('d/m/Y H:i') }}</small>
+                                            <small>Đổi trả đến {{ \App\Support\LocalDateTime::format($returnDeadline) }}</small>
                                         @endif
                                     </span>
                                 </a>
@@ -585,7 +585,7 @@
                             @foreach($usedCoupons as $usage)
                                 <div class="account-row">
                                     <span>{{ $usage->coupon_code }}</span>
-                                    <small>{{ $usage->used_at ? $usage->used_at->format('d/m/Y H:i') : 'Đã dùng' }}</small>
+                                    <small>{{ \App\Support\LocalDateTime::format($usage->used_at, 'd/m/Y H:i', 'Đã dùng') }}</small>
                                     <strong>
                                         {{ (int) $usage->discount_total > 0
                                             ? '-' . number_format((int) $usage->discount_total, 0, ',', '.') . '₫'

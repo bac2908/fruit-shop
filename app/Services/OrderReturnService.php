@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\OrderReturnRequest;
 use App\Models\OrderStatusHistory;
+use App\Support\LocalDateTime;
 use Illuminate\Validation\ValidationException;
 
 class OrderReturnService
@@ -176,7 +177,7 @@ class OrderReturnService
     private function appendNoteText(?string $existingNote, string $note): string
     {
         $existingNote = trim((string) $existingNote);
-        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
+        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
 
         return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
     }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Support\LocalDateTime;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -159,7 +160,7 @@ class MomoCallbackService
     private function appendAdminNote(Order $order, string $note): void
     {
         $existingNote = trim((string) $order->admin_note);
-        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
+        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
 
         $order->forceFill([
             'admin_note' => $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote,

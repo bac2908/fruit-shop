@@ -47,7 +47,7 @@
                                 @if($option['recommended'])<span>Đề xuất tốt nhất</span>@endif
                             </div>
                             <p>{{ $coupon->benefit_label }}</p>
-                            <small>{{ $coupon->condition_label }} · HSD {{ optional($coupon->ends_at)->format('d/m/Y') ?: 'không giới hạn' }}</small>
+                            <small>{{ $coupon->condition_label }} · HSD {{ \App\Support\LocalDateTime::format($coupon->ends_at, 'd/m/Y', 'không giới hạn') }}</small>
                             @if(!$option['eligible'])
                                 <em>{{ $option['reason'] }}</em>
                             @elseif($coupon->type === \App\Models\Coupon::TYPE_GIFT && $option['estimated_value'] > 0)

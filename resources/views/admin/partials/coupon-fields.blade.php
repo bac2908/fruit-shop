@@ -52,12 +52,12 @@
 
     <div class="coupon-field">
         <label>Bắt đầu</label>
-        <input type="datetime-local" name="starts_at" value="{{ old('starts_at', optional(optional($coupon)->starts_at)->format('Y-m-d\TH:i')) }}">
+        <input type="datetime-local" name="starts_at" value="{{ old('starts_at', \App\Support\LocalDateTime::format(optional($coupon)->starts_at, 'Y-m-d\TH:i', '')) }}">
     </div>
 
     <div class="coupon-field">
         <label>Kết thúc</label>
-        <input type="datetime-local" name="ends_at" value="{{ old('ends_at', optional(optional($coupon)->ends_at)->format('Y-m-d\TH:i')) }}">
+        <input type="datetime-local" name="ends_at" value="{{ old('ends_at', \App\Support\LocalDateTime::format(optional($coupon)->ends_at, 'Y-m-d\TH:i', '')) }}">
     </div>
 
     <div class="coupon-field">

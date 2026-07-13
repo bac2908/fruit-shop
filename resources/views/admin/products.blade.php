@@ -445,7 +445,7 @@
                                     </button>
                                 </form>
                             </td>
-                            <td>{{ optional($product->updated_at)->format('d/m/Y H:i') }}</td>
+                            <td>{{ \App\Support\LocalDateTime::format($product->updated_at) }}</td>
                             <td>
                                 <div class="action-links">
                                     <a class="action-link" href="{{ route('products.show', $product->slug) }}" target="_blank" title="Xem ngoai storefront">

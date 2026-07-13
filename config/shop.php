@@ -99,6 +99,7 @@ return [
     'order_automation' => [
         'auto_confirm_stock_reserved' => env('SHOP_AUTO_CONFIRM_STOCK_RESERVED', true),
         'auto_mark_cod_paid_on_done' => env('SHOP_AUTO_MARK_COD_PAID_ON_DONE', true),
+        'order_placed_email_enabled' => env('SHOP_ORDER_PLACED_EMAIL_ENABLED', true),
         'order_confirmed_email_enabled' => env('SHOP_ORDER_CONFIRMED_EMAIL_ENABLED', true),
         'order_cancelled_email_enabled' => env('SHOP_ORDER_CANCELLED_EMAIL_ENABLED', true),
         'low_stock_alert_enabled' => env('SHOP_LOW_STOCK_ALERT_ENABLED', true),

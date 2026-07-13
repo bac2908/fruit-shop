@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\LocalDateTime;
 use Illuminate\Database\Eloquent\Model;
 
 class UserVoucher extends Model
@@ -88,7 +89,7 @@ class UserVoucher extends Model
         $expiresAt = $this->effective_expires_at;
 
         if ($expiresAt) {
-            return 'Hết hạn ' . $expiresAt->format('d/m/Y H:i');
+            return 'Hết hạn ' . LocalDateTime::format($expiresAt);
         }
 
         return 'Không giới hạn thời gian';

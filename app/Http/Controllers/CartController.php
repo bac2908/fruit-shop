@@ -17,9 +17,11 @@ use App\Services\MomoCallbackService;
 use App\Services\CustomerNotificationService;
 use App\Services\OrderAutomationService;
 use App\Services\OrderCancellationService;
+use App\Services\OrderNotificationService;
 use App\Services\ShippingFeeService;
 use App\Services\VietnamAddressService;
 use App\Services\VoucherSelectionService;
+use App\Support\LocalDateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -360,7 +362,8 @@ class CartController extends Controller
         MomoPaymentService $momoPayment,
         OrderAutomationService $orderAutomation,
         CustomerNotificationService $customerNotifications,
-        OrderCancellationService $cancellationService
+        OrderCancellationService $cancellationService,
+        OrderNotificationService $orderNotifications
     )
     {
         $user = $request->user();
@@ -396,7 +399,7 @@ class CartController extends Controller
             'payment_method' => $validatedPayment['payment_method'],
         ]);
 
-        $order = DB::transaction(function () use ($validated, $cartItems, $user, $orderAutomation, $customerNotifications) {
+        $order = DB::transaction(function () use ($validated, $cartItems, $user, $orderAutomation, $customerNotifications, $orderNotifications) {
             $cartItems = $this->lockAndValidateCartItems($cartItems);
             $summary = $this->getCartSummary($cartItems, true, $validated);
             $summary = $this->lockAndValidateCoupon($summary);
@@ -489,6 +492,7 @@ class CartController extends Controller
             ]);
 
             $customerNotifications->orderPlaced($order);
+            $orderNotifications->notifyOrderPlaced($order, $user->id);
 
             if ($validated['payment_method'] !== Order::PAYMENT_METHOD_MOMO && empty($shippingQuote['requires_confirmation'])) {
                 $orderAutomation->autoConfirmAfterStockReserved(
@@ -1039,7 +1043,7 @@ class CartController extends Controller
     private function generateOrderCode(): string
     {
         for ($i = 0; $i < 5; $i++) {
-            $code = 'DH' . now()->format('ymdHis') . sprintf('%03d', random_int(0, 999));
+            $code = 'DH' . LocalDateTime::format(now(), 'ymdHis') . sprintf('%03d', random_int(0, 999));
 
             if (!Order::query()->where('code', $code)->exists()) {
                 return $code;

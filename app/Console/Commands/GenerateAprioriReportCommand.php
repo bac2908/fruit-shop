@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Support\AprioriHelper;
+use App\Support\LocalDateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -72,7 +73,7 @@ class GenerateAprioriReportCommand extends Command
 
         $html = $this->buildHtmlTemplate($stats, $rules, $itemsets2, $itemsets3);
 
-        $filepath = $outputPath ?? storage_path('app/apriori_report_' . now()->format('YmdHis') . '.html');
+        $filepath = $outputPath ?? storage_path('app/apriori_report_' . LocalDateTime::format(now(), 'YmdHis') . '.html');
         file_put_contents($filepath, $html);
 
         $this->info("📄 HTML Report: <fg=green>$filepath</>");
@@ -80,8 +81,8 @@ class GenerateAprioriReportCommand extends Command
 
     private function generateCsvReport(?string $outputPath): void
     {
-        $rulesPath = $outputPath ?? storage_path('app/apriori_rules_' . now()->format('YmdHis') . '.csv');
-        $itemsetsPath = storage_path('app/apriori_itemsets_' . now()->format('YmdHis') . '.csv');
+        $rulesPath = $outputPath ?? storage_path('app/apriori_rules_' . LocalDateTime::format(now(), 'YmdHis') . '.csv');
+        $itemsetsPath = storage_path('app/apriori_itemsets_' . LocalDateTime::format(now(), 'YmdHis') . '.csv');
 
         AprioriHelper::exportRulesToCsv($rulesPath);
         AprioriHelper::exportItemsetsToCsv($itemsetsPath, 2);
@@ -107,7 +108,7 @@ class GenerateAprioriReportCommand extends Command
             'itemsets' => $itemsets,
         ];
 
-        $filepath = $outputPath ?? storage_path('app/apriori_report_' . now()->format('YmdHis') . '.json');
+        $filepath = $outputPath ?? storage_path('app/apriori_report_' . LocalDateTime::format(now(), 'YmdHis') . '.json');
         file_put_contents($filepath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         $this->info("📄 JSON Report: <fg=green>$filepath</>");
@@ -115,7 +116,7 @@ class GenerateAprioriReportCommand extends Command
 
     private function buildHtmlTemplate(array $stats, $rules, $itemsets2, $itemsets3): string
     {
-        $generatedAt = now()->format('d/m/Y H:i:s');
+        $generatedAt = LocalDateTime::format(now(), 'd/m/Y H:i:s');
 
         $rulesTable = '';
         foreach ($rules->take(20) as $rule) {

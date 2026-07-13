@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Support\LocalDateTime;
 
 class OrderAutomationService
 {
@@ -93,7 +94,7 @@ class OrderAutomationService
     private function appendNoteText(?string $existingNote, string $note): string
     {
         $existingNote = trim((string) $existingNote);
-        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
+        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
 
         return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
     }

@@ -6,15 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Support\LocalDateTime;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $today = Carbon::today();
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->startOfDay();
+        $todayStart = LocalDateTime::now()->startOfDay()->utc();
+        $todayEnd = LocalDateTime::now()->endOfDay()->utc();
+        $thirtyDaysAgo = LocalDateTime::now()->subDays(30)->startOfDay()->utc();
 
         $ordersLast30Days = Order::query()->where('created_at', '>=', $thirtyDaysAgo);
         $orders30Count = (clone $ordersLast30Days)->count();
@@ -26,7 +26,7 @@ class DashboardController extends Controller
         $codCount = (clone $ordersLast30Days)->where('payment_method', Order::PAYMENT_METHOD_COD)->count();
 
         $metrics = [
-            'orders_today' => Order::query()->whereDate('created_at', $today)->count(),
+            'orders_today' => Order::query()->whereBetween('created_at', [$todayStart, $todayEnd])->count(),
             'monthly_revenue' => (int) (clone $activeRevenueQuery)->sum('total'),
             'new_customers' => User::query()->where('created_at', '>=', $thirtyDaysAgo)->count(),
             'conversion_rate' => $orders30Count > 0 ? round(($completedCount / max(1, $orders30Count)) * 100, 1) : 0,
@@ -64,19 +64,21 @@ class DashboardController extends Controller
 
     private function getWeeklyRevenue(): array
     {
-        $start = Carbon::now()->subDays(6)->startOfDay();
+        $localStart = LocalDateTime::now()->subDays(6)->startOfDay();
+        $start = $localStart->copy()->utc();
+        $localOffset = LocalDateTime::now()->format('P');
         $rawRevenue = Order::query()
-            ->selectRaw('DATE(created_at) as order_date, SUM(total) as revenue')
+            ->selectRaw("DATE(CONVERT_TZ(created_at, '+00:00', ?)) as order_date, SUM(total) as revenue", [$localOffset])
             ->where('created_at', '>=', $start)
             ->where('status', '!=', Order::STATUS_CANCELLED)
-            ->groupBy(DB::raw('DATE(created_at)'))
+            ->groupBy('order_date')
             ->pluck('revenue', 'order_date');
 
         $maxRevenue = max(1, (int) $rawRevenue->max());
         $values = [];
 
         for ($i = 0; $i < 7; $i++) {
-            $dateKey = $start->copy()->addDays($i)->toDateString();
+            $dateKey = $localStart->copy()->addDays($i)->toDateString();
             $revenue = (int) ($rawRevenue[$dateKey] ?? 0);
             $values[] = max(8, (int) round(($revenue / $maxRevenue) * 100));
         }

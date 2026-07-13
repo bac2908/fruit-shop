@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Models\UserVoucher;
+use App\Support\LocalDateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -158,8 +159,8 @@ class CouponController extends Controller
             'max_discount' => $isGift ? null : ($validated['max_discount'] ?? null),
             'usage_limit' => $validated['usage_limit'] ?? null,
             'per_customer_limit' => $validated['per_customer_limit'] ?? null,
-            'starts_at' => $validated['starts_at'] ?? null,
-            'ends_at' => $validated['ends_at'] ?? null,
+            'starts_at' => LocalDateTime::fromLocalInput($validated['starts_at'] ?? null),
+            'ends_at' => LocalDateTime::fromLocalInput($validated['ends_at'] ?? null),
             'is_active' => $request->boolean('is_active'),
             'is_public' => $request->boolean('is_public'),
             'description' => $validated['description'] ?? null,

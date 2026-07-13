@@ -7,6 +7,7 @@ use App\Models\OrderReturnRequest;
 use App\Models\OrderStatusHistory;
 use App\Notifications\OrderCancelledNotification;
 use App\Notifications\OrderConfirmedNotification;
+use App\Notifications\OrderPlacedNotification;
 use App\Notifications\OrderReturnRequestNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,8 @@ use Throwable;
 
 class OrderNotificationService
 {
+    private const HISTORY_PLACED_EMAIL_SENT = 'placed_email_sent';
+    private const HISTORY_PLACED_EMAIL_FAILED = 'placed_email_failed';
     private const HISTORY_CONFIRMED_EMAIL_SENT = 'confirmed_email_sent';
     private const HISTORY_CONFIRMED_EMAIL_FAILED = 'confirmed_email_failed';
     private const HISTORY_CANCELLED_EMAIL_SENT = 'cancelled_email_sent';
@@ -25,6 +28,78 @@ class OrderNotificationService
     public function __construct(CustomerNotificationService $customerNotifications)
     {
         $this->customerNotifications = $customerNotifications;
+    }
+
+    public function notifyOrderPlaced(Order $order, ?int $actorId = null): bool
+    {
+        if (!config('shop.order_automation.order_placed_email_enabled', true)) {
+            return false;
+        }
+
+        if ($this->placedEmailAlreadySent($order->id)) {
+            return false;
+        }
+
+        $callback = function () use ($order, $actorId) {
+            $freshOrder = Order::query()
+                ->with(['items', 'user'])
+                ->whereKey($order->id)
+                ->first();
+
+            if (!$freshOrder || $freshOrder->status === Order::STATUS_CANCELLED) {
+                return;
+            }
+
+            if ($this->placedEmailAlreadySent($freshOrder->id)) {
+                return;
+            }
+
+            $email = trim((string) ($freshOrder->customer_email ?: optional($freshOrder->user)->email));
+            if ($email === '') {
+                $this->recordEmailHistory(
+                    $freshOrder,
+                    $actorId,
+                    self::HISTORY_PLACED_EMAIL_FAILED,
+                    'Khong gui duoc email tiep nhan vi don hang khong co email khach.'
+                );
+
+                return;
+            }
+
+            try {
+                Notification::route('mail', $email)
+                    ->notify(new OrderPlacedNotification($freshOrder));
+
+                $this->recordEmailHistory(
+                    $freshOrder,
+                    $actorId,
+                    self::HISTORY_PLACED_EMAIL_SENT,
+                    'Da gui email tiep nhan don hang den ' . $email . '.'
+                );
+            } catch (Throwable $exception) {
+                Log::warning('Cannot send order placed email.', [
+                    'order_id' => $freshOrder->id,
+                    'order_code' => $freshOrder->code,
+                    'email' => $email,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                $this->recordEmailHistory(
+                    $freshOrder,
+                    $actorId,
+                    self::HISTORY_PLACED_EMAIL_FAILED,
+                    'Gui email tiep nhan don hang that bai: ' . $exception->getMessage()
+                );
+            }
+        };
+
+        if (DB::connection()->transactionLevel() > 0) {
+            DB::afterCommit($callback);
+        } else {
+            $callback();
+        }
+
+        return true;
     }
 
     public function notifyOrderConfirmed(Order $order, ?int $actorId = null): bool
@@ -222,6 +297,14 @@ class OrderNotificationService
         return OrderStatusHistory::query()
             ->where('order_id', $orderId)
             ->where('status', self::HISTORY_CONFIRMED_EMAIL_SENT)
+            ->exists();
+    }
+
+    private function placedEmailAlreadySent(int $orderId): bool
+    {
+        return OrderStatusHistory::query()
+            ->where('order_id', $orderId)
+            ->where('status', self::HISTORY_PLACED_EMAIL_SENT)
             ->exists();
     }
 

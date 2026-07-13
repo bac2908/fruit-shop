@@ -110,7 +110,7 @@
                     <tr>
                         <td><strong>{{ $customer->name }}</strong></td>
                         <td>{{ $customer->email ?? $customer->phone ?? '-' }}</td>
-                        <td>{{ isset($customer->last_order_at) ? \Carbon\Carbon::parse($customer->last_order_at)->format('d/m/Y') : '-' }}</td>
+                        <td>{{ \App\Support\LocalDateTime::format($customer->last_order_at ?? null, 'd/m/Y') }}</td>
                         <td>{{ isset($customer->lifetime_value) ? number_format((int) $customer->lifetime_value) . ' VND' : '--' }}</td>
                         <td>{{ isset($customer->orders_count) ? (int) $customer->orders_count : '--' }}</td>
                         <td><span class="tag">{{ $customer->segment ?? 'segment' }}</span></td>

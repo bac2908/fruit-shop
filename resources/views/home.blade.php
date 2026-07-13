@@ -134,7 +134,7 @@
 							<div class="cp-bottom">
 								<div class="cp-bottom-detail">
 									<p>Mã: <strong>{{ $coupon->code }}</strong></p>
-									<p>HSD: {{ $coupon->ends_at ? $coupon->ends_at->format('d/m/Y') : 'Không giới hạn' }}</p>
+									<p>HSD: {{ \App\Support\LocalDateTime::format($coupon->ends_at, 'd/m/Y', 'Không giới hạn') }}</p>
 								</div>
 								<div class="cp-bottom-btn">
 									@if($couponUsed)

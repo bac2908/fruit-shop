@@ -316,7 +316,7 @@
                         <td>{{ number_format((int) $coupon->user_vouchers_count) }}</td>
                         <td>{{ $coupon->is_public ? 'Công khai' : 'Gán riêng' }}</td>
                         <td>
-                            {{ optional($coupon->starts_at)->format('d/m/Y H:i') ?: 'Bắt đầu ngay' }}
+                            {{ \App\Support\LocalDateTime::format($coupon->starts_at, 'd/m/Y H:i', 'Bắt đầu ngay') }}
                             <div class="coupon-muted">{{ $coupon->expiry_label }}</div>
                         </td>
                         <td>

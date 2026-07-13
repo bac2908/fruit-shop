@@ -11,6 +11,7 @@ use App\Services\OrderAutomationService;
 use App\Services\OrderNotificationService;
 use App\Services\CustomerNotificationService;
 use App\Services\OrderStateTransitionService;
+use App\Support\LocalDateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -374,7 +375,7 @@ class OrderController extends Controller
     private function appendNoteText(?string $existingNote, string $note): string
     {
         $existingNote = trim((string) $existingNote);
-        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
+        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
 
         return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
     }

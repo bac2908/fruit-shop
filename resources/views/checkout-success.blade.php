@@ -72,7 +72,7 @@
                                 <strong>{{ $step['label'] }}</strong>
                                 <p>{{ $step['description'] }}</p>
                                 @if($step['time'])
-                                    <small>{{ $step['time']->format('d/m/Y H:i') }}</small>
+                                    <small>{{ \App\Support\LocalDateTime::format($step['time']) }}</small>
                                 @endif
                             </div>
                         </li>

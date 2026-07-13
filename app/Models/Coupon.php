@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use App\Support\LocalDateTime;
 
 class Coupon extends Model
 {
@@ -220,7 +221,7 @@ class Coupon extends Model
     public function getExpiryLabelAttribute(): string
     {
         if ($this->ends_at) {
-            return 'Hết hạn ' . $this->ends_at->format('d/m/Y H:i');
+            return 'Hết hạn ' . LocalDateTime::format($this->ends_at);
         }
 
         return 'Không giới hạn thời gian';
