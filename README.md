@@ -173,14 +173,14 @@ Password: fruitshop
 Root password: root
 ```
 
-Tài khoản admin sau khi seed:
+Trước khi chạy seeder, bắt buộc cấu hình tài khoản admin trong `.env`:
 
-```text
-Email: bacnguyen2921@gmail.com
-Password: Admin@12345
+```dotenv
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=MatKhauManh#DaiHon12KyTu
 ```
 
-Nên đổi `ADMIN_PASSWORD` trong `.env` trước khi seed nếu muốn dùng mật khẩu khác.
+Seeder không còn mật khẩu mặc định và sẽ dừng nếu mật khẩu thiếu chữ hoa, chữ thường, số, ký tự đặc biệt hoặc ngắn hơn 12 ký tự. Không commit hai giá trị này lên Git.
 
 ### 5. Import database hiện tại từ phpMyAdmin/AMPPS vào Docker
 
@@ -259,7 +259,18 @@ Hiện tại bộ test mẫu đã pass. Các test cần bổ sung tiếp để p
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`: gửi email.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`: Google OAuth.
 - `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`: MoMo sandbox.
+- `SHOP_MOMO_EXPIRE_MINUTES`: thời gian chờ thanh toán trước khi tự hủy đơn MoMo, mặc định 30 phút.
 - `SHOP_*`: cấu hình shop, shipping, email, return/refund, auto confirm.
+
+## Scheduler
+
+Các tác vụ tự hủy đơn và cảnh báo tồn kho chỉ chạy khi Laravel scheduler hoạt động. Ở local có thể chạy:
+
+```powershell
+php artisan schedule:work
+```
+
+Khi deploy Linux, cấu hình cron gọi `php artisan schedule:run` mỗi phút. Lệnh `shop:cancel-expired-momo-orders` chạy mỗi 5 phút, dùng khóa database và chỉ hủy đơn MoMo còn chưa thanh toán.
 
 ## Roadmap Để Đạt Mức 9/10
 
@@ -275,7 +286,7 @@ Hiện tại bộ test mẫu đã pass. Các test cần bổ sung tiếp để p
 ## Bảo Mật
 
 - Không commit file `.env`.
-- Đổi mật khẩu admin mặc định khi deploy.
+- Seeder admin bắt buộc nhận `ADMIN_EMAIL` và `ADMIN_PASSWORD` mạnh từ môi trường; dự án không chứa mật khẩu admin mặc định.
 - Không đưa Google/MoMo/Mail credentials thật lên GitHub.
 - Dùng `APP_DEBUG=false` trên production.
 - Chạy `php artisan config:cache` và `php artisan route:cache` khi deploy ổn định.

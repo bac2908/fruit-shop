@@ -327,7 +327,7 @@
                                 @if($order->shipping_delivery_note)
                                     <span class="muted">{{ $order->shipping_delivery_note }}</span>
                                 @endif
-                                @if($order->status !== \App\Models\Order::STATUS_CANCELLED)
+                                @if($order->status !== \App\Models\Order::STATUS_CANCELLED && $order->payment_status !== \App\Models\Order::PAYMENT_STATUS_PAID)
                                     <form method="post" action="{{ route('admin.orders.shipping', $order) }}" class="shipping-update-form">
                                         @csrf
                                         @method('PATCH')
@@ -336,6 +336,8 @@
                                         <input type="text" name="shipping_delivery_note" maxlength="500" value="{{ $order->shipping_delivery_note }}" placeholder="Ghi chu giao hang">
                                         <button type="submit">{{ $order->shipping_fee_status === \App\Models\Order::SHIPPING_FEE_STATUS_CONFIRMED ? 'Cap nhat phi' : 'Chot phi' }}</button>
                                     </form>
+                                @elseif($order->payment_status === \App\Models\Order::PAYMENT_STATUS_PAID)
+                                    <span class="muted">Tổng tiền đã khóa sau thanh toán</span>
                                 @endif
                             </span>
                         </td>
@@ -393,8 +395,8 @@
                                 @csrf
                                 @method('PATCH')
                                 <select name="status" required>
-                                    @foreach($statusLabels as $statusValue => $statusLabel)
-                                        <option value="{{ $statusValue }}" {{ $order->status === $statusValue ? 'selected' : '' }}>{{ $statusLabel }}</option>
+                                    @foreach(($allowedStatusTransitions[$order->id] ?? [$order->status]) as $statusValue)
+                                        <option value="{{ $statusValue }}" {{ $order->status === $statusValue ? 'selected' : '' }}>{{ $statusLabels[$statusValue] ?? $statusValue }}</option>
                                     @endforeach
                                 </select>
                                 <input type="text" name="admin_note" maxlength="500" placeholder="Ghi chu noi bo">

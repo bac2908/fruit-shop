@@ -31,6 +31,9 @@ class Order extends Model
         'status',
         'payment_method',
         'payment_status',
+        'momo_request_id',
+        'momo_transaction_id',
+        'payment_expires_at',
         'paid_at',
         'shipping_status',
         'shipping_delivery_method',
@@ -48,6 +51,7 @@ class Order extends Model
         'total' => 'integer',
         'status' => 'string',
         'payment_status' => 'string',
+        'payment_expires_at' => 'datetime',
         'shipping_status' => 'string',
         'paid_at' => 'datetime',
         'cancelled_at' => 'datetime',
@@ -83,6 +87,18 @@ class Order extends Model
     const DELIVERY_METHOD_LOCAL_EXPRESS = 'local_express';
     const DELIVERY_METHOD_PROVINCE_PARTNER = 'province_partner';
     const DELIVERY_METHOD_CONTACT_REQUIRED = 'contact_required';
+
+    protected static function booted()
+    {
+        static::updating(function (Order $order) {
+            $wasPaid = $order->getOriginal('payment_status') === self::PAYMENT_STATUS_PAID;
+            $moneyFields = ['subtotal', 'shipping_fee', 'discount_total', 'total'];
+
+            if ($wasPaid && $order->isDirty($moneyFields)) {
+                throw new \LogicException('Không thể thay đổi giá trị đơn hàng sau khi đã thanh toán.');
+            }
+        });
+    }
 
     public static function statusLabels(): array
     {

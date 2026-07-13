@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('shop:cancel-expired-bank-transfers')->hourly();
+        $schedule->command('shop:cancel-expired-momo-orders')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('shop:alert-low-stock')->dailyAt('08:00');
     }
 

@@ -104,6 +104,7 @@ return [
         'low_stock_alert_enabled' => env('SHOP_LOW_STOCK_ALERT_ENABLED', true),
         'low_stock_fallback_threshold' => env('SHOP_LOW_STOCK_FALLBACK_THRESHOLD', 5),
         'bank_transfer_expire_hours' => env('SHOP_BANK_TRANSFER_EXPIRE_HOURS', 24),
+        'momo_expire_minutes' => env('SHOP_MOMO_EXPIRE_MINUTES', 30),
     ],
 
     'returns' => [

@@ -3,20 +3,22 @@
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\OrderStatusHistory;
 
 class OrderAutomationService
 {
     private $notifications;
     private $customerNotifications;
+    private $stateTransitions;
 
     public function __construct(
         OrderNotificationService $notifications,
-        CustomerNotificationService $customerNotifications
+        CustomerNotificationService $customerNotifications,
+        OrderStateTransitionService $stateTransitions
     )
     {
         $this->notifications = $notifications;
         $this->customerNotifications = $customerNotifications;
+        $this->stateTransitions = $stateTransitions;
     }
 
     public function autoConfirmAfterStockReserved(Order $order, ?int $actorId = null, ?string $reason = null): bool
@@ -40,22 +42,10 @@ class OrderAutomationService
             return false;
         }
 
-        $previousStatus = $order->status;
         $note = $reason ?: 'He thong tu dong xac nhan vi don da giu ton kho thanh cong.';
 
-        $order->forceFill([
-            'status' => Order::STATUS_CONFIRMED,
+        $this->stateTransitions->transition($order, Order::STATUS_CONFIRMED, $actorId, $note, [
             'shipping_status' => Order::SHIPPING_STATUS_PREPARING,
-            'admin_note' => $this->appendNoteText($order->admin_note, $note),
-        ])->save();
-
-        OrderStatusHistory::query()->create([
-            'order_id' => $order->id,
-            'user_id' => $actorId,
-            'previous_status' => $previousStatus,
-            'status' => Order::STATUS_CONFIRMED,
-            'note' => $note,
-            'created_at' => now(),
         ]);
 
         $order->refresh();

@@ -13,8 +13,10 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserVoucher;
 use App\Services\MomoPaymentService;
+use App\Services\MomoCallbackService;
 use App\Services\CustomerNotificationService;
 use App\Services\OrderAutomationService;
+use App\Services\OrderCancellationService;
 use App\Services\ShippingFeeService;
 use App\Services\VietnamAddressService;
 use App\Services\VoucherSelectionService;
@@ -357,7 +359,8 @@ class CartController extends Controller
         Request $request,
         MomoPaymentService $momoPayment,
         OrderAutomationService $orderAutomation,
-        CustomerNotificationService $customerNotifications
+        CustomerNotificationService $customerNotifications,
+        OrderCancellationService $cancellationService
     )
     {
         $user = $request->user();
@@ -393,16 +396,16 @@ class CartController extends Controller
             'payment_method' => $validatedPayment['payment_method'],
         ]);
 
-        $momoPayUrl = null;
-
-        $order = DB::transaction(function () use ($validated, $cartItems, $user, $momoPayment, $orderAutomation, $customerNotifications, &$momoPayUrl) {
+        $order = DB::transaction(function () use ($validated, $cartItems, $user, $orderAutomation, $customerNotifications) {
             $cartItems = $this->lockAndValidateCartItems($cartItems);
             $summary = $this->getCartSummary($cartItems, true, $validated);
             $summary = $this->lockAndValidateCoupon($summary);
             $shippingQuote = $summary['shipping_quote'];
+            $orderCode = $this->generateOrderCode();
+            $isMomo = $validated['payment_method'] === Order::PAYMENT_METHOD_MOMO;
 
             $order = Order::query()->create([
-                'code' => $this->generateOrderCode(),
+                'code' => $orderCode,
                 'public_token' => Str::random(48),
                 'user_id' => $user->id,
                 'customer_name' => $validated['customer_name'],
@@ -424,6 +427,10 @@ class CartController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => Order::PAYMENT_STATUS_UNPAID,
+                'momo_request_id' => $isMomo ? $orderCode : null,
+                'payment_expires_at' => $isMomo
+                    ? now()->addMinutes((int) config('shop.order_automation.momo_expire_minutes', 30))
+                    : null,
                 'shipping_status' => Order::SHIPPING_STATUS_PENDING,
                 'shipping_delivery_method' => $shippingQuote['delivery_method'] ?? null,
                 'shipping_delivery_eta' => $shippingQuote['eta'] ?? null,
@@ -515,13 +522,43 @@ class CartController extends Controller
                 $this->saveCheckoutAddress($user, $validated);
             }
 
-            if ($validated['payment_method'] === Order::PAYMENT_METHOD_MOMO) {
-                $momoResponse = $momoPayment->createPayment($order);
-                $momoPayUrl = $momoResponse['payUrl'];
-            }
-
             return $order;
         });
+
+        $momoPayUrl = null;
+        if ($validated['payment_method'] === Order::PAYMENT_METHOD_MOMO) {
+            try {
+                $momoResponse = $momoPayment->createPayment($order);
+                $momoPayUrl = $momoResponse['payUrl'];
+            } catch (\Throwable $exception) {
+                DB::transaction(function () use ($order, $cancellationService) {
+                    $lockedOrder = Order::query()
+                        ->with('items')
+                        ->whereKey($order->id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($lockedOrder && $lockedOrder->payment_status === Order::PAYMENT_STATUS_UNPAID) {
+                        $cancellationService->cancelImmediately(
+                            $lockedOrder,
+                            null,
+                            null,
+                            'Hệ thống hủy đơn vì không tạo được phiên thanh toán MoMo.',
+                            false
+                        );
+                    }
+                });
+
+                report($exception);
+
+                return redirect()->route('checkout.payment')->with(
+                    'error',
+                    $exception instanceof ValidationException
+                        ? (collect($exception->errors())->flatten()->first() ?: 'Không thể tạo phiên thanh toán MoMo.')
+                        : 'Không thể kết nối MoMo lúc này. Giỏ hàng của bạn vẫn được giữ, vui lòng thử lại.'
+                );
+            }
+        }
 
         session([
             'checkout_order_code' => $order->code,
@@ -546,8 +583,7 @@ class CartController extends Controller
         Request $request,
         string $code,
         ?string $token = null,
-        MomoPaymentService $momoPayment,
-        OrderAutomationService $orderAutomation
+        MomoCallbackService $momoCallback
     )
     {
         $order = Order::query()
@@ -558,7 +594,8 @@ class CartController extends Controller
             abort(404);
         }
 
-        $paid = $this->applyMomoPaymentResult($order, $request->query(), $momoPayment, $orderAutomation);
+        $result = $momoCallback->handle($request->query(), $code);
+        $paid = $result['paid'];
         $flashType = $paid ? 'success' : 'error';
         $flashMessage = $paid
             ? 'Thanh toán MoMo thành công.'
@@ -572,25 +609,15 @@ class CartController extends Controller
             ->with($flashType, $flashMessage);
     }
 
-    public function momoIpn(Request $request, MomoPaymentService $momoPayment, OrderAutomationService $orderAutomation)
+    public function momoIpn(Request $request, MomoCallbackService $momoCallback)
     {
         $payload = $request->all();
-        $orderId = (string) ($payload['orderId'] ?? '');
-
-        $order = Order::query()->where('code', $orderId)->first();
-        if (!$order) {
-            return response()->json([
-                'resultCode' => 1,
-                'message' => 'Order not found',
-            ], 404);
-        }
-
-        $this->applyMomoPaymentResult($order, $payload, $momoPayment, $orderAutomation);
+        $result = $momoCallback->handle($payload);
 
         return response()->json([
-            'resultCode' => 0,
-            'message' => 'Received',
-        ]);
+            'resultCode' => $result['accepted'] ? 0 : 1,
+            'message' => $result['message'],
+        ], $result['accepted'] ? 200 : 422);
     }
 
     public function thankYou(string $code, ?string $token = null)
@@ -990,62 +1017,6 @@ class CartController extends Controller
         $email = Str::lower(trim((string) $value));
 
         return $email === '' ? null : $email;
-    }
-
-    private function applyMomoPaymentResult(
-        Order $order,
-        array $payload,
-        MomoPaymentService $momoPayment,
-        OrderAutomationService $orderAutomation
-    ): bool
-    {
-        if ($order->payment_method !== Order::PAYMENT_METHOD_MOMO) {
-            return false;
-        }
-
-        if (!$momoPayment->verifyResult($payload)) {
-            $this->appendOrderAdminNote($order, 'MoMo sandbox: chữ ký callback không hợp lệ.');
-            return false;
-        }
-
-        if ((int) ($payload['resultCode'] ?? -1) !== 0) {
-            $message = (string) ($payload['message'] ?? 'Thanh toán chưa thành công.');
-            $this->appendOrderAdminNote($order, 'MoMo sandbox: ' . $message);
-            return false;
-        }
-
-        if ($order->payment_status !== Order::PAYMENT_STATUS_PAID) {
-            $transId = (string) ($payload['transId'] ?? '');
-            $this->appendOrderAdminNote($order, 'MoMo sandbox paid. TransId: ' . ($transId !== '' ? $transId : 'N/A'));
-
-            $order->forceFill([
-                'payment_status' => Order::PAYMENT_STATUS_PAID,
-                'paid_at' => now(),
-            ])->save();
-
-            app(CustomerNotificationService::class)->paymentReceived($order);
-        }
-
-        $order->refresh();
-        if (!$order->requiresShippingConfirmation()) {
-            $orderAutomation->autoConfirmAfterStockReserved(
-                $order,
-                null,
-                'He thong tu dong xac nhan sau khi MoMo bao thanh toan thanh cong.'
-            );
-        }
-
-        return true;
-    }
-
-    private function appendOrderAdminNote(Order $order, string $note): void
-    {
-        $existingNote = trim((string) $order->admin_note);
-        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
-
-        $order->forceFill([
-            'admin_note' => $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote,
-        ])->save();
     }
 
     private function canViewOrder(Order $order, ?string $token): bool

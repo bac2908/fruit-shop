@@ -22,7 +22,12 @@ class MomoPaymentService
         $partnerCode = (string) config('services.momo.partner_code');
         $accessKey = (string) config('services.momo.access_key');
         $requestType = (string) config('services.momo.request_type', 'payWithMethod');
-        $requestId = $order->code;
+        $requestId = (string) $order->momo_request_id;
+        if ($requestId === '') {
+            throw ValidationException::withMessages([
+                'payment_method' => 'Đơn hàng chưa có mã yêu cầu MoMo hợp lệ.',
+            ]);
+        }
         $orderId = $order->code;
         $orderInfo = 'Thanh toan don hang ' . $order->code . ' tai The Gioi Trai Cay';
         $redirectUrl = route('checkout.momo.return', [
@@ -81,7 +86,13 @@ class MomoPaymentService
         }
 
         $data = $response->json();
-        if (!is_array($data) || (int) ($data['resultCode'] ?? -1) !== 0 || empty($data['payUrl'])) {
+        if (
+            !is_array($data)
+            || (int) ($data['resultCode'] ?? -1) !== 0
+            || empty($data['payUrl'])
+            || !hash_equals($orderId, (string) ($data['orderId'] ?? ''))
+            || !hash_equals($requestId, (string) ($data['requestId'] ?? ''))
+        ) {
             throw ValidationException::withMessages([
                 'payment_method' => $data['message'] ?? 'MoMo chưa tạo được liên kết thanh toán.',
             ]);
@@ -94,7 +105,7 @@ class MomoPaymentService
     {
         $this->ensureConfigured();
 
-        if (empty($payload['signature'])) {
+        if (empty($payload['signature']) || !array_key_exists('resultCode', $payload)) {
             return false;
         }
 

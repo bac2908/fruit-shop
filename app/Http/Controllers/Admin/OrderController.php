@@ -10,6 +10,7 @@ use App\Services\OrderCancellationService;
 use App\Services\OrderAutomationService;
 use App\Services\OrderNotificationService;
 use App\Services\CustomerNotificationService;
+use App\Services\OrderStateTransitionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(OrderStateTransitionService $stateTransitions)
     {
         $orders = Order::query()
             ->with(['cancellationRequests.user'])
@@ -32,6 +33,9 @@ class OrderController extends Controller
                 ->where('status', OrderCancellationRequest::STATUS_PENDING)
                 ->count(),
             'statusLabels' => Order::statusLabels(),
+            'allowedStatusTransitions' => $orders->mapWithKeys(function (Order $order) use ($stateTransitions) {
+                return [$order->id => $stateTransitions->availableStatuses($order)];
+            }),
             'paymentStatusLabels' => Order::paymentStatusLabels(),
             'cancellationStatusLabels' => OrderCancellationRequest::statusLabels(),
         ]);
@@ -43,7 +47,8 @@ class OrderController extends Controller
         OrderCancellationService $cancellationService,
         OrderAutomationService $orderAutomation,
         OrderNotificationService $orderNotifications,
-        CustomerNotificationService $customerNotifications
+        CustomerNotificationService $customerNotifications,
+        OrderStateTransitionService $stateTransitions
     )
     {
         $request->merge([
@@ -61,7 +66,7 @@ class OrderController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($request, $order, $validated, $cancellationService, $orderAutomation, $orderNotifications, $customerNotifications) {
+            DB::transaction(function () use ($request, $order, $validated, $cancellationService, $orderAutomation, $orderNotifications, $customerNotifications, $stateTransitions) {
                 $order = Order::query()
                     ->with(['items', 'cancellationRequests'])
                     ->whereKey($order->id)
@@ -82,11 +87,7 @@ class OrderController extends Controller
                     return;
                 }
 
-                if ($order->status === Order::STATUS_CANCELLED && $validated['status'] !== Order::STATUS_CANCELLED) {
-                    throw ValidationException::withMessages([
-                        'status' => 'Don da huy khong nen mo lai bang man hinh quan tri.',
-                    ]);
-                }
+                $stateTransitions->ensureCanTransition($order, $validated['status']);
 
                 if (
                     $order->hasPendingCancellationRequest()
@@ -109,28 +110,19 @@ class OrderController extends Controller
                     return;
                 }
 
-                $previousStatus = $order->status;
                 $statusNote = $validated['admin_note']
-                    ?: 'Admin cap nhat trang thai tu ' . $previousStatus . ' sang ' . $validated['status'] . '.';
+                    ?: 'Admin cap nhat trang thai tu ' . $order->status . ' sang ' . $validated['status'] . '.';
 
-                $order->forceFill([
-                    'status' => $validated['status'],
-                    'shipping_status' => $this->shippingStatusForOrderStatus($validated['status'], $order->shipping_status),
-                    'admin_note' => $this->appendNoteText($order->admin_note, $statusNote),
-                ])->save();
+                $stateTransitions->transition(
+                    $order,
+                    $validated['status'],
+                    $request->user()->id,
+                    $statusNote
+                );
 
                 if ($validated['status'] === Order::STATUS_DONE) {
                     $orderAutomation->autoMarkPaymentCollectedOnCompletion($order, $request->user()->id);
                 }
-
-                OrderStatusHistory::query()->create([
-                    'order_id' => $order->id,
-                    'user_id' => $request->user()->id,
-                    'previous_status' => $previousStatus,
-                    'status' => $validated['status'],
-                    'note' => $statusNote,
-                    'created_at' => now(),
-                ]);
 
                 if ($validated['status'] === Order::STATUS_CONFIRMED) {
                     $order->refresh();
@@ -254,7 +246,12 @@ class OrderController extends Controller
         return redirect()->route('admin.orders')->with('success', 'Da tu choi yeu cau huy don.');
     }
 
-    public function updateShipping(Request $request, Order $order, OrderNotificationService $orderNotifications)
+    public function updateShipping(
+        Request $request,
+        Order $order,
+        OrderNotificationService $orderNotifications,
+        OrderStateTransitionService $stateTransitions
+    )
     {
         $request->merge([
             'shipping_delivery_note' => $this->cleanTextInput($request->input('shipping_delivery_note'), true),
@@ -273,7 +270,7 @@ class OrderController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($request, $order, $validated, $orderNotifications) {
+            DB::transaction(function () use ($request, $order, $validated, $orderNotifications, $stateTransitions) {
                 $order = Order::query()
                     ->whereKey($order->id)
                     ->lockForUpdate()
@@ -289,6 +286,15 @@ class OrderController extends Controller
                 $previousShippingFee = (int) $order->shipping_fee;
                 $shippingFee = (int) $validated['shipping_fee'];
                 $total = max(0, (int) $order->subtotal + $shippingFee - (int) $order->discount_total);
+
+                if (
+                    $order->payment_status === Order::PAYMENT_STATUS_PAID
+                    && ($shippingFee !== $previousShippingFee || $total !== (int) $order->total)
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipping_fee' => 'Đơn đã thanh toán nên không thể thay đổi phí giao hàng hoặc tổng tiền.',
+                    ]);
+                }
                 $note = $validated['shipping_delivery_note']
                     ?: 'Admin chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.';
 
@@ -310,25 +316,26 @@ class OrderController extends Controller
                         || $order->payment_status === Order::PAYMENT_STATUS_PAID
                     );
 
-                if ($shouldAutoConfirm) {
-                    $changes['status'] = Order::STATUS_CONFIRMED;
-                    $changes['shipping_status'] = Order::SHIPPING_STATUS_PREPARING;
-                }
-
                 $order->forceFill($changes)->save();
 
-                OrderStatusHistory::query()->create([
-                    'order_id' => $order->id,
-                    'user_id' => $request->user()->id,
-                    'previous_status' => $previousStatus,
-                    'status' => $shouldAutoConfirm ? Order::STATUS_CONFIRMED : 'shipping_fee_confirmed',
-                    'note' => 'Shop da chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.',
-                    'created_at' => now(),
-                ]);
-
                 if ($shouldAutoConfirm) {
+                    $stateTransitions->transition(
+                        $order,
+                        Order::STATUS_CONFIRMED,
+                        $request->user()->id,
+                        'Shop da chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.'
+                    );
                     $order->refresh();
                     $orderNotifications->notifyOrderConfirmed($order, $request->user()->id);
+                } else {
+                    OrderStatusHistory::query()->create([
+                        'order_id' => $order->id,
+                        'user_id' => $request->user()->id,
+                        'previous_status' => $previousStatus,
+                        'status' => 'shipping_fee_confirmed',
+                        'note' => 'Shop da chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.',
+                        'created_at' => now(),
+                    ]);
                 }
             });
         } catch (ValidationException $exception) {
@@ -351,27 +358,6 @@ class OrderController extends Controller
             });
 
         return $summary;
-    }
-
-    private function shippingStatusForOrderStatus(string $status, string $currentShippingStatus): string
-    {
-        if ($status === Order::STATUS_PENDING) {
-            return Order::SHIPPING_STATUS_PENDING;
-        }
-
-        if ($status === Order::STATUS_CONFIRMED) {
-            return Order::SHIPPING_STATUS_PREPARING;
-        }
-
-        if ($status === Order::STATUS_SHIPPING) {
-            return Order::SHIPPING_STATUS_SHIPPING;
-        }
-
-        if ($status === Order::STATUS_DONE) {
-            return Order::SHIPPING_STATUS_DELIVERED;
-        }
-
-        return $currentShippingStatus;
     }
 
     private function cleanTextInput($value, bool $nullable = false): ?string

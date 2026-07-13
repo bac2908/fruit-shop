@@ -7,17 +7,21 @@ use App\Models\CouponUsage;
 use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\OrderCancellationRequest;
-use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\UserVoucher;
 
 class OrderCancellationService
 {
     private $notifications;
+    private $stateTransitions;
 
-    public function __construct(OrderNotificationService $notifications)
+    public function __construct(
+        OrderNotificationService $notifications,
+        OrderStateTransitionService $stateTransitions
+    )
     {
         $this->notifications = $notifications;
+        $this->stateTransitions = $stateTransitions;
     }
 
     public function cancelImmediately(
@@ -30,6 +34,8 @@ class OrderCancellationService
         if ($order->status === Order::STATUS_CANCELLED) {
             return;
         }
+
+        $this->stateTransitions->ensureCanTransition($order, Order::STATUS_CANCELLED);
 
         $order->loadMissing('items');
 
@@ -67,20 +73,23 @@ class OrderCancellationService
 
         $this->restoreCouponAfterCancel($order);
 
-        $previousStatus = $order->status;
         $cancelNote = $note ?: 'Don hang da duoc huy.';
         $payload = [
-            'status' => Order::STATUS_CANCELLED,
             'shipping_status' => Order::SHIPPING_STATUS_FAILED,
             'cancelled_at' => now(),
-            'admin_note' => $this->appendNoteText($order->admin_note, $cancelNote),
         ];
 
         if ($markRefunded && $order->payment_status === Order::PAYMENT_STATUS_PAID) {
             $payload['payment_status'] = Order::PAYMENT_STATUS_REFUNDED;
         }
 
-        $order->forceFill($payload)->save();
+        $this->stateTransitions->transition(
+            $order,
+            Order::STATUS_CANCELLED,
+            $actorId,
+            $cancelNote,
+            $payload
+        );
 
         if ($cancelRequest && $cancelRequest->status !== OrderCancellationRequest::STATUS_APPROVED) {
             $cancelRequest->forceFill([
@@ -89,15 +98,6 @@ class OrderCancellationService
                 'resolved_at' => now(),
             ])->save();
         }
-
-        OrderStatusHistory::query()->create([
-            'order_id' => $order->id,
-            'user_id' => $actorId,
-            'previous_status' => $previousStatus,
-            'status' => Order::STATUS_CANCELLED,
-            'note' => $cancelNote,
-            'created_at' => now(),
-        ]);
 
         $order->refresh();
         $this->notifications->notifyOrderCancelled($order, $actorId, $cancelNote);
@@ -143,11 +143,4 @@ class OrderCancellationService
         $usage->delete();
     }
 
-    private function appendNoteText(?string $existingNote, string $note): string
-    {
-        $existingNote = trim((string) $existingNote);
-        $newNote = '[' . now()->format('d/m/Y H:i') . '] ' . $note;
-
-        return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
-    }
 }
