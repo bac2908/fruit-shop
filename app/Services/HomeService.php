@@ -12,7 +12,7 @@ class HomeService
     /**
      * Get data for homepage sections based on category slugs
      */
-    public function getHomeSections(array $slugs, int $productLimit = 12)
+    public function getHomeSections(array $slugs, int $productLimit = 8)
     {
         $orderedSlugs = collect($slugs)
             ->filter(fn ($slug) => is_string($slug) && trim($slug) !== '')
@@ -103,44 +103,6 @@ class HomeService
             ->orderByDesc('id')
             ->limit($productLimit)
             ->get();
-
-        // Temporary fallback: fill missing slots from uncategorized products to avoid sparse home sections.
-        if ($products->count() < $productLimit) {
-            $needed = $productLimit - $products->count();
-            $excludeIds = $products->pluck('id')->all();
-
-            $uncategorizedProducts = Product::query()
-                ->where('is_active', true)
-                ->whereNull('category_id')
-                ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-                    $query->whereNotIn('id', $excludeIds);
-                })
-                ->orderByDesc('id')
-                ->limit($needed)
-                ->get();
-
-            if ($uncategorizedProducts->isNotEmpty()) {
-                $products = $products->concat($uncategorizedProducts)->values();
-            }
-        }
-
-        if ($products->count() < $productLimit) {
-            $needed = $productLimit - $products->count();
-            $excludeIds = $products->pluck('id')->all();
-
-            $latestProducts = Product::query()
-                ->where('is_active', true)
-                ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-                    $query->whereNotIn('id', $excludeIds);
-                })
-                ->orderByDesc('id')
-                ->limit($needed)
-                ->get();
-
-            if ($latestProducts->isNotEmpty()) {
-                $products = $products->concat($latestProducts)->values();
-            }
-        }
 
         return [
             'category' => $category,

@@ -24,7 +24,7 @@
 <div class="product-box">
 	<div class="product-thumbnail flexbox-grid">
 		<a href="{{ $productShowUrl }}" title="{{ $product->name }}">
-			<img src="{{ $imgUrl }}" data-lazyload="{{ $imgUrl }}" alt="{{ $product->name }}">
+			<img src="{{ $imgUrl }}" alt="{{ $product->name }}" width="480" height="480" loading="lazy" decoding="async">
 		</a>
 
 		@if($discount > 0)
@@ -38,11 +38,11 @@
 						@csrf
 						<input type="hidden" name="product_id" value="{{ $product->id }}" />
 						<input type="hidden" name="quantity" value="1" />
-						<button type="submit" class="btn-buy btn-cart btn btn-primary left-to add_to_cart" data-toggle="tooltip" title="Đặt hàng">
-							<i class="fa fa-shopping-bag"></i>
+						<button type="submit" class="btn-buy btn-cart btn btn-primary left-to add_to_cart" data-toggle="tooltip" title="Đặt hàng" aria-label="Thêm {{ $product->name }} vào giỏ hàng">
+							<i class="fa fa-shopping-bag" aria-hidden="true"></i>
 						</button>
 						<a href="{{ $productShowUrl }}" title="Xem nhanh" aria-label="Xem nhanh {{ $product->name }}" class="btn-gray product-detail-link btn right-to" data-quick-view-url="{{ $productQuickViewUrl }}">
-							<i class="fa fa-eye"></i>
+							<i class="fa fa-eye" aria-hidden="true"></i>
 						</a>
 					</div>
 				</form>
@@ -51,16 +51,16 @@
 					<div>
 						@if(!$isMissingPrice && !$isOutOfStock && $isCustomOrder)
 							<a href="{{ $consultUrl }}" class="product-action-link product-action-primary left-to" title="Tư vấn đặt mẫu" aria-label="Tư vấn đặt mẫu {{ $product->name }}">
-								<i class="fa fa-comments"></i>
+								<i class="fa fa-comments" aria-hidden="true"></i>
 							</a>
 						@elseif(!$isMissingPrice && !$isOutOfStock && $hasGearDetail)
 							<a href="{{ $productShowUrl }}" class="product-action-link product-action-primary left-to" title="Chọn sản phẩm" aria-label="Chọn sản phẩm {{ $product->name }}">
-								<i class="fa fa-gear"></i>
+								<i class="fa fa-gear" aria-hidden="true"></i>
 							</a>
 						@endif
 
 						<a href="{{ $productShowUrl }}" title="Xem nhanh" aria-label="Xem nhanh {{ $product->name }}" class="product-action-link product-action-secondary product-detail-link right-to" data-quick-view-url="{{ $productQuickViewUrl }}">
-							<i class="fa fa-eye"></i>
+							<i class="fa fa-eye" aria-hidden="true"></i>
 						</a>
 					</div>
 				</div>

@@ -65,7 +65,7 @@
                                             <td data-label="Sản phẩm">
                                                 <div class="cart-product-cell">
                                                     <a href="{{ route('products.show', $product->slug) }}" class="thumb">
-                                                        <img src="{{ $product->thumb_url }}" alt="{{ $product->name }}">
+                                                        <img src="{{ $product->thumb_url }}" alt="{{ $product->name }}" width="96" height="96" loading="lazy" decoding="async">
                                                     </a>
                                                     <div class="meta">
                                                         <a href="{{ route('products.show', $product->slug) }}" class="name">{{ $product->name }}</a>

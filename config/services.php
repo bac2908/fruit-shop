@@ -44,4 +44,9 @@ return [
         'request_type' => env('MOMO_REQUEST_TYPE', 'payWithMethod'),
     ],
 
+    'analytics' => [
+        'enabled' => filter_var(env('ANALYTICS_ENABLED', false), FILTER_VALIDATE_BOOL),
+        'measurement_id' => env('ANALYTICS_MEASUREMENT_ID'),
+    ],
+
 ];

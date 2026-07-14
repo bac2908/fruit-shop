@@ -109,7 +109,7 @@
                                     : (optional($item->product)->thumb_url ?: '//theme.hstatic.net/200000157781/1001036201/14/no-image.jpg?v=1064');
                             @endphp
                             <div class="order-item {{ $isVoucherGift ? 'is-voucher-gift' : '' }}">
-                                <img src="{{ $itemImage }}" alt="{{ $item->product_name }}">
+                                <img src="{{ $itemImage }}" alt="{{ $item->product_name }}" width="80" height="80" loading="lazy" decoding="async">
                                 <div class="order-item-info">
                                     <h3>{{ $item->product_name }}</h3>
                                     @if($isVoucherGift)

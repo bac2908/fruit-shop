@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -24,6 +25,8 @@ use App\Http\Controllers\Admin\ContactController as AdminContactController;
 */
 
 // Trang chủ
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/collections/all', [ProductController::class, 'index'])->name('products.index');
 Route::view('/pages/about-us', 'pages.about')->name('about');

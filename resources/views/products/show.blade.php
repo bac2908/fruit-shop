@@ -6,6 +6,80 @@
     $metaDescription = $plainDescription !== ''
         ? \Illuminate\Support\Str::limit($plainDescription, 320, '')
         : 'Thế Giới Trái Cây - Trái cây sạch, trái cây nhập khẩu chất lượng cao.';
+    $schemaImage = (string) $product->primary_image_url;
+    if (\Illuminate\Support\Str::startsWith($schemaImage, '//')) {
+        $schemaImage = 'https:' . $schemaImage;
+    } elseif (!\Illuminate\Support\Str::startsWith($schemaImage, ['http://', 'https://'])) {
+        $schemaImage = asset(ltrim($schemaImage, '/'));
+    }
+
+    $organizationId = route('home') . '#organization';
+    $productSchemaNode = [
+        '@type' => 'Product',
+        '@id' => $canonicalUrl . '#product',
+        'name' => $product->name,
+        'url' => $canonicalUrl,
+        'image' => [$schemaImage],
+        'description' => $metaDescription,
+        'sku' => trim((string) ($product->sku ?: $product->slug)),
+        'category' => optional($product->category)->name ?: 'Sản phẩm',
+        'brand' => ['@id' => $organizationId],
+    ];
+
+    $schemaPrice = (int) $product->orderable_price;
+    if ($schemaPrice > 0 && !(bool) $product->is_custom_order_product) {
+        $productSchemaNode['offers'] = [
+            '@type' => 'Offer',
+            'url' => $canonicalUrl,
+            'priceCurrency' => 'VND',
+            'price' => (string) $schemaPrice,
+            'availability' => $product->is_active && (int) $product->stock > 0
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+            'itemCondition' => 'https://schema.org/NewCondition',
+            'seller' => ['@id' => $organizationId],
+        ];
+    }
+
+    $breadcrumbItems = [
+        [
+            '@type' => 'ListItem',
+            'position' => 1,
+            'name' => 'Trang chủ',
+            'item' => route('home'),
+        ],
+    ];
+
+    if ($product->category) {
+        $breadcrumbItems[] = [
+            '@type' => 'ListItem',
+            'position' => count($breadcrumbItems) + 1,
+            'name' => $product->category->name,
+            'item' => route('categories.show', $product->category->slug),
+        ];
+    }
+
+    $breadcrumbItems[] = [
+        '@type' => 'ListItem',
+        'position' => count($breadcrumbItems) + 1,
+        'name' => $product->name,
+        'item' => $canonicalUrl,
+    ];
+
+    $productSchemaJson = json_encode(
+        [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                $productSchemaNode,
+                [
+                    '@type' => 'BreadcrumbList',
+                    '@id' => $canonicalUrl . '#breadcrumb',
+                    'itemListElement' => $breadcrumbItems,
+                ],
+            ],
+        ],
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    );
 @endphp
 
 @section('title', $product->name . ' - Thế Giới Trái Cây')
@@ -20,6 +94,7 @@
     <meta property="og:image" content="{{ $product->primary_image_url }}">
     <meta property="product:price:amount" content="{{ (int) $product->orderable_price }}">
     <meta property="product:price:currency" content="VND">
+    <script type="application/ld+json">{!! $productSchemaJson !!}</script>
 @endpush
 
 @section('content')
@@ -157,7 +232,7 @@
                             <div class="pdx-gallery-wrap">
                                 <div class="pdx-zoom-stage" id="pdx-zoom-stage">
                                     <a href="{{ $mainImage }}" class="pdx-main-image-link" target="_blank" rel="noopener noreferrer">
-                                        <img id="pdx-main-image" src="{{ $mainImage }}" alt="{{ $product->name }}" class="pdx-main-image">
+                                        <img id="pdx-main-image" src="{{ $mainImage }}" alt="{{ $product->name }}" class="pdx-main-image" width="720" height="720" loading="eager" decoding="async" fetchpriority="high">
                                     </a>
                                     <span class="pdx-zoom-lens" aria-hidden="true"></span>
                                 </div>
@@ -167,7 +242,7 @@
                                     <div class="pdx-thumb-grid" id="pdx-thumb-grid">
                                         @foreach($resolvedImages as $imageUrl)
                                             <button type="button" class="pdx-thumb {{ $loop->first ? 'is-active' : '' }}" data-image="{{ $imageUrl }}" aria-label="Xem ảnh {{ $loop->iteration }}">
-                                                <img src="{{ $imageUrl }}" alt="{{ $product->name }} - ảnh {{ $loop->iteration }}">
+                                                <img src="{{ $imageUrl }}" alt="{{ $product->name }} - ảnh {{ $loop->iteration }}" width="96" height="96" loading="lazy" decoding="async">
                                             </button>
                                         @endforeach
                                     </div>
@@ -348,7 +423,7 @@
                                     $featuredOld = ($featuredSale > 0 && $featuredSale < $featuredPrice) ? $featuredPrice : null;
                                 @endphp
                                 <a class="pdx-featured-item" href="{{ route('products.show', $featured->slug) }}" title="{{ $featured->name }}">
-                                    <img src="{{ $featured->primary_image_url }}" alt="{{ $featured->name }}" loading="lazy">
+                                    <img src="{{ $featured->primary_image_url }}" alt="{{ $featured->name }}" width="96" height="96" loading="lazy" decoding="async">
                                     <div class="pdx-featured-info">
                                         <h3>{{ $featured->name }}</h3>
                                         <div class="pdx-featured-price">

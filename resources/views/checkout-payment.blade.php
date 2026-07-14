@@ -118,7 +118,7 @@
                     @foreach($cartItems as $item)
                         <div class="payment-item">
                             <div class="payment-thumb">
-                                <img src="{{ $item['product']->thumb_url }}" alt="{{ $item['product']->name }}">
+                                <img src="{{ $item['product']->thumb_url }}" alt="{{ $item['product']->name }}" width="80" height="80" loading="lazy" decoding="async">
                                 <span>{{ $item['quantity'] }}</span>
                             </div>
                             <div class="payment-item-info">

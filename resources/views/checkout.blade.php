@@ -219,7 +219,7 @@
                     @foreach($cartItems as $item)
                         <div class="checkout-item">
                             <div class="checkout-thumb">
-                                <img src="{{ $item['product']->thumb_url }}" alt="{{ $item['product']->name }}">
+                                <img src="{{ $item['product']->thumb_url }}" alt="{{ $item['product']->name }}" width="80" height="80" loading="lazy" decoding="async">
                                 <span>{{ $item['quantity'] }}</span>
                             </div>
                             <div class="checkout-item-info">
