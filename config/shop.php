@@ -114,4 +114,11 @@ return [
         'max_evidence_mb' => env('SHOP_RETURN_MAX_EVIDENCE_MB', 3),
         'email_enabled' => env('SHOP_RETURN_EMAIL_ENABLED', true),
     ],
+
+    'contact' => [
+        'inbox_email' => env('CONTACT_INBOX_EMAIL', env('ADMIN_EMAIL', env('MAIL_FROM_ADDRESS'))),
+        'min_fill_seconds' => (int) env('CONTACT_MIN_FILL_SECONDS', 1),
+        'form_expire_minutes' => (int) env('CONTACT_FORM_EXPIRE_MINUTES', 240),
+        'duplicate_window_minutes' => (int) env('CONTACT_DUPLICATE_WINDOW_MINUTES', 15),
+    ],
 ];

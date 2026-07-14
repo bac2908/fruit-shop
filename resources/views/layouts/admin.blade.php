@@ -682,6 +682,13 @@
                 <i class="ri-team-line"></i>
                 <span>Khach hang</span>
             </a>
+            <a href="{{ route('admin.contacts.index') }}" class="menu-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}">
+                <i class="ri-mail-open-line"></i>
+                <span>Hop thu lien he</span>
+                @if(($adminNewContactCount ?? 0) > 0)
+                    <strong style="margin-left:auto;min-width:24px;padding:2px 7px;border-radius:999px;background:#fff;color:#1f7a4a;text-align:center;font-size:11px;">{{ $adminNewContactCount }}</strong>
+                @endif
+            </a>
             <a href="{{ route('admin.coupons') }}" class="menu-link {{ request()->routeIs('admin.coupons') ? 'active' : '' }}">
                 <i class="ri-coupon-2-line"></i>
                 <span>Coupon</span>

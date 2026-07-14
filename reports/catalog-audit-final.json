@@ -1,0 +1,3934 @@
+{
+    "generated_at": "2026-07-14T16:32:46+00:00",
+    "products_audited": 437,
+    "safe_fix_enabled": false,
+    "summary": {
+        "active_out_of_stock": {
+            "total": 4,
+            "fixed": 0,
+            "remaining": 4
+        },
+        "external_media": {
+            "total": 431,
+            "fixed": 0,
+            "remaining": 431
+        }
+    },
+    "issues": [
+        {
+            "product_id": 1,
+            "sku": "TGC-000001",
+            "slug": "man-hau-moc-chau",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 2,
+            "sku": "TGC-000002",
+            "slug": "nhan-hat-tieu",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 6,
+            "sku": "TGC-000006",
+            "slug": "cherry-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 8,
+            "sku": "TGC-000008",
+            "slug": "chom-chom-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 11,
+            "sku": "TGC-000011",
+            "slug": "hop-qua-pastel-pt1200",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 12,
+            "sku": "TGC-000012",
+            "slug": "kum-quat-tac-ngot-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 13,
+            "sku": "TGC-000013",
+            "slug": "man-hong-soc-trang-mst",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 14,
+            "sku": "TGC-000014",
+            "slug": "nho-xanh-uc-cordoma-atutumcrips",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 15,
+            "sku": "TGC-000015",
+            "slug": "nho-xanh-uc-btm-sweetglobe",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 17,
+            "sku": "TGC-000017",
+            "slug": "quyt-vang-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 20,
+            "sku": "TGC-000020",
+            "slug": "viet-quat-bluberry-uc-tasmania",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 23,
+            "sku": "TGC-000023",
+            "slug": "gio-trai-cay-kinh-le-kl1350",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 24,
+            "sku": "TGC-000024",
+            "slug": "gio-qua-trai-cay-chuc-mung-sinh-nhat-vc1500",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 31,
+            "sku": "TGC-000031",
+            "slug": "gio-qua-mang-cut",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 33,
+            "sku": "TGC-000033",
+            "slug": "nhan-ban-tu-hop-qua-trai-cay-tc0200",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 34,
+            "sku": "TGC-000034",
+            "slug": "nhan-ban-tu-xoai-cat-hoa-loc-chin",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 39,
+            "sku": "TGC-000039",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-d073",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 40,
+            "sku": "TGC-000040",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-d042",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 41,
+            "sku": "TGC-000041",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-d037",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 42,
+            "sku": "TGC-000042",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-da060",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 43,
+            "sku": "TGC-000043",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-d060",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 44,
+            "sku": "TGC-000044",
+            "slug": "nho-den-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 45,
+            "sku": "TGC-000045",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-d450",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 46,
+            "sku": "TGC-000046",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-v490",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 47,
+            "sku": "TGC-000047",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-v430",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 48,
+            "sku": "TGC-000048",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-v850",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 49,
+            "sku": "TGC-000049",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-xd950",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 50,
+            "sku": "TGC-000050",
+            "slug": "hop-mica-trong-suot-mcxl",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 51,
+            "sku": "TGC-000051",
+            "slug": "hop-mica-trong-suot-mcvd",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 52,
+            "sku": "TGC-000052",
+            "slug": "hop-mica-trong-suot-mcxd630",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 53,
+            "sku": "TGC-000053",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-x850",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 54,
+            "sku": "TGC-000054",
+            "slug": "gio-qua-banh-keo-tet-at-ty-2025-x840",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 55,
+            "sku": "TGC-000055",
+            "slug": "nho-do-longcrimson-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 57,
+            "sku": "TGC-000057",
+            "slug": "hop-qua-trai-cay-mica-trong-suot-mc002",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 60,
+            "sku": "TGC-000060",
+            "slug": "hop-qua-trai-cay-mica-trong-suot-mc001",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 63,
+            "sku": "TGC-000063",
+            "slug": "gio-trai-cay-mix-hoa-hong-ghh1500",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 65,
+            "sku": "TGC-000065",
+            "slug": "gio-qua-trai-cay-rx1450",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 66,
+            "sku": "TGC-000066",
+            "slug": "gio-trai-cay-mix-hoa-ht1500",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 68,
+            "sku": "TGC-000068",
+            "slug": "gio-trai-cay-mix-hoa-h770",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 69,
+            "sku": "TGC-000069",
+            "slug": "mang-cau-xiem",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 75,
+            "sku": "TGC-000075",
+            "slug": "gio-qua-trai-cay-kr2200",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 77,
+            "sku": "TGC-000077",
+            "slug": "gio-qua-trai-cay-qt850",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 78,
+            "sku": "TGC-000078",
+            "slug": "gio-qua-trai-cay-nd1300",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 79,
+            "sku": "TGC-000079",
+            "slug": "gio-qua-trai-cay-kinh-gio-kg1500",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 82,
+            "sku": "TGC-000082",
+            "slug": "cha-la-say-kho-nouri-tunnisia",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 83,
+            "sku": "TGC-000083",
+            "slug": "gio-trai-cay-mix-hoa-hong",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 85,
+            "sku": "TGC-000085",
+            "slug": "hop-qua-tron-ms2",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 86,
+            "sku": "TGC-000086",
+            "slug": "hop-qua-tron-ms1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 87,
+            "sku": "TGC-000087",
+            "slug": "tao-ambrosia-canada-size-80",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 88,
+            "sku": "TGC-000088",
+            "slug": "gio-trai-cay-va-bong-dong-tien",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 89,
+            "sku": "TGC-000089",
+            "slug": "combo-hong-gion-fuju-nho-mau-don",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 92,
+            "sku": "TGC-000092",
+            "slug": "gio-trai-cay-tang-qua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 94,
+            "sku": "TGC-000094",
+            "slug": "hop-qua-trai-cay-tg1250",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 96,
+            "sku": "TGC-000096",
+            "slug": "viet-quat-jumbo-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 97,
+            "sku": "TGC-000097",
+            "slug": "vu-sua-bo-hong-1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 101,
+            "sku": "TGC-000101",
+            "slug": "combo-1kg-kiwi-vang-1kg-kiwi-xanh-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 106,
+            "sku": "TGC-000106",
+            "slug": "nho-mau-don-shine-muscat-golden-grape-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 109,
+            "sku": "TGC-000109",
+            "slug": "hop-qua-luc-giac-2kg-nho-xanh-khong-hat-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 112,
+            "sku": "TGC-000112",
+            "slug": "nho-xanh-fruitico-uc-hang-air",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 114,
+            "sku": "TGC-000114",
+            "slug": "mang-cut-da-cam-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 116,
+            "sku": "TGC-000116",
+            "slug": "may-indo",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 117,
+            "sku": "TGC-000117",
+            "slug": "nho-xanh-uc-autumncrisp-hellos",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 118,
+            "sku": "TGC-000118",
+            "slug": "tao-evercrisp-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 119,
+            "sku": "TGC-000119",
+            "slug": "com-sau-rieng-ri6",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 120,
+            "sku": "TGC-000120",
+            "slug": "hop-qua-tang-dau-my-montery-hinh-tim",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 122,
+            "sku": "TGC-000122",
+            "slug": "nho-xanh-nam-phi-sweetglobe-raisins-hang-air",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 127,
+            "sku": "TGC-000127",
+            "slug": "sau-rieng-chuong-bo-com-sua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 129,
+            "sku": "TGC-000129",
+            "slug": "dau-my-montery-1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 135,
+            "sku": "TGC-000135",
+            "slug": "nhan-tieu-xuong-kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 136,
+            "sku": "TGC-000136",
+            "slug": "cha-la-say-kho-premium-khong-canh-israel",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 143,
+            "sku": "TGC-000143",
+            "slug": "vu-sua-lo-ren",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 148,
+            "sku": "TGC-000148",
+            "slug": "cam-vang-uc-nippy",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 151,
+            "sku": "TGC-000151",
+            "slug": "dua-luoi-binh-an",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 153,
+            "sku": "TGC-000153",
+            "slug": "dau-han-quoc-joyfarm-hop-giay-330gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 164,
+            "sku": "TGC-000164",
+            "slug": "tao-envy-my-size-88",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 165,
+            "sku": "TGC-000165",
+            "slug": "xoai-keo",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 173,
+            "sku": "TGC-000173",
+            "slug": "chuoi-gia-huong",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 179,
+            "sku": "TGC-000179",
+            "slug": "buoi-da-xanh-an-lien-ben-tre",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 181,
+            "sku": "TGC-000181",
+            "slug": "du-du-ruot-vang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 182,
+            "sku": "TGC-000182",
+            "slug": "tao-tui-value-pack-nam-phi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 197,
+            "sku": "TGC-000197",
+            "slug": "nho-xanh-autumncrips-chile",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 199,
+            "sku": "TGC-000199",
+            "slug": "nho-den-uc-hellos",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 200,
+            "sku": "TGC-000200",
+            "slug": "nho-xanh-uc-happy-valley",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 201,
+            "sku": "TGC-000201",
+            "slug": "dau-han-quoc-330gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 204,
+            "sku": "TGC-000204",
+            "slug": "tao-rockit-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 208,
+            "sku": "TGC-000208",
+            "slug": "mang-cut",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 212,
+            "sku": "TGC-000212",
+            "slug": "dua-luoi-aladin-dai-loan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 214,
+            "sku": "TGC-000214",
+            "slug": "nho-xanh-autumncrips-uc-oxgrape",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 220,
+            "sku": "TGC-000220",
+            "slug": "tao-sach-huu-co-juliet-phap",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 224,
+            "sku": "TGC-000224",
+            "slug": "cam-vang-mafa-ai-cap",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 225,
+            "sku": "TGC-000225",
+            "slug": "cha-la-say-kho-nguyen-canh-israel",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 231,
+            "sku": "TGC-000231",
+            "slug": "nho-xanh-autumncrips-angon-nam-phi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 234,
+            "sku": "TGC-000234",
+            "slug": "nho-xanh-autumncrips-grapeco-nam-phi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 246,
+            "sku": "TGC-000246",
+            "slug": "oi-ruby-ruot-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 247,
+            "sku": "TGC-000247",
+            "slug": "quyt-hanrabong-jeju-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 248,
+            "sku": "TGC-000248",
+            "slug": "cherry-uc-reidfruit-tasmania",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 260,
+            "sku": "TGC-000260",
+            "slug": "nho-den-khong-hat-nam-phi-hellos",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 263,
+            "sku": "TGC-000263",
+            "slug": "na-dai-dai-loan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 264,
+            "sku": "TGC-000264",
+            "slug": "nho-xanh-autumn-crips-peru",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 265,
+            "sku": "TGC-000265",
+            "slug": "cherry-uc-hansen-tasmania-size-26-28mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 266,
+            "sku": "TGC-000266",
+            "slug": "me-ngao-duong-thai-lan-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 269,
+            "sku": "TGC-000269",
+            "slug": "chuoi-cha-bot",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 270,
+            "sku": "TGC-000270",
+            "slug": "thanh-tra-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 271,
+            "sku": "TGC-000271",
+            "slug": "nho-xanh-peru-sweetglobe",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 272,
+            "sku": "TGC-000272",
+            "slug": "mit-ruot-do-ma-lai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 273,
+            "sku": "TGC-000273",
+            "slug": "hop-qua-2-qua-na-thai-phan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 286,
+            "sku": "TGC-000286",
+            "slug": "nho-xanh-khong-hat-grapeco-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 290,
+            "sku": "TGC-000290",
+            "slug": "me-dot-bot-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 293,
+            "sku": "TGC-000293",
+            "slug": "tao-envy-my-size-28",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 295,
+            "sku": "TGC-000295",
+            "slug": "gio-qua-2-chum-nho-mau-don-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 298,
+            "sku": "TGC-000298",
+            "slug": "dau-my-montery",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 300,
+            "sku": "TGC-000300",
+            "slug": "tao-ambrosia-canada-size-28",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 311,
+            "sku": "TGC-000311",
+            "slug": "tao-envy-my-size-24",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 313,
+            "sku": "TGC-000313",
+            "slug": "quyt-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 315,
+            "sku": "TGC-000315",
+            "slug": "quyt-vang-da-lat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 320,
+            "sku": "TGC-000320",
+            "slug": "cherry-uc-wvf",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 327,
+            "sku": "TGC-000327",
+            "slug": "mam-trai-cay-di-dam-vo-cung-thuong-tiec",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 329,
+            "sku": "TGC-000329",
+            "slug": "xoai-keo-nghe",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 332,
+            "sku": "TGC-000332",
+            "slug": "nho-mau-don-shine-muscat-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 333,
+            "sku": "TGC-000333",
+            "slug": "xoai-cat-chu-cao-lanh",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 339,
+            "sku": "TGC-000339",
+            "slug": "mam-quyt-duong-di-dam-kinh-vieng",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 341,
+            "sku": "TGC-000341",
+            "slug": "quyt-uc-iron-bank",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 342,
+            "sku": "TGC-000342",
+            "slug": "nho-do-keo-candy-heart-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 344,
+            "sku": "TGC-000344",
+            "slug": "hong-8-hai-da-lat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 345,
+            "sku": "TGC-000345",
+            "slug": "tao-gala-do-super-domex-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 348,
+            "sku": "TGC-000348",
+            "slug": "vu-sua-tim",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 349,
+            "sku": "TGC-000349",
+            "slug": "nho-xanh-khong-hat-toppass-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 359,
+            "sku": "TGC-000359",
+            "slug": "thanh-long-ruot-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 360,
+            "sku": "TGC-000360",
+            "slug": "thanh-long-ruot-trang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 361,
+            "sku": "TGC-000361",
+            "slug": "quyt-duong",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 362,
+            "sku": "TGC-000362",
+            "slug": "oi-nu-hoang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 363,
+            "sku": "TGC-000363",
+            "slug": "sapoche",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 364,
+            "sku": "TGC-000364",
+            "slug": "cam-soan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 365,
+            "sku": "TGC-000365",
+            "slug": "cam-sanh-ben-tre",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 366,
+            "sku": "TGC-000366",
+            "slug": "dua-hau-khong-hat-mat-troi-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 366,
+            "sku": "TGC-000366",
+            "slug": "dua-hau-khong-hat-mat-troi-do",
+            "code": "active_out_of_stock",
+            "severity": "warning",
+            "message": "Active product is out of stock; keep visible only when restocking is intentional.",
+            "fixed": false
+        },
+        {
+            "product_id": 367,
+            "sku": "TGC-000367",
+            "slug": "dua-hau-dai-ruot-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 368,
+            "sku": "TGC-000368",
+            "slug": "mang-cau-na",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 369,
+            "sku": "TGC-000369",
+            "slug": "dau-tay-montery-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 371,
+            "sku": "TGC-000371",
+            "slug": "sau-rieng-ri-6",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 372,
+            "sku": "TGC-000372",
+            "slug": "chuoi-su",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 372,
+            "sku": "TGC-000372",
+            "slug": "chuoi-su",
+            "code": "active_out_of_stock",
+            "severity": "warning",
+            "message": "Active product is out of stock; keep visible only when restocking is intentional.",
+            "fixed": false
+        },
+        {
+            "product_id": 373,
+            "sku": "TGC-000373",
+            "slug": "chuoi-cau",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 374,
+            "sku": "TGC-000374",
+            "slug": "man-do-an-phuoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 376,
+            "sku": "TGC-000376",
+            "slug": "dua-luoi-tl3",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 377,
+            "sku": "TGC-000377",
+            "slug": "buoi-da-xanh-ben-tre",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 379,
+            "sku": "TGC-000379",
+            "slug": "bo-5-long",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 380,
+            "sku": "TGC-000380",
+            "slug": "chom-chom-nhan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 381,
+            "sku": "TGC-000381",
+            "slug": "mit-to-nu",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 382,
+            "sku": "TGC-000382",
+            "slug": "nhan-xuong-vang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 385,
+            "sku": "TGC-000385",
+            "slug": "xoai-cat-hoa-loc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 386,
+            "sku": "TGC-000386",
+            "slug": "nho-xanh-uc-pegasus",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 387,
+            "sku": "TGC-000387",
+            "slug": "kiwi-do-rubyred-zespri-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 388,
+            "sku": "TGC-000388",
+            "slug": "set-qua-tet-3-ong-tao-rockit-kem-bao-li-xi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 389,
+            "sku": "TGC-000389",
+            "slug": "cha-la-say-kho-premium-nguyen-canh-isarael-hop-500gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 390,
+            "sku": "TGC-000390",
+            "slug": "cherry-uc-reidfruit-tasmania-size-28-30mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 391,
+            "sku": "TGC-000391",
+            "slug": "nho-do-keo-peru",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 392,
+            "sku": "TGC-000392",
+            "slug": "cherry-hills-uc-hop-qua-2kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 393,
+            "sku": "TGC-000393",
+            "slug": "viet-quat-peru",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 394,
+            "sku": "TGC-000394",
+            "slug": "dao-vang-kk",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 395,
+            "sku": "TGC-000395",
+            "slug": "hong-mat-van-son-ndt",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 396,
+            "sku": "TGC-000396",
+            "slug": "tao-cherry-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 396,
+            "sku": "TGC-000396",
+            "slug": "tao-cherry-noi-dia-trung",
+            "code": "active_out_of_stock",
+            "severity": "warning",
+            "message": "Active product is out of stock; keep visible only when restocking is intentional.",
+            "fixed": false
+        },
+        {
+            "product_id": 397,
+            "sku": "TGC-000397",
+            "slug": "nho-ngon-tay-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 398,
+            "sku": "TGC-000398",
+            "slug": "kiwi-vang-newzealand-size-22-thung-3-5kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 399,
+            "sku": "TGC-000399",
+            "slug": "khay-qua-6-qua-le-sua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 400,
+            "sku": "TGC-000400",
+            "slug": "dua-tet-hac-my-nhan-kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 401,
+            "sku": "TGC-000401",
+            "slug": "hong-treo-gio-noi-dia-trung-hop-1kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 402,
+            "sku": "TGC-000402",
+            "slug": "dau-moc-chau-son-la",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 403,
+            "sku": "TGC-000403",
+            "slug": "hop-cherry-newzealand-1kg-size-28",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 404,
+            "sku": "TGC-000404",
+            "slug": "man-com-roc-hat-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 405,
+            "sku": "TGC-000405",
+            "slug": "xo-1kg-kiwi-vang-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 406,
+            "sku": "TGC-000406",
+            "slug": "set-hong-deo-han-quoc-sang-ju-20-qua-set",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 407,
+            "sku": "TGC-000407",
+            "slug": "viet-quat-nam-phi-jumbo",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 408,
+            "sku": "TGC-000408",
+            "slug": "viet-quat-chum-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 409,
+            "sku": "TGC-000409",
+            "slug": "vai-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 410,
+            "sku": "TGC-000410",
+            "slug": "buoi-da-xanh-tan-trieu",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 411,
+            "sku": "TGC-000411",
+            "slug": "man-chile-ruot-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 412,
+            "sku": "TGC-000412",
+            "slug": "nho-xanh-fruitico-uc-sweetglobe",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 413,
+            "sku": "TGC-000413",
+            "slug": "nho-ngon-tay-uc-fruitico",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 414,
+            "sku": "TGC-000414",
+            "slug": "set-qua-tet-6-ong-tao-rockit-kem-bao-li-xi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 415,
+            "sku": "TGC-000415",
+            "slug": "cherry-newzealand-satria-orchard",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 416,
+            "sku": "TGC-000416",
+            "slug": "cherry-newzealand-puregold-size-28",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 417,
+            "sku": "TGC-000417",
+            "slug": "dau-bach-tuyet-han-quoc-hop-330gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 418,
+            "sku": "TGC-000418",
+            "slug": "me-nu-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 419,
+            "sku": "TGC-000419",
+            "slug": "hong-deo-mat-banh-xe-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 420,
+            "sku": "TGC-000420",
+            "slug": "nho-xanh-valley-supreme-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 421,
+            "sku": "TGC-000421",
+            "slug": "sau-rieng-black-thorn",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 422,
+            "sku": "TGC-000422",
+            "slug": "nho-xanh-jpg-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 423,
+            "sku": "TGC-000423",
+            "slug": "dao-det-tay-ban-nha",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 424,
+            "sku": "TGC-000424",
+            "slug": "dao-tuyet-le-giang-1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 425,
+            "sku": "TGC-000425",
+            "slug": "nho-xanh-my-sunpower",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 426,
+            "sku": "TGC-000426",
+            "slug": "tao-rockit-newzealand-phien-ban-qua-tang-trung-thu",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 427,
+            "sku": "TGC-000427",
+            "slug": "buoi-ruby-ruot-do-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 428,
+            "sku": "TGC-000428",
+            "slug": "tao-tui-nam-phi-delecta-fujired",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 429,
+            "sku": "TGC-000429",
+            "slug": "dao-long-vip-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 430,
+            "sku": "TGC-000430",
+            "slug": "dao-det-dai-loan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 431,
+            "sku": "TGC-000431",
+            "slug": "cha-la-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 432,
+            "sku": "TGC-000432",
+            "slug": "cherry-do-my-size-9-gloden-glow-hop-500gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 433,
+            "sku": "TGC-000433",
+            "slug": "tao-dazzle-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 434,
+            "sku": "TGC-000434",
+            "slug": "gio-qua-tang-doi-tac-tc1300",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 435,
+            "sku": "TGC-000435",
+            "slug": "nho-do-co-hat-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 436,
+            "sku": "TGC-000436",
+            "slug": "dua-luoi-ruot-xanh-ichiba",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 437,
+            "sku": "TGC-000437",
+            "slug": "dau-trang-bach-tuyet-han-quoc-1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 438,
+            "sku": "TGC-000438",
+            "slug": "quyt-thai-kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 439,
+            "sku": "TGC-000439",
+            "slug": "cherry-uc-hansengold-tasmania-size-30-32mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 440,
+            "sku": "TGC-000440",
+            "slug": "khay-qua-cherry-usa",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 441,
+            "sku": "TGC-000441",
+            "slug": "cherry-newzealand-otago-size-28mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 442,
+            "sku": "TGC-000442",
+            "slug": "set-qua-tet-yen-sao-mix-trai-cay-ys2023-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 443,
+            "sku": "TGC-000443",
+            "slug": "yen-sao-chung-duong-phen",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 444,
+            "sku": "TGC-000444",
+            "slug": "hop-qua-go-luc-giac-cherry-va-dau-han-quoc-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 445,
+            "sku": "TGC-000445",
+            "slug": "xuan-dao-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 446,
+            "sku": "TGC-000446",
+            "slug": "dau-trang-snowpink-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 447,
+            "sku": "TGC-000447",
+            "slug": "cam-canh-kg",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 448,
+            "sku": "TGC-000448",
+            "slug": "hong-treo-gio-hosigaki",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 449,
+            "sku": "TGC-000449",
+            "slug": "gio-trai-cay-di-dam-cbme-kinh-vieng",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 450,
+            "sku": "TGC-000450",
+            "slug": "dua-xiem-xanh-ben-tre-tui-luoi-3-qua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 451,
+            "sku": "TGC-000451",
+            "slug": "hop-qua-trai-cay-ms12",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 452,
+            "sku": "TGC-000452",
+            "slug": "gio-hoa-va-trai-cay-kinh-le-htc01",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 453,
+            "sku": "TGC-000453",
+            "slug": "hop-qua-trai-cay-luc-giac-hlg01",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 454,
+            "sku": "TGC-000454",
+            "slug": "sau-rieng-musang-king-malay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 455,
+            "sku": "TGC-000455",
+            "slug": "le-irroro-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 456,
+            "sku": "TGC-000456",
+            "slug": "hong-tao-det-premium",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 457,
+            "sku": "TGC-000457",
+            "slug": "cam-ruot-do-cara-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 458,
+            "sku": "TGC-000458",
+            "slug": "nho-xanh-khong-hat-sugardrop-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 459,
+            "sku": "TGC-000459",
+            "slug": "xoai-mien",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 460,
+            "sku": "TGC-000460",
+            "slug": "gio-hoa-va-trai-cay-kinh-le",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 461,
+            "sku": "TGC-000461",
+            "slug": "dua-luoi-mat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 462,
+            "sku": "TGC-000462",
+            "slug": "tau-hu-singapore",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 463,
+            "sku": "TGC-000463",
+            "slug": "tao-vang-nhat-shinano-gold",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 464,
+            "sku": "TGC-000464",
+            "slug": "dau-bach-tuyet-hop-300gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 465,
+            "sku": "TGC-000465",
+            "slug": "dau-mix-4-loai-hop-300gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 466,
+            "sku": "TGC-000466",
+            "slug": "dau-king-berry-han-quoc-hop-2-qua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 467,
+            "sku": "TGC-000467",
+            "slug": "thanh-long-vang-kim-long",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 468,
+            "sku": "TGC-000468",
+            "slug": "hop-qua-trai-cay-han-quoc-hq1500",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 469,
+            "sku": "TGC-000469",
+            "slug": "dau-han-quoc-250gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 470,
+            "sku": "TGC-000470",
+            "slug": "nho-ngon-tay-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 471,
+            "sku": "TGC-000471",
+            "slug": "tao-fuju-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 472,
+            "sku": "TGC-000472",
+            "slug": "cherry-newzealand-pure-golden",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 473,
+            "sku": "TGC-000473",
+            "slug": "tao-koru-my-size-45",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 474,
+            "sku": "TGC-000474",
+            "slug": "hong-treo-gio-dai-loan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 475,
+            "sku": "TGC-000475",
+            "slug": "tao-xanh-aomori-nhat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 476,
+            "sku": "TGC-000476",
+            "slug": "hop-qua-trai-cay-tang-dong-nghiep-dn1250",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 477,
+            "sku": "TGC-000477",
+            "slug": "hop-qua-trai-cay-tang-sinh-nhat-sn1300",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 478,
+            "sku": "TGC-000478",
+            "slug": "hop-qua-trai-cay-qt1300",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 479,
+            "sku": "TGC-000479",
+            "slug": "cam-cara-ruot-do-moc-chau",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 480,
+            "sku": "TGC-000480",
+            "slug": "nho-mau-don-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 481,
+            "sku": "TGC-000481",
+            "slug": "nho-mau-don-shine-muscat-greenvil-han-quoc-hop-900gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 482,
+            "sku": "TGC-000482",
+            "slug": "dao-tuyet-le-giang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 483,
+            "sku": "TGC-000483",
+            "slug": "tao-dazzle-newzealand-organic",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 484,
+            "sku": "TGC-000484",
+            "slug": "luu-do-dai-loan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 485,
+            "sku": "TGC-000485",
+            "slug": "nho-mau-don-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 486,
+            "sku": "TGC-000486",
+            "slug": "cherry-canada-jealousfruit-size-9",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 487,
+            "sku": "TGC-000487",
+            "slug": "nho-do-keo-candy-land-my-454gr-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 488,
+            "sku": "TGC-000488",
+            "slug": "cherry-vang-rainier-nordic-size-9",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 489,
+            "sku": "TGC-000489",
+            "slug": "nho-do-keo-candy-snap-my-1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 490,
+            "sku": "TGC-000490",
+            "slug": "cherry-do-my-size-8-5",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 491,
+            "sku": "VAI_THIEU_LUC_NGAN",
+            "slug": "vai-thieu-luc-ngan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 492,
+            "sku": "TGC-000492",
+            "slug": "cherry-vang-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 493,
+            "sku": "TGC-000493",
+            "slug": "tao-envy-newzealand-size-90",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 494,
+            "sku": "TGC-000494",
+            "slug": "nho-do-ruby-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 495,
+            "sku": "TGC-000495",
+            "slug": "kiwi-xanh-zespri-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 496,
+            "sku": "TGC-000496",
+            "slug": "cherry-do-my-size-95",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 497,
+            "sku": "TGC-000497",
+            "slug": "hop-qua-trai-cay-tang-gia-dinh",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 498,
+            "sku": "TGC-000498",
+            "slug": "tao-envy-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 499,
+            "sku": "TGC-000499",
+            "slug": "hong-gion-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 500,
+            "sku": "TGC-000500",
+            "slug": "cherry-do-m-r-my-size-9-5",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 501,
+            "sku": "TGC-000501",
+            "slug": "bo-mini-khong-hat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 502,
+            "sku": "TGC-000502",
+            "slug": "sau-rieng-musang-king",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 503,
+            "sku": "TGC-000503",
+            "slug": "vai-nep",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 504,
+            "sku": "TGC-000504",
+            "slug": "luu-peru-premium",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 505,
+            "sku": "TGC-000505",
+            "slug": "tao-rockit-newzealand-ong-3-qua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 506,
+            "sku": "TGC-000506",
+            "slug": "nho-xanh-autumncrips-nam-phi-tweespruit",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 507,
+            "sku": "TGC-000507",
+            "slug": "nho-do-khong-hat-hellos-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 508,
+            "sku": "TGC-000508",
+            "slug": "gio-trai-cay-tang-bac-sy",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 509,
+            "sku": "TGC-000509",
+            "slug": "gio-trai-cay-dam-tang-hd-bank-kinh-vieng",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 510,
+            "sku": "TGC-000510",
+            "slug": "tao-queen-newzealand-size-80",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 511,
+            "sku": "TGC-000511",
+            "slug": "nho-do-ninh-thuan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 512,
+            "sku": "TGC-000512",
+            "slug": "nho-xanh-ninh-thuan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 513,
+            "sku": "TGC-000513",
+            "slug": "dau-han-quoc-hop-500gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 514,
+            "sku": "TGC-000514",
+            "slug": "kem-vien-the-excellent-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 515,
+            "sku": "TGC-000515",
+            "slug": "nho-xanh-autumncrips-cadime-peru",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 516,
+            "sku": "TGC-000516",
+            "slug": "nho-den-khong-hat-lion-nam-phi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 517,
+            "sku": "TGC-000517",
+            "slug": "tao-envy-my-size-32",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 518,
+            "sku": "TGC-000518",
+            "slug": "dua-anh-kim",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 519,
+            "sku": "TGC-000519",
+            "slug": "hong-cat-lat-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 520,
+            "sku": "TGC-000520",
+            "slug": "hong-deo-han-quoc-nguyen-trai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 521,
+            "sku": "TGC-000521",
+            "slug": "bo-034",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 522,
+            "sku": "TGC-000522",
+            "slug": "nho-xanh-autumncrips-dragon-peru",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 523,
+            "sku": "TGC-000523",
+            "slug": "dua-le-bach-kim",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 524,
+            "sku": "TGC-000524",
+            "slug": "hop-qua-qtpn03-mung-ngay-quoc-te-phu-nu-8-thang-5",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 525,
+            "sku": "TGC-000525",
+            "slug": "hop-qua-qtpn02-mung-ngay-quoc-te-phu-nu-8-thang-3",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 526,
+            "sku": "TGC-000526",
+            "slug": "hop-qua-qtpn01-mung-ngay-quoc-te-phu-nu-8-thang-3",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 527,
+            "sku": "TGC-000527",
+            "slug": "cha-la-tuoi-an-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 528,
+            "sku": "TGC-000528",
+            "slug": "cherry-chile",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 529,
+            "sku": "TGC-000529",
+            "slug": "quyt-nhat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 530,
+            "sku": "TGC-000530",
+            "slug": "quyt-tieu-vang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 531,
+            "sku": "TGC-000531",
+            "slug": "vu-sua-hoang-kim",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 532,
+            "sku": "TGC-000532",
+            "slug": "cherry-uc-cerise-tasmania-size-32-34mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 533,
+            "sku": "TGC-000533",
+            "slug": "nho-xanh-autumncrips-hellos-nam-phi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 534,
+            "sku": "TGC-000534",
+            "slug": "mam-ngu-qua-l4",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 535,
+            "sku": "TGC-000535",
+            "slug": "mam-ngu-qua-l3",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 536,
+            "sku": "TGC-000536",
+            "slug": "gio-qua-trai-cay-khai-truong-hong-phat-1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 537,
+            "sku": "TGC-000537",
+            "slug": "cherry-uc-griggs-son-tasmania-size-30-32mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 538,
+            "sku": "TGC-000538",
+            "slug": "mam-ngu-qua-l2",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 539,
+            "sku": "TGC-000539",
+            "slug": "mam-ngu-qua-m4",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 540,
+            "sku": "TGC-000540",
+            "slug": "mam-ngu-qua-m3",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 541,
+            "sku": "TGC-000541",
+            "slug": "mam-ngu-qua-m2",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 542,
+            "sku": "TGC-000542",
+            "slug": "mam-ngu-qua-m1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 543,
+            "sku": "TGC-000543",
+            "slug": "mam-ngu-qua-l1",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 544,
+            "sku": "TGC-000544",
+            "slug": "mo-tuoi-sundrops-new-zealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 545,
+            "sku": "TGC-000545",
+            "slug": "mam-qua-cuoi-trai-cay-05",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 546,
+            "sku": "TGC-000546",
+            "slug": "nho-ngon-tay-uc-hang-may-bay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 547,
+            "sku": "TGC-000547",
+            "slug": "dau-han-quoc-eloasi-hop330gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 548,
+            "sku": "TGC-000548",
+            "slug": "gift-set-cherry-koala-uc-hop-1kg-size-32-34mm-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 549,
+            "sku": "TGC-000549",
+            "slug": "hop-4-qua-kiwi-vang-phap-size-18",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 549,
+            "sku": "TGC-000549",
+            "slug": "hop-4-qua-kiwi-vang-phap-size-18",
+            "code": "active_out_of_stock",
+            "severity": "warning",
+            "message": "Active product is out of stock; keep visible only when restocking is intentional.",
+            "fixed": false
+        },
+        {
+            "product_id": 550,
+            "sku": "TGC-000550",
+            "slug": "kiwi-vang-noi-dia-trung",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 551,
+            "sku": "TGC-000551",
+            "slug": "kiwi-vang-zespri-phap",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 552,
+            "sku": "TGC-000552",
+            "slug": "hong-gion-han-quoc-premium",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 553,
+            "sku": "TGC-000553",
+            "slug": "hop-qua-go-2-chum-nho-mau-don-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 554,
+            "sku": "TGC-000554",
+            "slug": "gio-qua-tao-envy-va-nho-mau-don-han-quoc-kinh-vieng",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 555,
+            "sku": "TGC-000555",
+            "slug": "le-sua-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 556,
+            "sku": "TGC-000556",
+            "slug": "gio-qua-trai-cay-va-hoa-hong-chuc-mung-sinh-nhat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 557,
+            "sku": "TGC-000557",
+            "slug": "cherry-vang-rainier-dunstanhill-newzealand-size-28-30mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 558,
+            "sku": "TGC-000558",
+            "slug": "dua-luoi-nhat-ruot-xanh",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 559,
+            "sku": "TGC-000559",
+            "slug": "cam-vinh-nghe-an",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 560,
+            "sku": "TGC-000560",
+            "slug": "man-xanh-duong",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 561,
+            "sku": "TGC-000561",
+            "slug": "dau-han-quoc-kfarm-500gr-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 562,
+            "sku": "TGC-000562",
+            "slug": "cherry-sarita-orchard-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 563,
+            "sku": "TGC-000563",
+            "slug": "kiwi-do-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 564,
+            "sku": "TGC-000564",
+            "slug": "qua-cuoi-04",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 565,
+            "sku": "TGC-000565",
+            "slug": "xoai-do-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 566,
+            "sku": "TGC-000566",
+            "slug": "tao-envy-my-size-72",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 567,
+            "sku": "TGC-000567",
+            "slug": "hop-qua-2-chum-nho-mau-don-han-quoc-hop",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 568,
+            "sku": "TGC-000568",
+            "slug": "cherry-lani-newzealand-premium",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 569,
+            "sku": "TGC-000569",
+            "slug": "du-du-baby-ruot-vang-a-con",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 570,
+            "sku": "TGC-000570",
+            "slug": "gio-qua-trai-cay-chuc-mung-tan-gia",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 571,
+            "sku": "TGC-000571",
+            "slug": "gio-qua-chuc-mung-sinh-nhat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 572,
+            "sku": "TGC-000572",
+            "slug": "cherry-uc-koala-gold-premium",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 573,
+            "sku": "TGC-000573",
+            "slug": "nho-kho-nguyen-canh-thompson-uc-hop-giay-500gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 574,
+            "sku": "TGC-000574",
+            "slug": "cherry-hill-orchard-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 575,
+            "sku": "TGC-000575",
+            "slug": "set-hong-deo-han-quoc-20-qua-set",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 576,
+            "sku": "TGC-000576",
+            "slug": "set-hong-deo-han-quoc-12-qua-set",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 577,
+            "sku": "TGC-000577",
+            "slug": "gio-trai-cay-cung-that-49-ngay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 578,
+            "sku": "TGC-000578",
+            "slug": "hop-qua-nho-xanh-my-hinh-tim-mung-ngay-nha-giao-viet-nam-20-11",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 579,
+            "sku": "TGC-000579",
+            "slug": "hop-tim-cherry-uc-size-28-30mm",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 580,
+            "sku": "TGC-000580",
+            "slug": "chuoi-sap-ben-tre",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 581,
+            "sku": "TGC-000581",
+            "slug": "luu-do-an-do",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 582,
+            "sku": "TGC-000582",
+            "slug": "gio-qua-h780",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 583,
+            "sku": "TGC-000583",
+            "slug": "gio-qua-tang-15-qua-cam-uc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 584,
+            "sku": "TGC-000584",
+            "slug": "hop-qua-trai-tim-nho-xanh-autumcrips-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 585,
+            "sku": "TGC-000585",
+            "slug": "set-qua-12-qua-tao-envy-newzealand-size-35",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 586,
+            "sku": "TGC-000586",
+            "slug": "cherry-uc-bigred",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 587,
+            "sku": "TGC-000587",
+            "slug": "sua-oc-cho-han-quoc-combo-3-bich",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 588,
+            "sku": "TGC-000588",
+            "slug": "thom-mini-thai-lan",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 589,
+            "sku": "TGC-000589",
+            "slug": "nho-den-adora-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 590,
+            "sku": "TGC-000590",
+            "slug": "tao-ambrosia-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 591,
+            "sku": "TGC-000591",
+            "slug": "hong-gion-fuju",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 592,
+            "sku": "TGC-000592",
+            "slug": "nho-xanh-autumcrips-sunpacific-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 593,
+            "sku": "TGC-000593",
+            "slug": "dau-uc-sunny-ridge",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 594,
+            "sku": "TGC-000594",
+            "slug": "dau-thoi-thin-da-lat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 595,
+            "sku": "TGC-000595",
+            "slug": "hop-qua-tang-ngay-phu-nu-viet-nam-20-10",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 596,
+            "sku": "TGC-000596",
+            "slug": "hong-gion-chin-nen-da-lat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 597,
+            "sku": "TGC-000597",
+            "slug": "nho-xanh-khong-hat-royalty-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 598,
+            "sku": "TGC-000598",
+            "slug": "tao-envy-newzealand-size-24",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 599,
+            "sku": "TGC-000599",
+            "slug": "hop-qua-spa-beauty-khai-truong-hong-phat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 600,
+            "sku": "TGC-000600",
+            "slug": "nuoc-ep-luu-nguyen-chat-y-lo-250ml",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 601,
+            "sku": "TGC-000601",
+            "slug": "nho-xanh-airchief-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 602,
+            "sku": "TGC-000602",
+            "slug": "nho-xanh-co-gai-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 603,
+            "sku": "TGC-000603",
+            "slug": "nho-do-keo-candy-heart-my-hop-907gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 604,
+            "sku": "TGC-000604",
+            "slug": "kem-tui-vi-dua-hau-han-quoc-tui-160ml",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 605,
+            "sku": "TGC-000605",
+            "slug": "kem-tui-vi-kem-tuyet-han-quoc-tui-160ml",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 606,
+            "sku": "TGC-000606",
+            "slug": "kem-tui-vi-cafe-sua-han-quoc-tui-160ml",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 607,
+            "sku": "TGC-000607",
+            "slug": "kem-tran-chau-khoai-mon-dai-loan-hop-4-cay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 608,
+            "sku": "TGC-000608",
+            "slug": "kem-matcha-tra-xanh-dai-loan-hop-4-cay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 609,
+            "sku": "TGC-000609",
+            "slug": "kem-sua-tuoi-tran-chau-duong-den-dai-loan-hop-4-cay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 610,
+            "sku": "TGC-000610",
+            "slug": "set-le-han-quoc-singo-3-5kg-6-qua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 611,
+            "sku": "TGC-000611",
+            "slug": "cherry-do-canada-sandher",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 612,
+            "sku": "TGC-000612",
+            "slug": "mam-cam-vang-uc-thanh-kinh-phan-uu",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 613,
+            "sku": "TGC-000613",
+            "slug": "nho-xanh-khong-hat-sugarcrunch-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 614,
+            "sku": "TGC-000614",
+            "slug": "khay-le-han-quoc-3-qua",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 615,
+            "sku": "TGC-000615",
+            "slug": "set-qua-8-qua-tao-envy-my-size-72",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 616,
+            "sku": "TGC-000616",
+            "slug": "tao-envy-newzealand-size-72",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 617,
+            "sku": "TGC-000617",
+            "slug": "cha-la-say-kho-tunnisia",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 618,
+            "sku": "TGC-000618",
+            "slug": "nho-do-khong-hat-royalty-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 619,
+            "sku": "TGC-000619",
+            "slug": "set-qua-10",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 620,
+            "sku": "TGC-000620",
+            "slug": "hop-qua-trai-cay-ms05",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 621,
+            "sku": "TGC-000621",
+            "slug": "set-qua-tang-trai-cay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 622,
+            "sku": "TGC-000622",
+            "slug": "set-qua-07",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 623,
+            "sku": "TGC-000623",
+            "slug": "set-qua-tang-trai-cay-ms08",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 624,
+            "sku": "TGC-000624",
+            "slug": "set-qua-tang-trai-cay-ms09",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 625,
+            "sku": "TGC-000625",
+            "slug": "tao-xanh-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 626,
+            "sku": "TGC-000626",
+            "slug": "hop-4-trai-kiwi-vang-zespri-phap",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 627,
+            "sku": "TGC-000627",
+            "slug": "hong-vuong-dong-da-lat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 628,
+            "sku": "TGC-000628",
+            "slug": "nho-do-keo-candy-snap-hop-900gr",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 629,
+            "sku": "TGC-000629",
+            "slug": "vai-kho-bac-giang",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 630,
+            "sku": "TGC-000630",
+            "slug": "hong-trung-da-lat",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 631,
+            "sku": "TGC-000631",
+            "slug": "tao-do-5-goc-red-delicious-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 632,
+            "sku": "TGC-000632",
+            "slug": "nhan-bap-cai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 633,
+            "sku": "TGC-000633",
+            "slug": "xoai-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 634,
+            "sku": "TGC-000634",
+            "slug": "nhan-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 635,
+            "sku": "TGC-000635",
+            "slug": "mit-thai-nguyen-mui",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 636,
+            "sku": "TGC-000636",
+            "slug": "cherry-do-my-size-10",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 637,
+            "sku": "TGC-000637",
+            "slug": "mam-cung-01",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 638,
+            "sku": "TGC-000638",
+            "slug": "mam-qua-cuoi-trai-cay-03",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 639,
+            "sku": "TGC-000639",
+            "slug": "mam-qua-cuoi-trai-cay-02",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 640,
+            "sku": "TGC-000640",
+            "slug": "mam-qua-cuoi-trai-cay-01",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 641,
+            "sku": "TGC-000641",
+            "slug": "gio-trai-cay-h31",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 642,
+            "sku": "TGC-000642",
+            "slug": "hop-qua-trai-cay-ms03",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 643,
+            "sku": "TGC-000643",
+            "slug": "hop-qua-trai-cay-ms02",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 644,
+            "sku": "TGC-000644",
+            "slug": "hop-qua-trai-cay-ms01",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 645,
+            "sku": "TGC-000645",
+            "slug": "luu-do-israel",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 646,
+            "sku": "TGC-000646",
+            "slug": "cam-vang-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 647,
+            "sku": "TGC-000647",
+            "slug": "hong-tao",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 648,
+            "sku": "TGC-000648",
+            "slug": "nho-den-my-midnight-beauty",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 649,
+            "sku": "TGC-000649",
+            "slug": "nho-ngon-tay-my",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 650,
+            "sku": "TGC-000650",
+            "slug": "nho-mau-don-han-quoc-eloasis",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 651,
+            "sku": "TGC-000651",
+            "slug": "kiwi-xanh-chile",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 652,
+            "sku": "TGC-000652",
+            "slug": "kiwi-vang-zespri-newzealand",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 653,
+            "sku": "TGC-000653",
+            "slug": "le-nam-phi",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 654,
+            "sku": "TGC-000654",
+            "slug": "le-han-quoc",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 655,
+            "sku": "TGC-000655",
+            "slug": "cherry-do-my-size-9",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 656,
+            "sku": "TGC-000656",
+            "slug": "sau-rieng-mongthoong",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 657,
+            "sku": "TGC-000657",
+            "slug": "me-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 658,
+            "sku": "TGC-000658",
+            "slug": "na-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 659,
+            "sku": "TGC-000659",
+            "slug": "mit-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 660,
+            "sku": "TGC-000660",
+            "slug": "bon-bon-thai",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 661,
+            "sku": "TGC-000661",
+            "slug": "luu-do-tu-xuyen",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 662,
+            "sku": "TGC-000662",
+            "slug": "xoai-tu-quy",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 663,
+            "sku": "TGC-000663",
+            "slug": "man-tron-hong-dao",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 664,
+            "sku": "TGC-000664",
+            "slug": "bo-booth",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 665,
+            "sku": "TGC-000665",
+            "slug": "coc-chin",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 666,
+            "sku": "TGC-000666",
+            "slug": "coc-cay",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        },
+        {
+            "product_id": 667,
+            "sku": "MANG_CUT_LAI_THIEU",
+            "slug": "mang-cut-lai-thieu",
+            "code": "external_media",
+            "severity": "warning",
+            "message": "Media is hosted by a third party and should be migrated to owned storage.",
+            "fixed": false
+        }
+    ]
+}

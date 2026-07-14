@@ -10,10 +10,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ContactController as AdminContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,7 +28,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/collections/all', [ProductController::class, 'index'])->name('products.index');
 Route::view('/pages/about-us', 'pages.about')->name('about');
 Route::get('/pages/lien-he', [ContactController::class, 'show'])->name('contact.page');
-Route::post('/pages/lien-he', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.submit');
+Route::post('/pages/lien-he', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.submit');
 Route::get('/pages/frontpage', [PageController::class, 'frontpage'])->name('page.frontpage');
 Route::get('/pages/cau-hoi-thuong-gap', [PageController::class, 'faq'])->name('page.faq');
 Route::get('/pages/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->name('page.privacy');
@@ -51,13 +53,23 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function () {
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+        ->middleware('throttle:3,10')
+        ->name('verification.send');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
 	Route::get('/', [NotificationController::class, 'index'])->name('index');
 	Route::post('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
 	Route::post('/{notification}/open', [NotificationController::class, 'open'])->name('open');
 });
 
-Route::middleware('auth')->prefix('account')->name('account.')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
 	Route::get('/', [ProfileController::class, 'show'])->name('profile');
 	Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
 	Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('addresses.store');
@@ -85,6 +97,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 	Route::get('/customers', function () {
 		return view('admin.customers');
 	})->name('customers');
+
+    Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{contactMessage}', [AdminContactController::class, 'show'])->name('contacts.show');
+    Route::patch('/contacts/{contactMessage}', [AdminContactController::class, 'update'])->name('contacts.update');
+    Route::post('/contacts/{contactMessage}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
 
 	Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
 	Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
@@ -119,10 +136,10 @@ Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.
 Route::post('/cart/coupon/auto', [CartController::class, 'autoCoupon'])->middleware('auth')->name('cart.coupon.auto');
 Route::post('/cart/coupon/use/{coupon}', [CartController::class, 'useCoupon'])->middleware('auth')->name('cart.coupon.use');
 Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
-Route::get('/checkout', [CartController::class, 'checkout'])->middleware('auth')->name('checkout');
-Route::post('/checkout/shipping', [CartController::class, 'storeCheckoutShipping'])->middleware('auth')->name('checkout.shipping');
-Route::get('/checkout/payment', [CartController::class, 'payment'])->middleware('auth')->name('checkout.payment');
-Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->middleware('auth')->name('checkout.place');
+Route::get('/checkout', [CartController::class, 'checkout'])->middleware(['auth', 'verified'])->name('checkout');
+Route::post('/checkout/shipping', [CartController::class, 'storeCheckoutShipping'])->middleware(['auth', 'verified'])->name('checkout.shipping');
+Route::get('/checkout/payment', [CartController::class, 'payment'])->middleware(['auth', 'verified'])->name('checkout.payment');
+Route::post('/checkout/place-order', [CartController::class, 'placeOrder'])->middleware(['auth', 'verified'])->name('checkout.place');
 Route::get('/checkout/momo/return/{code}/{token?}', [CartController::class, 'momoReturn'])->name('checkout.momo.return');
 Route::post('/checkout/momo/ipn', [CartController::class, 'momoIpn'])->name('checkout.momo.ipn');
 Route::get('/checkout/thank-you/{code}/{token?}', [CartController::class, 'thankYou'])->name('checkout.thankyou');

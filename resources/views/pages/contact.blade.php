@@ -33,6 +33,11 @@
                     <div class="contact-form-box">
                         <form class="contact-form" method="post" action="{{ route('contact.submit') }}">
                             @csrf
+                            <input type="hidden" name="contact_token" value="{{ $contactFormToken }}">
+                            <div class="contact-honeypot" aria-hidden="true">
+                                <label for="contact-website">Website</label>
+                                <input id="contact-website" type="text" name="website" value="" tabindex="-1" autocomplete="off">
+                            </div>
                             <p class="error-fills"></p>
 
                             <div class="form-signup form_contact clearfix">
@@ -155,6 +160,7 @@
 
 @push('styles')
 <style>
+    .contact-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
     body {
         background: #efefef;
     }

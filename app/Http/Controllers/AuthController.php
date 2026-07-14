@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\WelcomeVoucherService;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -163,10 +164,20 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        try {
+            event(new Registered($user));
+        } catch (Throwable $exception) {
+            Log::error('Unable to send registration verification email.', [
+                'user_id' => $user->id,
+                'exception' => get_class($exception),
+                'message' => $exception->getMessage(),
+            ]);
+        }
+
         return $this->redirectAfterLogin(
             $request,
             $user,
-            'Đăng ký tài khoản thành công. Chào mừng bạn đến với Thế Giới Trái Cây.'
+            'Tài khoản đã được tạo. Vui lòng xác minh email để tiếp tục mua hàng.'
         );
     }
 
@@ -485,6 +496,12 @@ class AuthController extends Controller
                 : redirect()->route('admin.dashboard');
 
             return $successMessage ? $response->with('success', $successMessage) : $response;
+        }
+
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()
+                ->route('verification.notice')
+                ->with('success', $successMessage ?: 'Vui lòng xác minh email để tiếp tục.');
         }
 
         if ($intendedUrl) {

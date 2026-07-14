@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Category;
+use App\Models\ContactMessage;
 use App\Models\Product;
 use App\Services\HomeService;
 use Illuminate\Support\Facades\DB;
@@ -211,6 +212,14 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('headerNotifications', $headerNotifications);
             $view->with('headerUnreadNotificationCount', $headerUnreadNotificationCount);
+        });
+
+        View::composer('layouts.admin', function ($view) {
+            $newContactCount = Schema::hasTable('contact_messages')
+                ? ContactMessage::query()->where('status', ContactMessage::STATUS_NEW)->count()
+                : 0;
+
+            $view->with('adminNewContactCount', $newContactCount);
         });
     }
 
