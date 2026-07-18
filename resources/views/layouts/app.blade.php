@@ -550,15 +550,62 @@
 		</div>
 	</footer>
 
-	<div class="tgc-side-icons hidden-xs hidden-sm">
-		<a class="icon-item phone" href="tel:0333499426" aria-label="phone"><i class="fa fa-phone"></i></a>
-		<a class="icon-item zalo" href="https://zalo.me/0333499426" target="_blank" rel="noopener noreferrer" aria-label="zalo">Zalo</a>
-		<a class="icon-item youtube" href="https://www.youtube.com/channel/UCbP8WRHFrvv06knZzKyf1Ew" target="_blank" rel="noopener noreferrer" aria-label="youtube"><i class="fa fa-youtube"></i></a>
-		<a class="icon-item instagram" href="https://www.instagram.com/thegioitraicay/" target="_blank" rel="noopener noreferrer" aria-label="instagram"><i class="fa fa-instagram"></i></a>
-		<a class="icon-item tiktok" href="https://www.tiktok.com/@thegioitraicay.net" target="_blank" rel="noopener noreferrer" aria-label="tiktok"><i class="fa fa-music"></i></a>
-		<a class="icon-item location" href="{{ route('contact.page') }}" aria-label="location"><i class="fa fa-map-marker"></i></a>
-		<a class="icon-item messenger" href="https://www.facebook.com/messages/t/270232287830" target="_blank" rel="noopener noreferrer" aria-label="messenger"><i class="fa fa-comment"></i></a>
+	<div class="tgc-side-icons" data-floating-actions>
+		<a class="icon-item phone" href="tel:0333499426" aria-label="Gọi hotline" title="Gọi hotline">
+			<i class="fa fa-phone" aria-hidden="true"></i>
+		</a>
+		<a class="icon-item zalo" href="https://zalo.me/0333499426" target="_blank" rel="noopener noreferrer" aria-label="Nhắn Zalo" title="Nhắn Zalo">Zalo</a>
+		<a class="icon-item location" href="{{ route('contact.page') }}" aria-label="Xem địa chỉ cửa hàng" title="Xem địa chỉ cửa hàng">
+			<i class="fa fa-map-marker" aria-hidden="true"></i>
+		</a>
+		<button class="icon-item support" id="supportWidgetToggle" type="button" aria-label="Mở hỗ trợ mua hàng" title="Hỗ trợ mua hàng" aria-controls="supportWidget" aria-expanded="false">
+			<i class="fa fa-comments" aria-hidden="true"></i>
+		</button>
 	</div>
+
+	<section
+		class="support-widget"
+		id="supportWidget"
+		role="dialog"
+		aria-labelledby="supportWidgetTitle"
+		data-shipping-url="{{ route('page.shipping.payment') }}"
+		data-payment-url="{{ route('page.shipping.payment') }}"
+		data-orders-url="{{ auth()->check() ? route('account.profile', ['tab' => 'orders']) : route('login') }}"
+		data-returns-url="{{ route('page.return') }}"
+		hidden
+	>
+		<header class="support-widget-header">
+			<span class="support-widget-avatar" aria-hidden="true"><i class="fa fa-comments"></i></span>
+			<span class="support-widget-heading">
+				<strong id="supportWidgetTitle">Hỗ trợ mua hàng</strong>
+				<small>Phục vụ từ 07:00 - 19:00</small>
+			</span>
+			<button class="support-widget-close" type="button" aria-label="Đóng hỗ trợ" title="Đóng">
+				<i class="fa fa-times" aria-hidden="true"></i>
+			</button>
+		</header>
+
+		<div class="support-widget-body">
+			<p class="support-widget-intro">Xin chào, bạn cần hỗ trợ nội dung nào?</p>
+			<div class="support-widget-topics" aria-label="Nội dung hỗ trợ">
+				<button type="button" data-support-topic="shipping" aria-pressed="false"><i class="fa fa-truck" aria-hidden="true"></i> Phí giao hàng</button>
+				<button type="button" data-support-topic="payment" aria-pressed="false"><i class="fa fa-credit-card" aria-hidden="true"></i> Thanh toán</button>
+				<button type="button" data-support-topic="orders" aria-pressed="false"><i class="fa fa-cube" aria-hidden="true"></i> Theo dõi đơn</button>
+				<button type="button" data-support-topic="returns" aria-pressed="false"><i class="fa fa-refresh" aria-hidden="true"></i> Đổi trả</button>
+			</div>
+
+			<div class="support-widget-answer" data-support-answer aria-live="polite" hidden>
+				<strong data-support-answer-title></strong>
+				<p data-support-answer-text></p>
+				<a data-support-answer-link href="#"></a>
+			</div>
+
+			<div class="support-widget-contact">
+				<a href="tel:0333499426"><i class="fa fa-phone" aria-hidden="true"></i> Gọi tư vấn</a>
+				<a href="https://zalo.me/0333499426" target="_blank" rel="noopener noreferrer"><strong>Zalo</strong> Nhắn cửa hàng</a>
+			</div>
+		</div>
+	</section>
 
 	@if(!empty($salesPopupProducts))
 	<div class="sales-pop-toast" id="salesPopToast" role="status" aria-live="polite">
@@ -994,7 +1041,7 @@
 			}
 		})();
 
-		// Show floating quick-actions only after scrolling down.
+		// Show floating quick-actions after scrolling; support remains available on mobile.
 		(function() {
 			var sideIcons = document.querySelector('.tgc-side-icons');
 			var backToTop = document.getElementById('backToTop');
@@ -1007,7 +1054,8 @@
 
 			function toggleFloatingActions() {
 				var currentScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
-				var isVisible = currentScroll > scrollThreshold;
+				var isMobile = window.matchMedia('(max-width: 767px)').matches;
+				var isVisible = currentScroll > scrollThreshold || isMobile;
 
 				if (sideIcons) {
 					sideIcons.classList.toggle('is-visible', isVisible);
@@ -1020,6 +1068,112 @@
 
 			toggleFloatingActions();
 			window.addEventListener('scroll', toggleFloatingActions, { passive: true });
+			window.addEventListener('resize', toggleFloatingActions);
+		})();
+
+		(function() {
+			var toggle = document.getElementById('supportWidgetToggle');
+			var widget = document.getElementById('supportWidget');
+
+			if (!toggle || !widget) {
+				return;
+			}
+
+			var closeButton = widget.querySelector('.support-widget-close');
+			var answer = widget.querySelector('[data-support-answer]');
+			var answerTitle = widget.querySelector('[data-support-answer-title]');
+			var answerText = widget.querySelector('[data-support-answer-text]');
+			var answerLink = widget.querySelector('[data-support-answer-link]');
+			var topicButtons = Array.prototype.slice.call(widget.querySelectorAll('[data-support-topic]'));
+			var lastFocusedElement = null;
+			var topics = {
+				shipping: {
+					title: 'Phí giao hàng',
+					text: 'Phí và thời gian giao dự kiến được tính theo Tỉnh/Thành, loại sản phẩm và phương thức giao. Tổng phí được hiển thị trước khi bạn đặt hàng.',
+					url: widget.getAttribute('data-shipping-url'),
+					label: 'Xem chính sách giao hàng'
+				},
+				payment: {
+					title: 'Phương thức thanh toán',
+					text: 'Cửa hàng hỗ trợ thanh toán khi nhận hàng, chuyển khoản ngân hàng và MoMo trong môi trường demo.',
+					url: widget.getAttribute('data-payment-url'),
+					label: 'Xem chính sách thanh toán'
+				},
+				orders: {
+					title: 'Theo dõi đơn hàng',
+					text: 'Bạn có thể xem trạng thái, lịch sử xử lý, yêu cầu hủy hoặc đổi trả trong mục Đơn hàng của tài khoản.',
+					url: widget.getAttribute('data-orders-url'),
+					label: @json(auth()->check() ? 'Mở đơn hàng của tôi' : 'Đăng nhập để xem đơn')
+				},
+				returns: {
+					title: 'Đổi trả và hoàn tiền',
+					text: 'Hãy giữ hình ảnh sản phẩm và gửi yêu cầu trong thời hạn áp dụng. Cửa hàng sẽ kiểm tra điều kiện trước khi xác nhận phương án xử lý.',
+					url: widget.getAttribute('data-returns-url'),
+					label: 'Xem chính sách đổi trả'
+				}
+			};
+
+			function openWidget() {
+				lastFocusedElement = document.activeElement;
+				widget.hidden = false;
+				toggle.setAttribute('aria-expanded', 'true');
+				document.body.classList.add('support-widget-open');
+				closeButton.focus();
+			}
+
+			function closeWidget() {
+				widget.hidden = true;
+				toggle.setAttribute('aria-expanded', 'false');
+				document.body.classList.remove('support-widget-open');
+				if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+					lastFocusedElement.focus();
+				}
+			}
+
+			toggle.addEventListener('click', function() {
+				if (widget.hidden) {
+					openWidget();
+				} else {
+					closeWidget();
+				}
+			});
+
+			closeButton.addEventListener('click', closeWidget);
+
+			topicButtons.forEach(function(button) {
+				button.addEventListener('click', function() {
+					var topicName = button.getAttribute('data-support-topic');
+					var topic = topics[topicName];
+
+					if (!topic) {
+						return;
+					}
+
+					topicButtons.forEach(function(item) {
+						var isSelected = item === button;
+						item.classList.toggle('is-selected', isSelected);
+						item.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+					});
+
+					answerTitle.textContent = topic.title;
+					answerText.textContent = topic.text;
+					answerLink.textContent = topic.label;
+					answerLink.href = topic.url;
+					answer.hidden = false;
+				});
+			});
+
+			document.addEventListener('keydown', function(event) {
+				if (event.key === 'Escape' && !widget.hidden) {
+					closeWidget();
+				}
+			});
+
+			document.addEventListener('click', function(event) {
+				if (!widget.hidden && !widget.contains(event.target) && !toggle.contains(event.target)) {
+					closeWidget();
+				}
+			});
 		})();
 
 		(function() {
