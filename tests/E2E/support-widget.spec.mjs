@@ -6,7 +6,7 @@ test('hộp hỗ trợ trả lời FAQ và điều hướng đúng trên desktop
     await page.evaluate(() => window.scrollTo(0, 500));
 
     const toggle = page.getByRole('button', { name: 'Mở hỗ trợ mua hàng' });
-    const widget = page.getByRole('dialog', { name: 'Hỗ trợ mua hàng' });
+    const widget = page.getByRole('dialog', { name: 'Trợ lý mua hàng' });
 
     await expect(toggle).toBeVisible();
     await toggle.click();
@@ -15,7 +15,10 @@ test('hộp hỗ trợ trả lời FAQ và điều hướng đúng trên desktop
 
     await widget.getByRole('button', { name: 'Theo dõi đơn' }).click();
     await expect(widget.getByText('Theo dõi đơn hàng', { exact: true })).toBeVisible();
-    await expect(widget.getByRole('link', { name: 'Đăng nhập để xem đơn' })).toHaveAttribute('href', /login$/);
+    await expect(widget.getByRole('link', { name: 'Đăng nhập và theo dõi đơn' })).toHaveAttribute('href', /account\?tab=orders$/);
+    await expect(page.getByRole('link', { name: 'Gọi hotline' })).toBeHidden();
+    await expect(page.locator('#salesPopToast')).toBeHidden();
+    await expect(page.locator('#backToTop')).toBeHidden();
 
     const accessibility = await new AxeBuilder({ page })
         .include('#supportWidget')
@@ -29,6 +32,11 @@ test('hộp hỗ trợ trả lời FAQ và điều hướng đúng trên desktop
     await page.keyboard.press('Escape');
     await expect(widget).toBeHidden();
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await toggle.click();
+    await widget.getByRole('button', { name: 'Theo dõi đơn' }).click();
+    await widget.getByRole('link', { name: 'Đăng nhập và theo dõi đơn' }).click();
+    await expect(page).toHaveURL(/\/login$/);
 });
 
 test.describe('mobile', () => {
@@ -42,7 +50,7 @@ test.describe('mobile', () => {
         await expect(page.getByRole('link', { name: 'Gọi hotline' })).toBeHidden();
 
         await toggle.click();
-        const widget = page.getByRole('dialog', { name: 'Hỗ trợ mua hàng' });
+        const widget = page.getByRole('dialog', { name: 'Trợ lý mua hàng' });
         await expect(widget).toBeVisible();
 
         const box = await widget.boundingBox();
@@ -56,4 +64,22 @@ test.describe('mobile', () => {
         await expect(widget.getByRole('link', { name: 'Xem chính sách giao hàng' })).toBeVisible();
         await page.screenshot({ path: testInfo.outputPath('support-mobile.png') });
     });
+});
+
+test('khách đã đăng nhập mở trực tiếp đúng tab đơn hàng', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('checkout.e2e@example.test');
+    await page.locator('#password').fill('Checkout#2026');
+    await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+    await expect(page).toHaveURL(/\/$/);
+
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await page.getByRole('button', { name: 'Mở hỗ trợ mua hàng' }).click();
+
+    const widget = page.getByRole('dialog', { name: 'Trợ lý mua hàng' });
+    await widget.getByRole('button', { name: 'Theo dõi đơn' }).click();
+    await widget.getByRole('link', { name: 'Mở đơn hàng của tôi' }).click();
+
+    await expect(page).toHaveURL(/\/account\?tab=orders$/);
+    await expect(page.locator('.account-tab[data-account-tab="orders"]')).toHaveClass(/is-active/);
 });

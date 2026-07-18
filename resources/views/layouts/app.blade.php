@@ -570,15 +570,16 @@
 		aria-labelledby="supportWidgetTitle"
 		data-shipping-url="{{ route('page.shipping.payment') }}"
 		data-payment-url="{{ route('page.shipping.payment') }}"
-		data-orders-url="{{ auth()->check() ? route('account.profile', ['tab' => 'orders']) : route('login') }}"
+		data-orders-url="{{ route('account.profile', ['tab' => 'orders']) }}"
+		data-orders-authenticated="{{ auth()->check() ? 'true' : 'false' }}"
 		data-returns-url="{{ route('page.return') }}"
 		hidden
 	>
 		<header class="support-widget-header">
 			<span class="support-widget-avatar" aria-hidden="true"><i class="fa fa-comments"></i></span>
 			<span class="support-widget-heading">
-				<strong id="supportWidgetTitle">Hỗ trợ mua hàng</strong>
-				<small>Phục vụ từ 07:00 - 19:00</small>
+				<strong id="supportWidgetTitle">Trợ lý mua hàng</strong>
+				<small>Tự động 24/7 · Tư vấn 07:00-19:00</small>
 			</span>
 			<button class="support-widget-close" type="button" aria-label="Đóng hỗ trợ" title="Đóng">
 				<i class="fa fa-times" aria-hidden="true"></i>
@@ -1086,6 +1087,7 @@
 			var answerLink = widget.querySelector('[data-support-answer-link]');
 			var topicButtons = Array.prototype.slice.call(widget.querySelectorAll('[data-support-topic]'));
 			var lastFocusedElement = null;
+			var hasAuthenticatedCustomer = widget.getAttribute('data-orders-authenticated') === 'true';
 			var topics = {
 				shipping: {
 					title: 'Phí giao hàng',
@@ -1101,9 +1103,11 @@
 				},
 				orders: {
 					title: 'Theo dõi đơn hàng',
-					text: 'Bạn có thể xem trạng thái, lịch sử xử lý, yêu cầu hủy hoặc đổi trả trong mục Đơn hàng của tài khoản.',
+					text: hasAuthenticatedCustomer
+						? 'Mở mục Đơn hàng để xem trạng thái, lịch sử xử lý, yêu cầu hủy hoặc đổi trả của bạn.'
+						: 'Đăng nhập để xem trạng thái và lịch sử xử lý. Sau khi đăng nhập, hệ thống sẽ đưa bạn trở lại đúng mục Đơn hàng.',
 					url: widget.getAttribute('data-orders-url'),
-					label: @json(auth()->check() ? 'Mở đơn hàng của tôi' : 'Đăng nhập để xem đơn')
+					label: hasAuthenticatedCustomer ? 'Mở đơn hàng của tôi' : 'Đăng nhập và theo dõi đơn'
 				},
 				returns: {
 					title: 'Đổi trả và hoàn tiền',
