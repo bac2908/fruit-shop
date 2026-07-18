@@ -183,7 +183,7 @@
 		<div class="container">
 			<div class="section-title a-center">
 				<h2><a href="{{ route('categories.show', $section['category']->slug) }}">{{ $section['category']->name }}</a></h2>
-				<p>{{ $section['category']->description ?? 'Sản phẩm chất lượng loại 1' }}</p>
+				<p>{{ $section['slogan'] }}</p>
 			</div>
 			<div class="section-content">
 				<div class="products products-view-grid owl-carousel owl-theme" data-autoplay='true' data-md-items="4" data-sm-items="3" data-xs-items="2" data-margin="30" data-nav="true">

@@ -48,9 +48,32 @@ for (const profile of profiles) {
     });
     await page.waitForTimeout(2500);
 
+    await page.evaluate(async () => {
+        const step = Math.max(window.innerHeight * 0.8, 320);
+        for (let offset = 0; offset < document.documentElement.scrollHeight; offset += step) {
+            window.scrollTo(0, offset);
+            await new Promise((resolve) => setTimeout(resolve, 120));
+        }
+        window.scrollTo(0, 0);
+    });
+    await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+    await page.waitForTimeout(500);
+
     const pageState = await page.evaluate(() => {
         const brokenImages = [...document.images]
             .filter((image) => image.complete && image.naturalWidth === 0)
+            .map((image) => image.currentSrc || image.src)
+            .slice(0, 25);
+        const pendingVisibleImages = [...document.images]
+            .filter((image) => {
+                const rect = image.getBoundingClientRect();
+                const isInVisibleColumn = rect.width > 0
+                    && rect.height > 0
+                    && rect.right > 0
+                    && rect.left < document.documentElement.clientWidth;
+
+                return !image.complete && isInVisibleColumn;
+            })
             .map((image) => image.currentSrc || image.src)
             .slice(0, 25);
         const overflowingElements = [...document.querySelectorAll('body *')]
@@ -77,6 +100,7 @@ for (const profile of profiles) {
             bodyWidth: document.body.scrollWidth,
             viewportWidth: document.documentElement.clientWidth,
             brokenImages,
+            pendingVisibleImages,
             overflowingElements,
             resourceCount: resources.length,
             transferredBytes: resources.reduce((total, resource) => total + (resource.transferSize || 0), 0),
@@ -88,16 +112,6 @@ for (const profile of profiles) {
     const accessibility = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
-
-    await page.evaluate(async () => {
-        const step = Math.max(window.innerHeight * 0.8, 320);
-        for (let offset = 0; offset < document.documentElement.scrollHeight; offset += step) {
-            window.scrollTo(0, offset);
-            await new Promise((resolve) => setTimeout(resolve, 40));
-        }
-        window.scrollTo(0, 0);
-    });
-    await page.waitForTimeout(500);
 
     await page.screenshot({
         path: path.join(outputDirectory, `${profile.name}.png`),
@@ -148,6 +162,7 @@ console.log(JSON.stringify(report, null, 2));
 const failed = Object.values(report.profiles).some((profile) => (
     profile.status !== 200
     || profile.pageState.brokenImages.length > 0
+    || profile.pageState.pendingVisibleImages.length > 0
     || profile.pageState.bodyWidth > profile.pageState.viewportWidth + 1
     || profile.accessibility.seriousOrCritical.length > 0
 ));

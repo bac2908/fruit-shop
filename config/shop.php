@@ -11,6 +11,16 @@ return [
         'san-pham-ban-chay'
     ],
 
+    'home_category_slogans' => [
+        'trai-cay-viet-nam' => 'Tươi ngon từ vườn Việt, chọn lọc theo mùa mỗi ngày.',
+        'trai-cay-nhap-khau' => 'Hương vị quốc tế tuyển chọn, nguồn gốc rõ ràng.',
+        'trai-cay-thai-lan' => 'Đặc sản xứ Chùa Vàng, đậm vị và tươi mới.',
+        'gio-qua-va-set-qua' => 'Trao quà tinh tế, gửi trọn lời chúc chân thành.',
+        'qua-cuoi-va-mam-cung' => 'Sắp lễ trang trọng, đủ đầy cho ngày quan trọng.',
+        'hang-vao-mua' => 'Đúng mùa ngon nhất, giá tốt và luôn tươi mới.',
+        'san-pham-ban-chay' => 'Những lựa chọn được khách hàng yêu thích nhất.',
+    ],
+
     'mam_dia_ngu_qua' => [
         'collection_slugs' => [
             'mam-ngu-qua-l1',

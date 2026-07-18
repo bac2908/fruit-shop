@@ -38,6 +38,39 @@ class HomeCatalogSectionTest extends TestCase
         $this->assertNotNull($section);
         $this->assertSame([$expected->id], $section['products']->pluck('id')->all());
         $this->assertFalse($section['products']->contains('id', $unexpected->id));
+        $this->assertSame('Danh mục kiểm thử được tuyển chọn tươi ngon mỗi ngày.', $section['slogan']);
+    }
+
+    public function test_home_sections_use_distinct_configured_slogans(): void
+    {
+        $suffix = uniqid();
+        $firstCategory = Category::query()->create([
+            'name' => 'Danh mục slogan một',
+            'slug' => "slogan-one-{$suffix}",
+            'sort_order' => 999,
+            'is_active' => true,
+        ]);
+        $secondCategory = Category::query()->create([
+            'name' => 'Danh mục slogan hai',
+            'slug' => "slogan-two-{$suffix}",
+            'sort_order' => 1000,
+            'is_active' => true,
+        ]);
+
+        $this->createProduct($firstCategory, "Sản phẩm slogan một {$suffix}");
+        $this->createProduct($secondCategory, "Sản phẩm slogan hai {$suffix}");
+        config()->set("shop.home_category_slogans.{$firstCategory->slug}", 'Slogan riêng thứ nhất.');
+        config()->set("shop.home_category_slogans.{$secondCategory->slug}", 'Slogan riêng thứ hai.');
+
+        $sections = app(HomeService::class)->getHomeSections([
+            $firstCategory->slug,
+            $secondCategory->slug,
+        ], 8);
+
+        $this->assertSame(
+            ['Slogan riêng thứ nhất.', 'Slogan riêng thứ hai.'],
+            $sections->take(2)->pluck('slogan')->all()
+        );
     }
 
     private function createProduct(Category $category, string $name): Product

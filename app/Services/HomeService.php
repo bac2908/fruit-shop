@@ -108,7 +108,19 @@ class HomeService
             'category' => $category,
             'products' => $products,
             'icon_url' => $category->getIconUrl(),
+            'slogan' => $this->categorySlogan($category),
         ];
+    }
+
+    private function categorySlogan(Category $category): string
+    {
+        $configuredSlogan = config('shop.home_category_slogans.' . $category->slug);
+
+        if (is_string($configuredSlogan) && trim($configuredSlogan) !== '') {
+            return trim($configuredSlogan);
+        }
+
+        return $category->name . ' được tuyển chọn tươi ngon mỗi ngày.';
     }
 
     /**

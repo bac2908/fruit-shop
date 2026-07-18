@@ -8,20 +8,21 @@ Project này được xây dựng để đưa vào portfolio/CV intern PHP. Đi�
 
 ## Tech Stack
 
-- Backend: PHP, Laravel 8
-- Frontend: Blade, CSS, JavaScript, Laravel Mix
-- Database: MySQL
+- Backend: PHP 8.2, Laravel 12
+- Frontend: Blade, CSS, JavaScript, Vite 8
+- Database: MySQL 8
 - Authentication: Laravel session auth, Google OAuth qua Socialite
 - Payment: COD, chuyển khoản ngân hàng, MoMo sandbox
 - Mail: SMTP/Mailpit cho local Docker
 - DevOps: Docker, Docker Compose, Apache, phpMyAdmin
-- Testing: PHPUnit / `php artisan test`
+- Testing: PHPUnit 11, Playwright, axe-core
 
 ## Chức Năng Đã Xây Dựng
 
 ### Khách Hàng
 
 - Đăng ký, đăng nhập, đăng xuất.
+- Xác minh email bằng liên kết ký số có thời hạn và giới hạn gửi lại.
 - Đăng nhập bằng Google OAuth.
 - Quên mật khẩu và đặt lại mật khẩu qua email.
 - Validation đăng ký/đăng nhập theo hướng ecommerce.
@@ -42,6 +43,17 @@ Project này được xây dựng để đưa vào portfolio/CV intern PHP. Đi�
 - Tìm kiếm sản phẩm, gợi ý từ khóa phổ biến và lịch sử tìm kiếm cho user đăng nhập.
 - Card sản phẩm có giá, giá khuyến mãi, trạng thái tồn kho, nút thêm vào giỏ.
 - Mini cart popup sau khi thêm sản phẩm vào giỏ.
+- Sitemap XML, robots.txt, canonical URL và JSON-LD cho tổ chức/sản phẩm/breadcrumb.
+- Google Analytics chỉ được tải sau khi người dùng đồng ý cookie.
+- Ảnh WebP, lazy loading, kích thước ảnh ổn định và giao diện mobile không tràn ngang.
+- Modal hỗ trợ bàn phím, focus trap và các kiểm tra accessibility bằng axe-core.
+
+### Liên Hệ Và Chống Spam
+
+- Form liên hệ có honeypot, token thời gian và rate limit theo IP/email.
+- Phát hiện nội dung gửi trùng và chấm điểm spam trước khi vào inbox.
+- Admin có inbox để lọc, đọc, ghi chú và trả lời khách hàng.
+- Lỗi SMTP không làm mất nội dung liên hệ đã lưu trong database.
 
 ### Giỏ Hàng Và Checkout
 
@@ -90,8 +102,11 @@ fruitshop/
 ├── public/                 # Entry public/index.php, assets, uploads public
 ├── resources/views/        # Blade templates FE/Admin
 ├── routes/web.php          # Web routes
-├── tests/                  # PHPUnit tests
+├── scripts/                # Audit frontend và chuẩn bị database E2E
+├── tests/                  # PHPUnit feature/unit và Playwright E2E
 ├── docker/                 # Apache/PHP/MySQL helper files
+├── playwright.config.mjs
+├── vite.config.js
 ├── Dockerfile
 ├── docker-compose.yml
 └── README.md
@@ -99,10 +114,10 @@ fruitshop/
 
 ## Yêu Cầu Khi Chạy Local Không Docker
 
-- PHP 8.0+
+- PHP 8.2+
 - Composer
-- MySQL
-- Node.js và npm nếu cần build asset
+- MySQL 8
+- Node.js 22 và npm
 - AMPPS/XAMPP hoặc webserver có document root trỏ vào `public/`
 
 ## Cài Đặt Local Không Docker
@@ -115,7 +130,7 @@ copy .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 php artisan storage:link
-npm run dev
+npm run build
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
@@ -202,7 +217,7 @@ Nếu chỉ chạy `migrate --seed`, database sẽ có schema và admin user, nh
 
 ### 6. Build asset trong Docker
 
-Nếu cần build CSS/JS bằng Laravel Mix:
+Chạy Vite development server:
 
 ```powershell
 docker compose --profile assets run --rm node npm run dev
@@ -211,7 +226,7 @@ docker compose --profile assets run --rm node npm run dev
 Bản production:
 
 ```powershell
-docker compose --profile assets run --rm node npm run prod
+docker compose --profile assets run --rm node npm run build
 ```
 
 ## Lệnh Docker Hay Dùng
@@ -234,8 +249,10 @@ docker compose down -v
 
 ## Kiểm Thử
 
+### Backend
+
 ```powershell
-php artisan test
+& 'C:\Program Files\Ampps\php82\php.exe' artisan test
 ```
 
 Hoặc trong Docker:
@@ -244,13 +261,30 @@ Hoặc trong Docker:
 docker compose exec app php artisan test
 ```
 
-Hiện tại bộ test mẫu đã pass. Các test cần bổ sung tiếp để project đạt điểm cao hơn:
+### Frontend, hiệu năng và accessibility
 
-- Auth/register/login/reset password.
-- Cart/add/update/remove coupon.
-- Checkout/place order.
-- Admin product filter/visibility.
-- Order cancellation/return workflow.
+```powershell
+npm run build
+npm run audit:frontend
+```
+
+Audit mở trang desktop/mobile bằng Chromium, kiểm tra request lỗi, ảnh hỏng, tràn ngang và vi phạm accessibility bằng axe-core.
+
+### Checkout end-to-end
+
+Lần đầu cài Chromium cho Playwright:
+
+```powershell
+npx playwright install chromium
+```
+
+Chạy luồng thật từ đăng nhập đến đặt đơn COD:
+
+```powershell
+npm run test:e2e
+```
+
+Test tự tạo database `<DB_DATABASE>_e2e`, chạy mới toàn bộ migration, seed user/sản phẩm/địa chỉ riêng, rồi kiểm tra đăng nhập, thêm giỏ, checkout, tạo đơn, trang cảm ơn và giỏ hàng rỗng. Script từ chối chạy nếu tên database không có hậu tố `_e2e`, xác nhận kết nối trước `migrate:fresh` và kiểm tra database chính không thay đổi trước/sau test.
 
 ## Biến Môi Trường Quan Trọng
 
@@ -261,6 +295,8 @@ Hiện tại bộ test mẫu đã pass. Các test cần bổ sung tiếp để p
 - `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`: MoMo sandbox.
 - `SHOP_MOMO_EXPIRE_MINUTES`: thời gian chờ thanh toán trước khi tự hủy đơn MoMo, mặc định 30 phút.
 - `SHOP_*`: cấu hình shop, shipping, email, return/refund, auto confirm.
+- `ANALYTICS_ENABLED`, `GOOGLE_ANALYTICS_ID`: bật analytics theo consent.
+- `E2E_DB_DATABASE`: tên database kiểm thử tùy chọn, bắt buộc kết thúc bằng `_e2e`.
 
 ## Scheduler
 
@@ -272,16 +308,17 @@ php artisan schedule:work
 
 Khi deploy Linux, cấu hình cron gọi `php artisan schedule:run` mỗi phút. Lệnh `shop:cancel-expired-momo-orders` chạy mỗi 5 phút, dùng khóa database và chỉ hủy đơn MoMo còn chưa thanh toán.
 
-## Roadmap Để Đạt Mức 9/10
+## Việc Cần Làm Trước Production Thật
 
+- Chuyển 431 ảnh sản phẩm đang hotlink sang storage/CDN do cửa hàng sở hữu sau khi xác nhận quyền sử dụng.
+- Duyệt nghiệp vụ 4 sản phẩm đang hết tồn để nhập thêm hoặc chủ động ẩn khỏi storefront.
 - Hoàn thiện CRUD sản phẩm admin: thêm/sửa/xóa mềm, upload ảnh, sửa giá, sửa tồn kho.
 - Admin customers: danh sách khách hàng, tổng chi tiêu, đơn gần nhất, khóa/mở tài khoản.
 - Admin reports: doanh thu, top sản phẩm, coupon usage, tồn kho thấp, tỷ lệ hủy đơn.
 - Admin settings: thông tin shop, phí ship, ngân hàng, cấu hình thanh toán.
-- Viết feature tests cho các luồng ecommerce chính.
 - Chuyển email nặng sang queue worker khi deploy thật.
-- Thêm sitemap/robots/SEO metadata cho product/category.
-- Chuẩn hóa backup/restore database và tài liệu deploy production.
+- Thiết lập CI chạy PHPUnit, build frontend, audit và Playwright trên mỗi pull request.
+- Chuẩn hóa backup/restore tự động, log tập trung và giám sát lỗi production.
 
 ## Bảo Mật
 

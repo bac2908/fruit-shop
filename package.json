@@ -3,7 +3,8 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "audit:frontend": "node scripts/audit-frontend.mjs"
+        "audit:frontend": "node scripts/audit-frontend.mjs",
+        "test:e2e": "node scripts/run-checkout-e2e.mjs"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.12.1",
