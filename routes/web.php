@@ -1,22 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\EmailVerificationController;
-use App\Http\Controllers\SeoController;
+use App\Http\Controllers\Admin\ContactController as AdminContactController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
-use App\Http\Controllers\Admin\ContactController as AdminContactController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SeoController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,16 +42,16 @@ Route::get('/pages/dieu-khoan-dich-vu', [PageController::class, 'termsOfService'
 Route::get('/pages/khach-hang-doanh-nghiep', [PageController::class, 'corporateCustomers'])->name('page.corporate');
 
 Route::middleware('guest')->group(function () {
-	Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-	Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login.post');
-	Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-	Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.post');
-	Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
-	Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->middleware('throttle:3,1')->name('password.email');
-	Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
-	Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
-	Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->middleware('throttle:10,1')->name('google.redirect');
-	Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->middleware('throttle:10,1')->name('google.callback');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login.post');
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.post');
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->middleware('throttle:3,1')->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
+    Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->middleware('throttle:10,1')->name('google.redirect');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->middleware('throttle:10,1')->name('google.callback');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -67,59 +67,59 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->prefix('notifications')->name('notifications.')->group(function () {
-	Route::get('/', [NotificationController::class, 'index'])->name('index');
-	Route::post('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
-	Route::post('/{notification}/open', [NotificationController::class, 'open'])->name('open');
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::post('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
+    Route::post('/{notification}/open', [NotificationController::class, 'open'])->name('open');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
-	Route::get('/', [ProfileController::class, 'show'])->name('profile');
-	Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
-	Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('addresses.store');
-	Route::patch('/addresses/{address}/default', [ProfileController::class, 'setDefaultAddress'])->name('addresses.default');
-	Route::delete('/addresses/{address}', [ProfileController::class, 'destroyAddress'])->name('addresses.destroy');
-	Route::patch('/orders/{order}/cancel', [ProfileController::class, 'cancelOrder'])->name('orders.cancel');
-	Route::post('/orders/{order}/returns', [ProfileController::class, 'requestReturn'])->name('orders.returns.store');
-	Route::post('/wishlist/{product}', [ProfileController::class, 'toggleWishlist'])->name('wishlist.toggle');
-	Route::delete('/wishlist/{item}', [ProfileController::class, 'removeWishlist'])->name('wishlist.remove');
+    Route::get('/', [ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('addresses.store');
+    Route::patch('/addresses/{address}/default', [ProfileController::class, 'setDefaultAddress'])->name('addresses.default');
+    Route::delete('/addresses/{address}', [ProfileController::class, 'destroyAddress'])->name('addresses.destroy');
+    Route::patch('/orders/{order}/cancel', [ProfileController::class, 'cancelOrder'])->name('orders.cancel');
+    Route::post('/orders/{order}/returns', [ProfileController::class, 'requestReturn'])->name('orders.returns.store');
+    Route::post('/wishlist/{product}', [ProfileController::class, 'toggleWishlist'])->name('wishlist.toggle');
+    Route::delete('/wishlist/{item}', [ProfileController::class, 'removeWishlist'])->name('wishlist.remove');
 });
 
 // Admin operation routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-	Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-	Route::get('/products', [AdminProductController::class, 'index'])->name('products');
-	Route::patch('/products/{product}/visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.visibility');
+    Route::get('/products', [AdminProductController::class, 'index'])->name('products');
+    Route::patch('/products/{product}/visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.visibility');
 
-	Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
-	Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
-	Route::patch('/orders/{order}/shipping', [AdminOrderController::class, 'updateShipping'])->name('orders.shipping');
-	Route::patch('/orders/cancellations/{cancellationRequest}/approve', [AdminOrderController::class, 'approveCancellation'])->name('orders.cancellations.approve');
-	Route::patch('/orders/cancellations/{cancellationRequest}/reject', [AdminOrderController::class, 'rejectCancellation'])->name('orders.cancellations.reject');
+    Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
+    Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
+    Route::patch('/orders/{order}/shipping', [AdminOrderController::class, 'updateShipping'])->name('orders.shipping');
+    Route::patch('/orders/cancellations/{cancellationRequest}/approve', [AdminOrderController::class, 'approveCancellation'])->name('orders.cancellations.approve');
+    Route::patch('/orders/cancellations/{cancellationRequest}/reject', [AdminOrderController::class, 'rejectCancellation'])->name('orders.cancellations.reject');
 
-	Route::get('/customers', function () {
-		return view('admin.customers');
-	})->name('customers');
+    Route::get('/customers', function () {
+        return view('admin.customers');
+    })->name('customers');
 
     Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
     Route::get('/contacts/{contactMessage}', [AdminContactController::class, 'show'])->name('contacts.show');
     Route::patch('/contacts/{contactMessage}', [AdminContactController::class, 'update'])->name('contacts.update');
     Route::post('/contacts/{contactMessage}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
 
-	Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
-	Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
-	Route::post('/coupons/assign', [AdminCouponController::class, 'assign'])->name('coupons.assign');
-	Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
-	Route::patch('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
-	Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+    Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
+    Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
+    Route::post('/coupons/assign', [AdminCouponController::class, 'assign'])->name('coupons.assign');
+    Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
+    Route::patch('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
+    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
 
-	Route::get('/reports', function () {
-		return view('admin.reports');
-	})->name('reports');
+    Route::get('/reports', function () {
+        return view('admin.reports');
+    })->name('reports');
 
-	Route::get('/settings', function () {
-		return view('admin.settings');
-	})->name('settings');
+    Route::get('/settings', function () {
+        return view('admin.settings');
+    })->name('settings');
 });
 
 // Trang danh mục sản phẩm
@@ -133,6 +133,7 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])->name('produc
 // Các trang khác (Giỏ hàng, Tìm kiếm...)
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::post('/cart/add-bundle', [CartController::class, 'addBundle'])->name('cart.bundle.add');
 Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');

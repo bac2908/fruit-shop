@@ -11,13 +11,19 @@ class AprioriRecommendationService
 {
     // Thông số mặc định cho Apriori
     private $minSupport = 0.02;      // Tối thiểu 2% giao dịch
+
     private $minConfidence = 0.30;   // Tối thiểu 30% độ tin cậy
+
     private $minLift = 1.0;          // Tối thiểu 1.0 để có liên quan
+
     private $minPairCount = 2;       // Tối thiểu 2 lần xuất hiện
+
     private $maxItemsetSize = 4;     // Tìm kiếm itemsets tới 4-items
+
     private $cacheHours = 24;
 
     private $analysis = null;
+
     private $enableDebug = false;
 
     public function __construct(
@@ -58,19 +64,22 @@ class AprioriRecommendationService
         $productIds = $rules->pluck('consequent_id')->unique()->values()->all();
         $products = Product::query()
             ->with([
+                'category',
                 'images' => function ($q) {
                     $q->orderBy('sort_order');
                 },
             ])
             ->whereIn('id', $productIds)
-            ->where('is_active', true)
+            ->orderable()
+            ->where('has_gear_detail', false)
             ->get()
+            ->reject(fn (Product $recommendedProduct) => $recommendedProduct->is_custom_order_product)
             ->keyBy('id');
 
         return $rules->map(function (array $rule) use ($products) {
             $recommendedProduct = $products->get($rule['consequent_id']);
 
-            if (!$recommendedProduct) {
+            if (! $recommendedProduct) {
                 return null;
             }
 
@@ -304,15 +313,21 @@ class AprioriRecommendationService
         // Lọc quy tắc theo ngưỡng
         $analysis['rules_2items'] = array_values(array_filter(
             $analysis['rules_2items'],
-            function($rule) { return $this->passesThresholds($rule); }
+            function ($rule) {
+                return $this->passesThresholds($rule);
+            }
         ));
         $analysis['rules_3items'] = array_values(array_filter(
             $analysis['rules_3items'],
-            function($rule) { return $this->passesThresholds($rule); }
+            function ($rule) {
+                return $this->passesThresholds($rule);
+            }
         ));
         $analysis['rules_4items'] = array_values(array_filter(
             $analysis['rules_4items'],
-            function($rule) { return $this->passesThresholds($rule); }
+            function ($rule) {
+                return $this->passesThresholds($rule);
+            }
         ));
 
         // Lưu vào cache
@@ -351,7 +366,7 @@ class AprioriRecommendationService
                     ];
                 }
             }
-        } else if ($k === 3) {
+        } elseif ($k === 3) {
             // Sinh 3-itemsets từ 2-itemsets
             $tripleCounts = [];
             foreach ($transactions as $productIds) {
@@ -379,7 +394,7 @@ class AprioriRecommendationService
                     ];
                 }
             }
-        } else if ($k === 4) {
+        } elseif ($k === 4) {
             // Sinh 4-itemsets từ 3-itemsets
             $quadCounts = [];
             foreach ($transactions as $productIds) {
@@ -420,7 +435,7 @@ class AprioriRecommendationService
     private function appendItemsetCounts(array $itemsets, array &$itemsetCountMap): void
     {
         foreach ($itemsets as $itemset) {
-            if (!isset($itemset['items'], $itemset['count'])) {
+            if (! isset($itemset['items'], $itemset['count'])) {
                 continue;
             }
 
@@ -436,7 +451,7 @@ class AprioriRecommendationService
         $rules = [];
 
         foreach ($itemsets as $itemset) {
-            if (!isset($itemset['items'], $itemset['count'])) {
+            if (! isset($itemset['items'], $itemset['count'])) {
                 continue;
             }
 
@@ -517,7 +532,7 @@ class AprioriRecommendationService
                 }
             }
 
-            if (!empty($subset) && count($subset) < $count) {
+            if (! empty($subset) && count($subset) < $count) {
                 $subsets[] = $subset;
             }
         }
@@ -535,6 +550,7 @@ class AprioriRecommendationService
         }
 
         sort($items);
+
         return implode(':', $items);
     }
 
@@ -554,6 +570,7 @@ class AprioriRecommendationService
     private function itemsetKey(array $ids): string
     {
         sort($ids);
+
         return implode(':', $ids);
     }
 
@@ -562,11 +579,11 @@ class AprioriRecommendationService
      */
     private function getCacheKey(): string
     {
-        return 'apriori_analysis_' . md5(
-            $this->minSupport . '_' .
-            $this->minConfidence . '_' .
-            $this->minLift . '_' .
-            $this->minPairCount . '_' .
+        return 'apriori_analysis_'.md5(
+            $this->minSupport.'_'.
+            $this->minConfidence.'_'.
+            $this->minLift.'_'.
+            $this->minPairCount.'_'.
             $this->maxItemsetSize
         );
     }
@@ -580,6 +597,7 @@ class AprioriRecommendationService
         arsort($itemCounts);
 
         $topIds = array_slice(array_keys($itemCounts), 0, $limit);
+
         return Product::query()
             ->whereIn('id', $topIds)
             ->get(['id', 'name'])
@@ -600,6 +618,7 @@ class AprioriRecommendationService
         usort($rules, function ($a, $b) {
             $scoreA = ($a['lift'] * 1000000) + ($a['confidence'] * 1000) + $a['support'];
             $scoreB = ($b['lift'] * 1000000) + ($b['confidence'] * 1000) + $b['support'];
+
             return $scoreB <=> $scoreA;
         });
 
@@ -616,6 +635,7 @@ class AprioriRecommendationService
         }
 
         $sum = array_sum(array_column($rules, $metric));
+
         return round($sum / count($rules), 4);
     }
 

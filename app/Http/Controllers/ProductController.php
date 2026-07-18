@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductView;
 use App\Models\Product;
+use App\Models\ProductView;
 use App\Models\SearchHistory;
 use App\Models\WishlistItem;
 use App\Services\AprioriRecommendationService;
+use App\Services\ProductRecommendationService;
 use App\Services\ProductService;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
@@ -16,12 +17,19 @@ use Illuminate\Support\Str;
 class ProductController extends Controller
 {
     protected $productService;
+
     protected $aprioriRecommendationService;
 
-    public function __construct(ProductService $productService, AprioriRecommendationService $aprioriRecommendationService)
-    {
+    protected $productRecommendationService;
+
+    public function __construct(
+        ProductService $productService,
+        AprioriRecommendationService $aprioriRecommendationService,
+        ProductRecommendationService $productRecommendationService
+    ) {
         $this->productService = $productService;
         $this->aprioriRecommendationService = $aprioriRecommendationService;
+        $this->productRecommendationService = $productRecommendationService;
     }
 
     public function index(Request $request)
@@ -31,9 +39,9 @@ class ProductController extends Controller
         $featuredProducts = $this->productService->getFeaturedProducts(5);
 
         return view('products.index', [
-            'products'          => $products,
-            'allCategories'     => $allCategories,
-            'featuredProducts'  => $featuredProducts,
+            'products' => $products,
+            'allCategories' => $allCategories,
+            'featuredProducts' => $featuredProducts,
         ]);
     }
 
@@ -41,7 +49,7 @@ class ProductController extends Controller
     {
         $product = $this->productService->findBySlug($slug);
 
-        if (!$product) {
+        if (! $product) {
             abort(404);
         }
 
@@ -52,8 +60,10 @@ class ProductController extends Controller
             ? $this->productService->getOptionProducts($product, 8)
             : collect([$product]);
         $featuredProducts = $this->productService->getFeaturedProducts(5);
-        $frequentlyBoughtTogether = $this->aprioriRecommendationService->recommendForProduct($product, 4);
-        $aprioriStats = $this->aprioriRecommendationService->getStats();
+        $bundleRecommendation = $this->productRecommendationService->recommend($product, 3);
+        $aprioriStats = auth()->check() && auth()->user()->isAdmin()
+            ? $this->aprioriRecommendationService->getStats()
+            : [];
         $isWishlisted = $this->isWishlisted($product->id);
 
         return view('products.show', [
@@ -61,7 +71,7 @@ class ProductController extends Controller
             'relatedProducts' => $relatedProducts,
             'optionProducts' => $optionProducts,
             'featuredProducts' => $featuredProducts,
-            'frequentlyBoughtTogether' => $frequentlyBoughtTogether,
+            'bundleRecommendation' => $bundleRecommendation,
             'aprioriStats' => $aprioriStats,
             'isWishlisted' => $isWishlisted,
         ]);
@@ -71,7 +81,7 @@ class ProductController extends Controller
     {
         $product = $this->productService->findBySlug($slug);
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'message' => 'Không tìm thấy sản phẩm.',
             ], 404);
@@ -101,8 +111,8 @@ class ProductController extends Controller
         $canAddToCart = (bool) $product->is_active
             && $inStock
             && $displayPrice > 0
-            && !$isCustomOrder
-            && !(bool) $product->has_gear_detail;
+            && ! $isCustomOrder
+            && ! (bool) $product->has_gear_detail;
 
         $descriptionText = trim(preg_replace('/\s+/u', ' ', strip_tags((string) ($product->short_desc ?: $product->description))));
 
@@ -126,9 +136,9 @@ class ProductController extends Controller
             'price' => [
                 'value' => $displayPrice,
                 'formatted' => $displayPrice > 0
-                    ? ($isCustomOrder ? 'Từ ' : '') . number_format($displayPrice, 0, ',', '.') . 'đ'
+                    ? ($isCustomOrder ? 'Từ ' : '').number_format($displayPrice, 0, ',', '.').'đ'
                     : 'Đang cập nhật giá',
-                'compare_formatted' => $isSalePrice ? number_format($basePrice, 0, ',', '.') . 'đ' : null,
+                'compare_formatted' => $isSalePrice ? number_format($basePrice, 0, ',', '.').'đ' : null,
                 'discount_percent' => $discountPercent,
                 'is_contact_price' => $displayPrice <= 0,
             ],
@@ -180,8 +190,8 @@ class ProductController extends Controller
         $products = collect();
 
         if (Str::length($keyword) >= 2) {
-            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $keyword) . '%';
-            $prefixLike = str_replace(['%', '_'], ['\%', '\_'], $keyword) . '%';
+            $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $keyword).'%';
+            $prefixLike = str_replace(['%', '_'], ['\%', '\_'], $keyword).'%';
 
             $products = Product::query()
                 ->with([
@@ -218,7 +228,7 @@ class ProductController extends Controller
 
     private function recordProductView(int $productId): void
     {
-        if (!auth()->check() || !Schema::hasTable('product_views')) {
+        if (! auth()->check() || ! Schema::hasTable('product_views')) {
             return;
         }
 
@@ -236,7 +246,7 @@ class ProductController extends Controller
 
     private function isWishlisted(int $productId): bool
     {
-        if (!auth()->check() || !Schema::hasTable('wishlist_items')) {
+        if (! auth()->check() || ! Schema::hasTable('wishlist_items')) {
             return false;
         }
 
@@ -248,7 +258,7 @@ class ProductController extends Controller
 
     private function recordSearchKeyword(string $keyword, int $resultsCount): void
     {
-        if (!auth()->check() || !Schema::hasTable('search_histories')) {
+        if (! auth()->check() || ! Schema::hasTable('search_histories')) {
             return;
         }
 
@@ -271,7 +281,7 @@ class ProductController extends Controller
 
     private function recentSearchKeywords(): array
     {
-        if (!auth()->check() || !Schema::hasTable('search_histories')) {
+        if (! auth()->check() || ! Schema::hasTable('search_histories')) {
             return [];
         }
 
@@ -287,7 +297,7 @@ class ProductController extends Controller
     {
         $fallback = ['măng cụt', 'giỏ quà', 'cherry', 'sầu riêng', 'nho xanh'];
 
-        if (!Schema::hasTable('search_histories')) {
+        if (! Schema::hasTable('search_histories')) {
             return $fallback;
         }
 
@@ -316,7 +326,7 @@ class ProductController extends Controller
             'image' => $product->primary_image_url,
             'category' => optional($product->category)->name,
             'price' => $price > 0
-                ? ($isCustomOrder ? 'Từ ' : '') . number_format($price, 0, ',', '.') . '₫'
+                ? ($isCustomOrder ? 'Từ ' : '').number_format($price, 0, ',', '.').'₫'
                 : 'Liên hệ',
         ];
     }

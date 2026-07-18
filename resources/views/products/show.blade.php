@@ -168,7 +168,13 @@
         return $item && $item->id;
     })->take(5);
 
-    $aprioriItems = collect($frequentlyBoughtTogether ?? []);
+    $bundleRecommendation = $bundleRecommendation ?? [
+        'items' => collect(),
+        'source' => 'none',
+        'title' => '',
+        'subtitle' => '',
+    ];
+    $bundleItems = collect($bundleRecommendation['items'] ?? []);
     $aprioriStats = $aprioriStats ?? [
         'orders_count' => 0,
         'transaction_count' => 0,
@@ -176,6 +182,7 @@
         'min_pair_count' => 1,
     ];
     $showAprioriMetrics = auth()->check() && auth()->user()->isAdmin();
+    $canBundleProduct = $canOrderProduct && !(bool) $product->has_gear_detail;
 
     $policyItems = [
         [
@@ -448,60 +455,92 @@
     </div>
 </section>
 
-<section class="pdx-apriori-section">
-    <div class="container">
-        <div class="pdx-apriori-heading">
-            <div>
-                <span class="pdx-apriori-kicker">Apriori recommendation</span>
-                <h2>Sản phẩm thường mua kèm</h2>
-            </div>
-            @if($showAprioriMetrics)
-                <div class="pdx-apriori-stats">
-                    <span>{{ (int) ($aprioriStats['transaction_count'] ?? 0) }} giao dịch hợp lệ</span>
-                    <span>{{ (int) ($aprioriStats['rules_count'] ?? 0) }} luật kết hợp</span>
+@if($bundleItems->isNotEmpty() && $canBundleProduct)
+    <section class="pdx-bundle-section" aria-labelledby="pdx-bundle-title">
+        <div class="container">
+            <div class="pdx-bundle-heading">
+                <div>
+                    <span class="pdx-bundle-kicker">
+                        <i class="fa fa-shopping-basket" aria-hidden="true"></i>
+                        Gợi ý cho giỏ hàng
+                    </span>
+                    <h2 id="pdx-bundle-title">{{ $bundleRecommendation['title'] }}</h2>
+                    <p>{{ $bundleRecommendation['subtitle'] }}</p>
                 </div>
-            @endif
-        </div>
-
-        @if($aprioriItems->isNotEmpty())
-            <div class="row row-fix">
-                @foreach($aprioriItems as $recommendation)
-                    @php
-                        $recommendedProduct = $recommendation['product'];
-                    @endphp
-                    <div class="col-xs-6 col-sm-4 col-md-3 col-fix">
-                        <div class="pdx-apriori-card">
-                            <x-products.card :product="$recommendedProduct" />
-                            @if($showAprioriMetrics)
-                                <div class="pdx-apriori-metrics">
-                                    <span title="Support: tỷ lệ đơn hàng chứa cả hai sản phẩm">
-                                        Support {{ number_format(($recommendation['support'] ?? 0) * 100, 1, ',', '.') }}%
-                                    </span>
-                                    <span title="Confidence: xác suất mua sản phẩm này khi đã mua sản phẩm đang xem">
-                                        Confidence {{ number_format(($recommendation['confidence'] ?? 0) * 100, 1, ',', '.') }}%
-                                    </span>
-                                    <span title="Lift: mức độ mạnh của luật kết hợp so với mua ngẫu nhiên">
-                                        Lift {{ number_format($recommendation['lift'] ?? 0, 2, ',', '.') }}
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="pdx-apriori-empty">
                 @if($showAprioriMetrics)
-                    <strong>Chưa đủ dữ liệu để sinh gợi ý Apriori cho sản phẩm này.</strong>
-                    <p>Thuật toán cần các đơn hàng có từ 2 sản phẩm trở lên để tạo luật dạng “mua A thì thường mua B”. Khi có thêm dữ liệu trong bảng <code>orders</code> và <code>order_items</code>, danh sách mua kèm sẽ tự hiển thị tại đây.</p>
-                @else
-                    <strong>Chưa có gợi ý mua kèm cho sản phẩm này.</strong>
-                    <p>Hệ thống sẽ tự cập nhật khi có thêm dữ liệu mua hàng phù hợp.</p>
+                    <div class="pdx-bundle-stats" aria-label="Thống kê hệ thống gợi ý">
+                        <span>{{ (int) ($aprioriStats['transaction_count'] ?? 0) }} giao dịch hợp lệ</span>
+                        <span>{{ (int) ($aprioriStats['rules_count'] ?? 0) }} luật kết hợp</span>
+                    </div>
                 @endif
             </div>
-        @endif
-    </div>
-</section>
+
+            <form action="{{ route('cart.bundle.add') }}" method="post" class="pdx-bundle-shell" data-bundle-form>
+                @csrf
+                <input type="hidden" name="product_ids[]" value="{{ $product->id }}">
+
+                <div class="pdx-bundle-products">
+                    <article class="pdx-bundle-product is-current is-selected">
+                        <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" width="84" height="84" loading="lazy" decoding="async">
+                        <div class="pdx-bundle-product-info">
+                            <span class="pdx-bundle-product-label">Sản phẩm đang xem</span>
+                            <h3><a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a></h3>
+                            <strong>{{ number_format($displayPrice, 0, ',', '.') }}₫</strong>
+                        </div>
+                        <span class="pdx-bundle-fixed-check" title="Sản phẩm chính luôn được thêm" aria-label="Sản phẩm chính đã được chọn">
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
+                    </article>
+
+                    @foreach($bundleItems as $recommendation)
+                        @php
+                            $recommendedProduct = $recommendation['product'];
+                            $recommendedPrice = (int) $recommendedProduct->orderable_price;
+                        @endphp
+                        <label class="pdx-bundle-product is-selected" data-bundle-item>
+                            <input
+                                type="checkbox"
+                                name="product_ids[]"
+                                value="{{ $recommendedProduct->id }}"
+                                data-bundle-checkbox
+                                data-price="{{ $recommendedPrice }}"
+                                checked
+                            >
+                            <span class="pdx-bundle-checkbox" aria-hidden="true">
+                                <i class="fa fa-check"></i>
+                            </span>
+                            <img src="{{ $recommendedProduct->primary_image_url }}" alt="{{ $recommendedProduct->name }}" width="84" height="84" loading="lazy" decoding="async">
+                            <span class="pdx-bundle-product-info">
+                                <span class="pdx-bundle-product-category">{{ optional($recommendedProduct->category)->name ?: 'Sản phẩm' }}</span>
+                                <span class="pdx-bundle-product-name">{{ $recommendedProduct->name }}</span>
+                                <strong>{{ number_format($recommendedPrice, 0, ',', '.') }}₫</strong>
+                                @if($showAprioriMetrics && ($recommendation['source'] ?? '') === 'behavioral')
+                                    <small>
+                                        Tin cậy {{ number_format(($recommendation['confidence'] ?? 0) * 100, 1, ',', '.') }}%
+                                        · Lift {{ number_format($recommendation['lift'] ?? 0, 2, ',', '.') }}
+                                    </small>
+                                @endif
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+
+                <aside class="pdx-bundle-summary" aria-label="Tóm tắt nhóm sản phẩm">
+                    <span class="pdx-bundle-summary-label">Tạm tính nhóm đã chọn</span>
+                    <strong data-bundle-total data-current-price="{{ $displayPrice }}">
+                        {{ number_format($displayPrice + $bundleItems->sum(fn ($item) => (int) $item['product']->orderable_price), 0, ',', '.') }}₫
+                    </strong>
+                    <p><span data-bundle-count>{{ $bundleItems->count() + 1 }}</span> sản phẩm, mỗi loại 1</p>
+                    <button type="submit" class="pdx-bundle-submit">
+                        <i class="fa fa-shopping-bag" aria-hidden="true"></i>
+                        Thêm <span data-bundle-submit-count>{{ $bundleItems->count() + 1 }}</span> sản phẩm vào giỏ
+                    </button>
+                    <small>Giá và tồn kho được kiểm tra lại khi thêm.</small>
+                </aside>
+            </form>
+        </div>
+    </section>
+@endif
 
 @if($relatedProducts->isNotEmpty())
     <section class="pdx-related-section">
@@ -1139,103 +1178,245 @@
     margin: 0 0 46px;
 }
 
-.pdx-apriori-section {
-    margin: 0 0 28px;
+.pdx-bundle-section {
+    margin: 0 0 34px;
 }
 
-.pdx-apriori-heading {
+.pdx-bundle-heading {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 12px;
+    gap: 18px;
+    margin-bottom: 14px;
 }
 
-.pdx-apriori-kicker {
+.pdx-bundle-kicker {
     display: inline-flex;
     align-items: center;
-    height: 26px;
-    border-radius: 999px;
-    background: #ecf7df;
+    gap: 7px;
+    min-height: 26px;
     color: #5f922b;
-    padding: 0 10px;
     font-size: 12px;
     font-weight: 700;
-    margin-bottom: 8px;
+    text-transform: uppercase;
 }
 
-.pdx-apriori-heading h2 {
+.pdx-bundle-heading h2 {
+    margin: 3px 0 4px;
+    color: #202b1d;
+    font-size: 27px;
+    line-height: 1.2;
+}
+
+.pdx-bundle-heading p {
     margin: 0;
-    color: #2a2a2a;
-    font-size: 30px;
+    color: #647060;
+    font-size: 14px;
 }
 
-.pdx-apriori-stats {
+.pdx-bundle-stats {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 8px;
-    color: #666;
-    font-size: 13px;
-}
-
-.pdx-apriori-stats span {
-    display: inline-flex;
-    align-items: center;
-    min-height: 30px;
-    border: 1px solid #e2edd7;
-    border-radius: 999px;
-    background: #fff;
-    padding: 0 10px;
-}
-
-.pdx-apriori-card {
-    position: relative;
-}
-
-.pdx-apriori-metrics {
-    display: grid;
-    gap: 5px;
-    margin: -10px 10px 18px;
-    padding: 9px 10px;
-    border: 1px dashed #dbe8cf;
-    border-radius: 10px;
-    background: #fbfff7;
-    color: #5d6b58;
+    gap: 7px;
+    color: #647060;
     font-size: 12px;
 }
 
-.pdx-apriori-metrics span {
+.pdx-bundle-stats span {
+    min-height: 28px;
+    border: 1px solid #dce8d2;
+    border-radius: 999px;
+    background: #fff;
+    padding: 5px 9px;
+}
+
+.pdx-bundle-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    overflow: hidden;
+    border: 1px solid #dce8d2;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(40, 73, 28, 0.07);
+}
+
+.pdx-bundle-products {
+    min-width: 0;
+}
+
+.pdx-bundle-product {
+    position: relative;
+    display: grid;
+    grid-template-columns: 24px 74px minmax(0, 1fr);
+    align-items: center;
+    gap: 13px;
+    min-height: 100px;
+    margin: 0;
+    border-bottom: 1px solid #e9eee5;
+    padding: 12px 18px;
+    background: #fff;
+    color: #263322;
+    cursor: pointer;
+    transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.pdx-bundle-product:last-child {
+    border-bottom: 0;
+}
+
+.pdx-bundle-product.is-current {
+    grid-template-columns: 74px minmax(0, 1fr) 24px;
+    background: #f5faef;
+    cursor: default;
+}
+
+.pdx-bundle-product:not(.is-selected) {
+    background: #fafafa;
+    opacity: 0.62;
+}
+
+.pdx-bundle-product:hover {
+    background: #f8fbf5;
+}
+
+.pdx-bundle-product input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pdx-bundle-checkbox,
+.pdx-bundle-fixed-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid #b9cab0;
+    border-radius: 5px;
+    background: #fff;
+    color: transparent;
+    font-size: 11px;
+}
+
+.pdx-bundle-product.is-selected .pdx-bundle-checkbox,
+.pdx-bundle-fixed-check {
+    border-color: #70b52d;
+    background: #70b52d;
+    color: #fff;
+}
+
+.pdx-bundle-product input:focus-visible + .pdx-bundle-checkbox {
+    outline: 3px solid rgba(104, 170, 36, 0.28);
+    outline-offset: 2px;
+}
+
+.pdx-bundle-product > img {
+    width: 74px;
+    height: 74px;
+    border: 1px solid #e5ebdf;
+    border-radius: 6px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.pdx-bundle-product-info {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.pdx-bundle-product-label,
+.pdx-bundle-product-category {
+    color: #71806c;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.pdx-bundle-product h3,
+.pdx-bundle-product-name {
     display: block;
+    margin: 0;
+    color: #253021;
+    font-size: 15px;
+    font-weight: 700;
     line-height: 1.35;
 }
 
-.pdx-apriori-empty {
-    border: 1px dashed #dbe8cf;
-    border-radius: 14px;
-    background: #fbfff7;
-    padding: 16px;
-    color: #4d5f49;
+.pdx-bundle-product h3 a {
+    color: inherit;
 }
 
-.pdx-apriori-empty strong {
-    display: block;
-    margin-bottom: 6px;
-    color: #2f2f2f;
+.pdx-bundle-product-info strong {
+    color: #f08a12;
     font-size: 15px;
 }
 
-.pdx-apriori-empty p {
-    margin: 0;
-    line-height: 1.7;
+.pdx-bundle-product-info small {
+    color: #6e7a69;
+    font-size: 11px;
 }
 
-.pdx-apriori-empty code {
-    color: #5f922b;
-    background: #eef8e5;
-    padding: 2px 5px;
-    border-radius: 5px;
+.pdx-bundle-summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    border-left: 1px solid #dce8d2;
+    padding: 24px;
+    background: #f7fbf2;
+}
+
+.pdx-bundle-summary-label {
+    margin-bottom: 7px;
+    color: #61705c;
+    font-size: 13px;
+}
+
+.pdx-bundle-summary > strong {
+    color: #22311e;
+    font-size: 26px;
+    line-height: 1.2;
+}
+
+.pdx-bundle-summary p {
+    margin: 7px 0 18px;
+    color: #657160;
+    font-size: 13px;
+}
+
+.pdx-bundle-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    width: 100%;
+    border: 0;
+    border-radius: 6px;
+    background: #68aa24;
+    color: #fff;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.pdx-bundle-submit:hover,
+.pdx-bundle-submit:focus {
+    background: #f39a18;
+    color: #fff;
+}
+
+.pdx-bundle-summary small {
+    margin-top: 10px;
+    color: #768071;
+    font-size: 11px;
+    line-height: 1.45;
 }
 
 .pdx-related-title {
@@ -1296,13 +1477,17 @@
         font-size: 26px;
     }
 
-    .pdx-apriori-heading {
+    .pdx-bundle-heading {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .pdx-apriori-stats {
+    .pdx-bundle-stats {
         justify-content: flex-start;
+    }
+
+    .pdx-bundle-shell {
+        grid-template-columns: minmax(0, 1fr) 270px;
     }
 }
 
@@ -1347,8 +1532,40 @@
         font-size: 22px;
     }
 
-    .pdx-apriori-heading h2 {
+    .pdx-bundle-heading h2 {
         font-size: 22px;
+    }
+
+    .pdx-bundle-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .pdx-bundle-summary {
+        border-top: 1px solid #dce8d2;
+        border-left: 0;
+        padding: 18px;
+    }
+
+    .pdx-bundle-product,
+    .pdx-bundle-product.is-current {
+        grid-template-columns: 22px 62px minmax(0, 1fr);
+        gap: 10px;
+        min-height: 88px;
+        padding: 10px 12px;
+    }
+
+    .pdx-bundle-product.is-current {
+        grid-template-columns: 62px minmax(0, 1fr) 22px;
+    }
+
+    .pdx-bundle-product > img {
+        width: 62px;
+        height: 62px;
+    }
+
+    .pdx-bundle-product h3,
+    .pdx-bundle-product-name {
+        font-size: 14px;
     }
 }
 </style>
@@ -1542,6 +1759,50 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
+
+    var bundleForm = document.querySelector('[data-bundle-form]');
+    if (bundleForm) {
+        var bundleCheckboxes = Array.from(bundleForm.querySelectorAll('[data-bundle-checkbox]'));
+        var bundleTotal = bundleForm.querySelector('[data-bundle-total]');
+        var bundleCount = bundleForm.querySelector('[data-bundle-count]');
+        var bundleSubmitCount = bundleForm.querySelector('[data-bundle-submit-count]');
+        var currentPrice = bundleTotal ? parseInt(bundleTotal.getAttribute('data-current-price'), 10) || 0 : 0;
+        var currencyFormatter = new Intl.NumberFormat('vi-VN');
+
+        function updateBundleSummary() {
+            var selectedCount = 1;
+            var selectedTotal = currentPrice;
+
+            bundleCheckboxes.forEach(function (checkbox) {
+                var item = checkbox.closest('[data-bundle-item]');
+                var isSelected = checkbox.checked;
+
+                if (item) {
+                    item.classList.toggle('is-selected', isSelected);
+                }
+
+                if (isSelected) {
+                    selectedCount += 1;
+                    selectedTotal += parseInt(checkbox.getAttribute('data-price'), 10) || 0;
+                }
+            });
+
+            if (bundleTotal) {
+                bundleTotal.textContent = currencyFormatter.format(selectedTotal) + '₫';
+            }
+            if (bundleCount) {
+                bundleCount.textContent = selectedCount;
+            }
+            if (bundleSubmitCount) {
+                bundleSubmitCount.textContent = selectedCount;
+            }
+        }
+
+        bundleCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', updateBundleSummary);
+        });
+        updateBundleSummary();
+    }
 });
 </script>
 @endpush

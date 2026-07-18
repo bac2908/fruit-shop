@@ -12,9 +12,9 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserVoucher;
-use App\Services\MomoPaymentService;
-use App\Services\MomoCallbackService;
 use App\Services\CustomerNotificationService;
+use App\Services\MomoCallbackService;
+use App\Services\MomoPaymentService;
 use App\Services\OrderAutomationService;
 use App\Services\OrderCancellationService;
 use App\Services\OrderNotificationService;
@@ -104,6 +104,67 @@ class CartController extends Controller
             ]);
     }
 
+    public function addBundle(Request $request)
+    {
+        $validated = $request->validate([
+            'product_ids' => ['required', 'array', 'min:1', 'max:4'],
+            'product_ids.*' => ['required', 'integer', 'distinct'],
+        ]);
+
+        $productIds = collect($validated['product_ids'])
+            ->map(fn ($productId) => (int) $productId)
+            ->values();
+        $products = Product::query()
+            ->with('category')
+            ->whereIn('id', $productIds->all())
+            ->get()
+            ->keyBy('id');
+
+        if ($products->count() !== $productIds->count()) {
+            return redirect()->back()->with('error', 'Một sản phẩm đã thay đổi hoặc không còn tồn tại. Vui lòng thử lại.');
+        }
+
+        $cart = session('cart', []);
+
+        foreach ($productIds as $productId) {
+            $product = $products->get($productId);
+            $newQuantity = (int) ($cart[(string) $productId]['quantity'] ?? 0) + 1;
+
+            if ((bool) $product->has_gear_detail || (bool) $product->is_custom_order_product) {
+                return redirect()->back()->with(
+                    'error',
+                    'Sản phẩm "'.$product->name.'" cần được chọn hoặc tư vấn riêng trước khi thêm vào giỏ.'
+                );
+            }
+
+            if ($error = $this->getProductAvailabilityError($product, $newQuantity)) {
+                return redirect()->back()->with('error', $error);
+            }
+        }
+
+        foreach ($productIds as $productId) {
+            $key = (string) $productId;
+            $cart[$key] = [
+                'product_id' => $productId,
+                'quantity' => (int) ($cart[$key]['quantity'] ?? 0) + 1,
+            ];
+        }
+
+        session(['cart' => $cart]);
+
+        if (session('cart_coupon_selection_mode') !== 'manual') {
+            session([
+                'cart_coupon_selection_mode' => 'auto',
+                'cart_coupon_auto_disabled' => false,
+            ]);
+        }
+
+        return redirect()->back()->with(
+            'success',
+            'Đã thêm '.$productIds->count().' sản phẩm đã chọn vào giỏ hàng.'
+        );
+    }
+
     public function update(Request $request)
     {
         $validated = $request->validate([
@@ -120,7 +181,7 @@ class CartController extends Controller
                 ->where('is_active', true)
                 ->first();
 
-            if (!$product) {
+            if (! $product) {
                 unset($cart[$productId]);
                 session(['cart' => $cart]);
 
@@ -172,7 +233,7 @@ class CartController extends Controller
 
     public function applyCoupon(Request $request)
     {
-        if (!$request->user()) {
+        if (! $request->user()) {
             session(['url.intended' => route('cart')]);
 
             return redirect()
@@ -198,7 +259,7 @@ class CartController extends Controller
             ->whereRaw('LOWER(code) = ?', [Str::lower($code)])
             ->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return redirect()->route($redirectRoute)->with('error', 'Mã ưu đãi không tồn tại hoặc đã hết hạn.');
         }
 
@@ -214,7 +275,7 @@ class CartController extends Controller
 
         return redirect()->route($redirectRoute)->with(
             'success',
-            'Đã áp dụng mã ' . $coupon->code . ': ' . $coupon->benefit_label . '.'
+            'Đã áp dụng mã '.$coupon->code.': '.$coupon->benefit_label.'.'
         );
     }
 
@@ -242,7 +303,7 @@ class CartController extends Controller
 
         return redirect()->route($redirectRoute)->with(
             'success',
-            'Đã chọn mã ' . $coupon->code . ': ' . $coupon->benefit_label . '.'
+            'Đã chọn mã '.$coupon->code.': '.$coupon->benefit_label.'.'
         );
     }
 
@@ -333,6 +394,7 @@ class CartController extends Controller
 
         if ($cartItems->isEmpty()) {
             session()->forget(['checkout_shipping', 'checkout_payment_method']);
+
             return redirect()->route('cart')->with('error', 'Gio hang dang trong. Vui long them san pham de tiep tuc.');
         }
 
@@ -341,7 +403,7 @@ class CartController extends Controller
         }
 
         $checkoutShipping = session('checkout_shipping');
-        if (!is_array($checkoutShipping) || empty($checkoutShipping)) {
+        if (! is_array($checkoutShipping) || empty($checkoutShipping)) {
             return redirect()->route('checkout')->with('error', 'Vui long kiem tra thong tin giao hang truoc khi chon thanh toan.');
         }
 
@@ -364,12 +426,11 @@ class CartController extends Controller
         CustomerNotificationService $customerNotifications,
         OrderCancellationService $cancellationService,
         OrderNotificationService $orderNotifications
-    )
-    {
+    ) {
         $user = $request->user();
         $checkoutShipping = session('checkout_shipping');
 
-        if (!is_array($checkoutShipping) || empty($checkoutShipping)) {
+        if (! is_array($checkoutShipping) || empty($checkoutShipping)) {
             return redirect()->route('checkout')->with('error', 'Vui long kiem tra thong tin giao hang truoc khi dat hang.');
         }
 
@@ -418,7 +479,7 @@ class CartController extends Controller
                 'shipping_province_code' => $validated['province_code'],
                 'shipping_ward_code' => $validated['ward_code'],
                 'customer_note' => $validated['notes'] ?? null,
-                'admin_note' => !empty($shippingQuote['requires_confirmation'])
+                'admin_note' => ! empty($shippingQuote['requires_confirmation'])
                     ? 'Đơn hàng tươi giao tỉnh/khu vực đặc biệt: phí ship đang là tạm tính, cần shop xác nhận đóng gói và tuyến giao trước khi xử lý.'
                     : null,
                 'subtotal' => (int) $summary['subtotal'],
@@ -466,7 +527,7 @@ class CartController extends Controller
                     'stock_before' => $stockBefore,
                     'stock_after' => $stockAfter,
                     'unit_cost' => $product->cost_price,
-                    'note' => 'Xuat kho cho don ' . $order->code,
+                    'note' => 'Xuat kho cho don '.$order->code,
                 ]);
             }
 
@@ -586,15 +647,14 @@ class CartController extends Controller
     public function momoReturn(
         Request $request,
         string $code,
-        ?string $token = null,
+        ?string $token,
         MomoCallbackService $momoCallback
-    )
-    {
+    ) {
         $order = Order::query()
             ->where('code', $code)
             ->firstOrFail();
 
-        if (!$this->canViewOrder($order, $token)) {
+        if (! $this->canViewOrder($order, $token)) {
             abort(404);
         }
 
@@ -631,7 +691,7 @@ class CartController extends Controller
             ->where('code', $code)
             ->firstOrFail();
 
-        if (!$this->canViewOrder($order, $token)) {
+        if (! $this->canViewOrder($order, $token)) {
             abort(404);
         }
 
@@ -661,7 +721,7 @@ class CartController extends Controller
         return $cart->map(function (array $item) use ($products) {
             $product = $products->get($item['product_id'] ?? null);
 
-            if (!$product) {
+            if (! $product) {
                 return null;
             }
 
@@ -714,7 +774,7 @@ class CartController extends Controller
 
         if (
             $user
-            && !session('cart_coupon_auto_disabled', false)
+            && ! session('cart_coupon_auto_disabled', false)
             && ($couponCode === '' || $selectionMode === 'auto')
         ) {
             $voucherOptions = $voucherOptions ?: app(VoucherSelectionService::class)->optionsFor($user, $subtotal);
@@ -740,7 +800,7 @@ class CartController extends Controller
             ->whereRaw('LOWER(code) = ?', [Str::lower($couponCode)])
             ->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return $this->handleInvalidSessionCoupon($throwOnInvalid, 'Mã giảm giá không hợp lệ hoặc đã hết hạn.');
         }
 
@@ -778,20 +838,20 @@ class CartController extends Controller
 
     private function getProductAvailabilityError(Product $product, int $quantity): ?string
     {
-        if (!$product->is_active) {
-            return 'San pham "' . $product->name . '" hien khong kha dung.';
+        if (! $product->is_active) {
+            return 'San pham "'.$product->name.'" hien khong kha dung.';
         }
 
         if ($this->getOrderableUnitPrice($product) <= 0) {
-            return 'San pham "' . $product->name . '" chua co gia ban. Vui long lien he de duoc bao gia.';
+            return 'San pham "'.$product->name.'" chua co gia ban. Vui long lien he de duoc bao gia.';
         }
 
         if ((int) $product->stock <= 0) {
-            return 'San pham "' . $product->name . '" da het hang.';
+            return 'San pham "'.$product->name.'" da het hang.';
         }
 
         if ($quantity > (int) $product->stock) {
-            return 'San pham "' . $product->name . '" chi con ' . (int) $product->stock . ' san pham.';
+            return 'San pham "'.$product->name.'" chi con '.(int) $product->stock.' san pham.';
         }
 
         return null;
@@ -823,7 +883,7 @@ class CartController extends Controller
         return $cartItems->map(function (array $item) use ($products) {
             $product = $products->get($item['product']->id);
 
-            if (!$product) {
+            if (! $product) {
                 throw ValidationException::withMessages([
                     'cart' => 'Mot san pham trong gio hang khong con ton tai.',
                 ]);
@@ -847,7 +907,7 @@ class CartController extends Controller
 
     private function lockAndValidateCoupon(array $summary): array
     {
-        if (!$summary['coupon']) {
+        if (! $summary['coupon']) {
             return $summary;
         }
 
@@ -858,7 +918,7 @@ class CartController extends Controller
 
         $user = auth()->user();
 
-        if (!$coupon) {
+        if (! $coupon) {
             throw ValidationException::withMessages([
                 'coupon' => 'Ma giam gia khong hop le hoac da het luot su dung.',
             ]);
@@ -936,7 +996,7 @@ class CartController extends Controller
 
     private function saveCheckoutAddress(User $user, array $validated): void
     {
-        $shouldDefault = (bool) $validated['set_default_address'] || !$user->addresses()->exists();
+        $shouldDefault = (bool) $validated['set_default_address'] || ! $user->addresses()->exists();
 
         if ($shouldDefault) {
             $user->addresses()->update(['is_default' => false]);
@@ -959,7 +1019,7 @@ class CartController extends Controller
             ]
         );
 
-        if ($shouldDefault && !$address->is_default) {
+        if ($shouldDefault && ! $address->is_default) {
             $address->forceFill(['is_default' => true])->save();
         }
     }
@@ -985,11 +1045,11 @@ class CartController extends Controller
         }
 
         if (preg_match('/^0[0-9]{9}$/', $phone)) {
-            return '+84' . substr($phone, 1);
+            return '+84'.substr($phone, 1);
         }
 
         if (preg_match('/^84[0-9]{9}$/', $phone)) {
-            return '+' . $phone;
+            return '+'.$phone;
         }
 
         return $phone;
@@ -1043,13 +1103,13 @@ class CartController extends Controller
     private function generateOrderCode(): string
     {
         for ($i = 0; $i < 5; $i++) {
-            $code = 'DH' . LocalDateTime::format(now(), 'ymdHis') . sprintf('%03d', random_int(0, 999));
+            $code = 'DH'.LocalDateTime::format(now(), 'ymdHis').sprintf('%03d', random_int(0, 999));
 
-            if (!Order::query()->where('code', $code)->exists()) {
+            if (! Order::query()->where('code', $code)->exists()) {
                 return $code;
             }
         }
 
-        return 'DH' . strtoupper(Str::random(10));
+        return 'DH'.strtoupper(Str::random(10));
     }
 }
