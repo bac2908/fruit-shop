@@ -46,6 +46,15 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $categorySlugs = config('shop.home_categories', []);
+            $quickCategorySlugs = config('shop.quick_category_slugs', []);
+            $sectionCategories = collect($sections)
+                ->pluck('category')
+                ->filter()
+                ->keyBy('slug');
+            $quickCategories = collect($quickCategorySlugs)
+                ->map(fn (string $slug) => $sectionCategories->get($slug))
+                ->filter()
+                ->values();
 
             $megaMenuSlugs = array_slice($categorySlugs, 0, 4);
             $megaCategories = collect();
@@ -200,6 +209,7 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('sections', $sections);
             $view->with('megaCategories', $megaCategories);
+            $view->with('quickCategories', $quickCategories);
             $view->with('salesPopupProducts', $this->getSalesPopupProducts());
 
             $headerNotifications = collect();

@@ -17,6 +17,24 @@ class E2eCheckoutSeeder extends Seeder
 
     public function run(): void
     {
+        $quickCategoryNames = [
+            'trai-cay-viet-nam' => 'Trái cây Việt Nam',
+            'trai-cay-nhap-khau' => 'Trái cây nhập khẩu',
+            'trai-cay-thai-lan' => 'Trái cây Thái Lan',
+            'gio-qua-va-set-qua' => 'Giỏ quà và Set quà',
+            'qua-cuoi-va-mam-cung' => 'Quả cưới và mâm cúng',
+            'san-pham-ban-chay' => 'Sản phẩm Bestseller',
+        ];
+
+        foreach (config('shop.quick_category_slugs', []) as $sortOrder => $slug) {
+            Category::query()->create([
+                'name' => $quickCategoryNames[$slug] ?? str($slug)->replace('-', ' ')->title(),
+                'slug' => $slug,
+                'sort_order' => $sortOrder + 1,
+                'is_active' => true,
+            ]);
+        }
+
         $category = Category::query()->create([
             'name' => 'Sản phẩm kiểm thử E2E',
             'slug' => 'e2e-checkout',

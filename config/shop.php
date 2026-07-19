@@ -11,6 +11,15 @@ return [
         'san-pham-ban-chay'
     ],
 
+    'quick_category_slugs' => [
+        'trai-cay-viet-nam',
+        'trai-cay-nhap-khau',
+        'trai-cay-thai-lan',
+        'gio-qua-va-set-qua',
+        'qua-cuoi-va-mam-cung',
+        'san-pham-ban-chay',
+    ],
+
     'home_category_slogans' => [
         'trai-cay-viet-nam' => 'Tươi ngon từ vườn Việt, chọn lọc theo mùa mỗi ngày.',
         'trai-cay-nhap-khau' => 'Hương vị quốc tế tuyển chọn, nguồn gốc rõ ràng.',

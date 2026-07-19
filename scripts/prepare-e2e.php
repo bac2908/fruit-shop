@@ -180,11 +180,13 @@ try {
 
 $targetFingerprint = $databaseFingerprint($pdo, $database);
 $expectedMigrations = count(glob($root . '/database/migrations/*.php') ?: []);
+$shopConfig = require $root . '/config/shop.php';
+$expectedCategories = 1 + count($shopConfig['quick_category_slugs'] ?? []);
 
 if (
     $targetFingerprint['tables'] < 1
     || $targetFingerprint['users'] !== 1
-    || $targetFingerprint['categories'] !== 1
+    || $targetFingerprint['categories'] !== $expectedCategories
     || $targetFingerprint['products'] !== 1
     || $targetFingerprint['orders'] !== 0
     || $targetFingerprint['migrations'] !== $expectedMigrations

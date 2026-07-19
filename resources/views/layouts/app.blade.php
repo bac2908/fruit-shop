@@ -550,6 +550,8 @@
 		</div>
 	</footer>
 
+	@include('partials.category-rail')
+
 	<div class="tgc-side-icons" data-floating-actions>
 		<a class="icon-item phone" href="tel:0333499426" aria-label="Gọi hotline" title="Gọi hotline">
 			<i class="fa fa-phone" aria-hidden="true"></i>
@@ -1045,9 +1047,10 @@
 		// Show floating quick-actions after scrolling; support remains available on mobile.
 		(function() {
 			var sideIcons = document.querySelector('.tgc-side-icons');
+			var categoryRail = document.querySelector('[data-category-rail]');
 			var backToTop = document.getElementById('backToTop');
 
-			if (!sideIcons && !backToTop) {
+			if (!sideIcons && !categoryRail && !backToTop) {
 				return;
 			}
 
@@ -1060,6 +1063,10 @@
 
 				if (sideIcons) {
 					sideIcons.classList.toggle('is-visible', isVisible);
+				}
+
+				if (categoryRail) {
+					categoryRail.classList.toggle('is-visible', currentScroll > scrollThreshold);
 				}
 
 				if (backToTop) {
