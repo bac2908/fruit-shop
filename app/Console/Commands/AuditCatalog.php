@@ -11,6 +11,9 @@ use RuntimeException;
 
 class AuditCatalog extends Command
 {
+    /** @var array<int, array{count:int, median:float}> */
+    private array $categoryPriceStats = [];
+
     protected $signature = 'catalog:audit
         {--fix-safe : Apply deterministic fixes that do not change business pricing or stock}
         {--product= : Limit the audit to one product ID}
@@ -28,6 +31,14 @@ class AuditCatalog extends Command
         }
 
         $products = $query->orderBy('id')->get();
+        $this->categoryPriceStats = $products
+            ->filter(fn (Product $product) => $product->category_id && (int) $product->price > 0)
+            ->groupBy('category_id')
+            ->map(fn ($items) => [
+                'count' => $items->count(),
+                'median' => (float) $items->median('price'),
+            ])
+            ->all();
         $issues = [];
 
         if ($this->option('fix-safe')) {
@@ -52,7 +63,7 @@ class AuditCatalog extends Command
             ->sortKeys()
             ->all();
 
-        $this->info('Catalog products audited: ' . $products->count());
+        $this->info('Catalog products audited: '.$products->count());
         $this->table(
             ['Code', 'Total', 'Fixed', 'Remaining'],
             collect($summary)->map(fn ($row, $code) => [$code, $row['total'], $row['fixed'], $row['remaining']])->values()->all()
@@ -72,7 +83,7 @@ class AuditCatalog extends Command
                 'summary' => $summary,
                 'issues' => $issues,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            $this->info('Report written to: ' . $path);
+            $this->info('Report written to: '.$path);
         }
 
         $unresolvedCritical = collect($issues)
@@ -87,12 +98,28 @@ class AuditCatalog extends Command
 
     private function auditProduct(Product $product, array &$issues, bool $fix): void
     {
-        if (!$product->category) {
+        if (! $product->category) {
             $this->issue($issues, $product, 'missing_category', 'critical', 'Product has no valid category.');
         }
 
         if ((int) $product->price <= 0) {
             $this->issue($issues, $product, 'invalid_price', 'critical', 'Base price must be greater than zero.');
+        }
+
+        $categoryPrice = $this->categoryPriceStats[(int) $product->category_id] ?? null;
+        if (
+            $categoryPrice
+            && $categoryPrice['count'] >= 8
+            && $categoryPrice['median'] > 0
+            && ((int) $product->price > $categoryPrice['median'] * 4 || (int) $product->price < $categoryPrice['median'] / 4)
+        ) {
+            $this->issue(
+                $issues,
+                $product,
+                'price_outlier',
+                'warning',
+                'Price differs by more than 4x from the category median and needs a manual market review.'
+            );
         }
 
         if ($product->sale_price !== null && ((int) $product->sale_price <= 0 || (int) $product->sale_price >= (int) $product->price)) {
@@ -117,6 +144,80 @@ class AuditCatalog extends Command
             $this->issue($issues, $product, 'name_whitespace', 'warning', 'Product name contains redundant whitespace.', $fix);
         }
 
+        if (trim((string) $product->unit) === '') {
+            $inferredUnit = $this->inferUnit($product);
+            $fixed = $fix && $inferredUnit !== null;
+
+            if ($fixed) {
+                $product->forceFill(['unit' => $inferredUnit])->save();
+                $product->unit = $inferredUnit;
+            }
+
+            $this->issue(
+                $issues,
+                $product,
+                'missing_unit',
+                'warning',
+                $inferredUnit === null
+                    ? 'Product selling unit is missing and cannot be inferred safely.'
+                    : "Product selling unit is missing; inferred as {$inferredUnit} from its name.",
+                $fixed
+            );
+        }
+
+        if ((int) $product->stock < 0) {
+            $this->issue($issues, $product, 'negative_stock', 'critical', 'Stock cannot be negative.');
+        }
+
+        if ((int) $product->low_stock_threshold < 0) {
+            $this->issue($issues, $product, 'negative_low_stock_threshold', 'warning', 'Low-stock threshold cannot be negative.');
+        }
+
+        $plainDescription = $this->plainText((string) $product->description);
+        if ($plainDescription === '') {
+            $this->issue($issues, $product, 'missing_description', 'critical', 'Product description is missing.');
+        } elseif (Str::length($plainDescription) < 80) {
+            $this->issue($issues, $product, 'short_description_content', 'warning', 'Product description has fewer than 80 characters.');
+        }
+
+        $plainSummary = $this->plainText((string) $product->short_desc);
+        if ($plainSummary === '') {
+            $this->issue($issues, $product, 'missing_short_description', 'warning', 'Product summary is missing.');
+        } elseif (Str::length($plainSummary) < 40) {
+            $this->issue($issues, $product, 'short_summary_content', 'warning', 'Product summary has fewer than 40 characters.');
+        }
+
+        $localMediaPath = $this->localOptimizedMediaPath($product);
+        $primaryMediaPath = trim((string) optional($product->images->first())->url) ?: trim((string) $product->thumb);
+
+        if (Str::startsWith($primaryMediaPath, ['http://', 'https://', '//'])) {
+            $fixed = false;
+
+            if ($fix && $localMediaPath !== null) {
+                $product->forceFill(['thumb' => $localMediaPath])->save();
+
+                $primaryImage = $product->images->first();
+                if ($primaryImage) {
+                    $primaryImage->forceFill(['url' => $localMediaPath])->save();
+                    $primaryImage->url = $localMediaPath;
+                }
+
+                $product->thumb = $localMediaPath;
+                $fixed = true;
+            }
+
+            $this->issue(
+                $issues,
+                $product,
+                'external_primary_media',
+                $localMediaPath === null ? 'critical' : 'warning',
+                $localMediaPath === null
+                    ? 'Primary media is external and no owned local mirror was found.'
+                    : 'Primary media is external while an optimized local mirror is available.',
+                $fixed
+            );
+        }
+
         if ($product->images->isEmpty()) {
             $thumb = trim((string) $product->thumb);
             $fixed = false;
@@ -130,18 +231,24 @@ class AuditCatalog extends Command
         }
 
         $mediaPaths = $product->images->pluck('url')->push($product->thumb)->filter()->unique();
+        $hasExternalGalleryMedia = false;
         foreach ($mediaPaths as $mediaPath) {
             $mediaPath = trim((string) $mediaPath);
             if (Str::startsWith($mediaPath, ['http://', 'https://', '//'])) {
-                $this->issue($issues, $product, 'external_media', 'warning', 'Media is hosted by a third party and should be migrated to owned storage.');
-                break;
+                $hasExternalGalleryMedia = true;
+
+                continue;
             }
 
             $relativePath = ltrim((string) parse_url($mediaPath, PHP_URL_PATH), '/');
-            if ($relativePath !== '' && !File::exists(public_path($relativePath))) {
-                $this->issue($issues, $product, 'missing_local_media', 'critical', 'Referenced local media file does not exist: ' . $relativePath);
+            if ($relativePath !== '' && ! File::exists(public_path($relativePath))) {
+                $this->issue($issues, $product, 'missing_local_media', 'critical', 'Referenced local media file does not exist: '.$relativePath);
                 break;
             }
+        }
+
+        if ($hasExternalGalleryMedia) {
+            $this->issue($issues, $product, 'external_gallery_media', 'warning', 'One or more gallery images are still hosted by a third party.');
         }
 
         if ((int) $product->stock <= 0 && $product->is_active) {
@@ -150,7 +257,7 @@ class AuditCatalog extends Command
 
         if (trim((string) $product->meta_title) === '') {
             if ($fix) {
-                $product->forceFill(['meta_title' => Str::limit($product->name . ' | Thế Giới Trái Cây', 60, '')])->save();
+                $product->forceFill(['meta_title' => Str::limit($product->name.' | Thế Giới Trái Cây', 60, '')])->save();
             }
             $this->issue($issues, $product, 'missing_meta_title', 'warning', 'SEO title is missing.', $fix);
         }
@@ -180,12 +287,12 @@ class AuditCatalog extends Command
 
     private function uniqueSku(Product $product): string
     {
-        $base = 'TGC-' . str_pad((string) $product->id, 6, '0', STR_PAD_LEFT);
+        $base = 'TGC-'.str_pad((string) $product->id, 6, '0', STR_PAD_LEFT);
         $candidate = $base;
         $suffix = 1;
 
         while (Product::query()->where('sku', $candidate)->whereKeyNot($product->id)->exists()) {
-            $candidate = $base . '-' . $suffix++;
+            $candidate = $base.'-'.$suffix++;
         }
 
         return $candidate;
@@ -199,13 +306,59 @@ class AuditCatalog extends Command
         return Str::limit($source, 155, '');
     }
 
+    private function plainText(string $html): string
+    {
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return trim((string) preg_replace('/\s+/u', ' ', $text));
+    }
+
+    private function localOptimizedMediaPath(Product $product): ?string
+    {
+        $base = 'images/products_synced/'.$product->id.'-'.$product->slug;
+
+        foreach (['webp', 'jpg', 'jpeg', 'png'] as $extension) {
+            $relativePath = $base.'.'.$extension;
+
+            if (File::exists(public_path($relativePath))) {
+                return $relativePath;
+            }
+
+            $matches = File::glob(public_path('images/products_synced/'.$product->id.'-*.'.$extension));
+            if (count($matches) === 1) {
+                return 'images/products_synced/'.basename($matches[0]);
+            }
+        }
+
+        return null;
+    }
+
+    private function inferUnit(Product $product): ?string
+    {
+        $name = Str::lower($this->plainText((string) $product->name));
+
+        if (preg_match('/(^|\s)mâm(\s|$)/u', $name) === 1) {
+            return 'mâm';
+        }
+
+        if (preg_match('/(^|[\s-])phần(\s|$)/u', $name) === 1) {
+            return 'phần';
+        }
+
+        if (preg_match('/^(quýt|na\s|táo\s|cam\s|đào\s|lựu\s|bơ\s|dưa\s|lê\s|kiwi\s|xoài\s|đu đủ\s)/u', $name) === 1) {
+            return 'kg';
+        }
+
+        return null;
+    }
+
     private function reportPath(string $relativePath): string
     {
         $root = realpath(base_path());
         $target = base_path(ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR));
-        $normalized = dirname($target) . DIRECTORY_SEPARATOR . basename($target);
+        $normalized = dirname($target).DIRECTORY_SEPARATOR.basename($target);
 
-        if (!$root || !Str::startsWith(strtolower($normalized), strtolower($root . DIRECTORY_SEPARATOR))) {
+        if (! $root || ! Str::startsWith(strtolower($normalized), strtolower($root.DIRECTORY_SEPARATOR))) {
             throw new RuntimeException('The report path must stay inside the project directory.');
         }
 

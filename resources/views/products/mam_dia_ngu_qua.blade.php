@@ -330,7 +330,7 @@
                                             <div class="product-mini-item clearfix {{ $miniSale ? 'on-sale' : '' }}">
                                                 <div class="product-img relative">
                                                     <a href="{{ route('products.show', $fp->slug) }}">
-                                                        <img src="{{ $miniThumb }}" alt="{{ $fp->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                        <img src="{{ $miniThumb }}" alt="{{ $fp->name }}" width="96" height="96" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;">
                                                     </a>
                                                 </div>
 

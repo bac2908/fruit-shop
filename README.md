@@ -270,6 +270,35 @@ npm run audit:frontend
 
 Audit mở trang desktop/mobile bằng Chromium, kiểm tra request lỗi, ảnh hỏng, tràn ngang và vi phạm accessibility bằng axe-core.
 
+### Audit catalog và tối ưu ảnh
+
+Kiểm tra ảnh, giá, tồn kho, đơn vị bán, mô tả và metadata của toàn bộ catalog:
+
+```powershell
+php artisan catalog:audit --json=storage/app/catalog-audit.json
+```
+
+Tạo ảnh WebP từ ảnh JPEG/PNG thuộc quyền kiểm soát của dự án, sau đó ưu tiên ảnh local làm ảnh đại diện sản phẩm:
+
+```powershell
+php artisan media:optimize --path=images/products_synced --quality=80
+php artisan catalog:audit --fix-safe --json=storage/app/catalog-audit-after.json
+```
+
+`--fix-safe` chỉ chuẩn hóa dữ liệu xác định được như SKU, metadata và đường dẫn ảnh local. Lệnh không tự đổi giá, tồn kho, danh mục hoặc trạng thái hiển thị. Các cảnh báo `price_outlier`, `active_out_of_stock` và ảnh gallery bên thứ ba phải được người quản trị duyệt theo nghiệp vụ.
+
+### Kiểm tra email trên hosting
+
+Sau khi điền SMTP thật trong `.env` của hosting, xóa cache cấu hình và kiểm tra trước khi gửi:
+
+```powershell
+php artisan config:clear
+php artisan mail:check
+php artisan mail:check --send=dia-chi-nhan-thu@example.com
+```
+
+Lệnh đầu kiểm tra mailer, địa chỉ/tên người gửi, SMTP và `APP_URL` mà không hiển thị mật khẩu. Lệnh có `--send` mới gửi một email thật; cần xác nhận thư trong cả Inbox và Spam. Trên production phải dùng `APP_URL` HTTPS công khai, email theo tên miền của cửa hàng và cấu hình SPF, DKIM, DMARC tại nhà cung cấp DNS/mail.
+
 ### Checkout end-to-end
 
 Lần đầu cài Chromium cho Playwright:
@@ -310,7 +339,7 @@ Khi deploy Linux, cấu hình cron gọi `php artisan schedule:run` mỗi phút.
 
 ## Việc Cần Làm Trước Production Thật
 
-- Chuyển 431 ảnh sản phẩm đang hotlink sang storage/CDN do cửa hàng sở hữu sau khi xác nhận quyền sử dụng.
+- Ảnh đại diện đã có biến thể WebP local cho phần lớn catalog; tiếp tục chuyển toàn bộ ảnh gallery còn hotlink sang storage/CDN do cửa hàng sở hữu sau khi xác nhận quyền sử dụng.
 - Duyệt nghiệp vụ 4 sản phẩm đang hết tồn để nhập thêm hoặc chủ động ẩn khỏi storefront.
 - Hoàn thiện CRUD sản phẩm admin: thêm/sửa/xóa mềm, upload ảnh, sửa giá, sửa tồn kho.
 - Admin customers: danh sách khách hàng, tổng chi tiêu, đơn gần nhất, khóa/mở tài khoản.

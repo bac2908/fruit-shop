@@ -487,7 +487,7 @@
                             <h3><a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a></h3>
                             <strong>{{ number_format($displayPrice, 0, ',', '.') }}₫</strong>
                         </div>
-                        <span class="pdx-bundle-fixed-check" title="Sản phẩm chính luôn được thêm" aria-label="Sản phẩm chính đã được chọn">
+                        <span class="pdx-bundle-fixed-check" role="img" title="Sản phẩm chính luôn được thêm" aria-label="Sản phẩm chính đã được chọn">
                             <i class="fa fa-check" aria-hidden="true"></i>
                         </span>
                     </article>
@@ -570,6 +570,10 @@
 
 .pdx-breadcrumb {
     margin-bottom: 14px;
+}
+
+.pdx-breadcrumb strong span {
+    color: #3f6f22 !important;
 }
 
 .pdx-layout {
@@ -711,7 +715,7 @@
     border-radius: 999px;
     border: 1px solid #dce9d2;
     background: #f5fbf0;
-    color: #628f2e !important;
+    color: #416b25 !important;
     padding: 4px 12px;
     font-size: 12px;
     font-weight: 600;
@@ -744,7 +748,7 @@
 }
 
 .pdx-meta-stock.is-available {
-    color: #2d8f4a;
+    color: #18733a;
     font-weight: 600;
 }
 
@@ -765,7 +769,7 @@
     font-size: 36px;
     font-weight: 700;
     line-height: 1;
-    color: #f7941d;
+    color: #b85c00;
 }
 
 .pdx-price-old {
@@ -910,12 +914,12 @@
 }
 
 .pdx-btn-primary {
-    background: #8bc34a;
+    background: #3f7a1d;
     color: #fff;
 }
 
 .pdx-btn-primary:hover {
-    background: #79ad3f;
+    background: #315f16;
     color: #fff;
 }
 
@@ -1000,8 +1004,8 @@
 }
 
 .pdx-tab-btn.is-active {
-    border-color: #8bc34a;
-    background: #8bc34a;
+    border-color: #3f7a1d;
+    background: #3f7a1d;
     color: #fff;
 }
 
@@ -1163,7 +1167,7 @@
 }
 
 .pdx-featured-price .current {
-    color: #f7941d;
+    color: #b85c00;
     font-size: 14px;
     font-weight: 700;
 }
@@ -1195,7 +1199,7 @@
     align-items: center;
     gap: 7px;
     min-height: 26px;
-    color: #5f922b;
+    color: #3f6f22;
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
@@ -1332,7 +1336,7 @@
 
 .pdx-bundle-product-label,
 .pdx-bundle-product-category {
-    color: #71806c;
+    color: #4f5d4b;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -1353,7 +1357,7 @@
 }
 
 .pdx-bundle-product-info strong {
-    color: #f08a12;
+    color: #a94f00;
     font-size: 15px;
 }
 
@@ -1399,7 +1403,7 @@
     width: 100%;
     border: 0;
     border-radius: 6px;
-    background: #68aa24;
+    background: #3f7a1d;
     color: #fff;
     padding: 10px 14px;
     font-size: 14px;
@@ -1414,7 +1418,7 @@
 
 .pdx-bundle-summary small {
     margin-top: 10px;
-    color: #768071;
+    color: #566250;
     font-size: 11px;
     line-height: 1.45;
 }

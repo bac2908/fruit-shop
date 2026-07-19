@@ -99,7 +99,7 @@
                         </div>
                     </div>
 
-                    <label class="auth-check" style="margin-bottom: 18px;">
+                    <label class="auth-check" style="margin-block-end: 18px;">
                         <input type="checkbox" name="terms" value="1" required>
                         <span>
                             Tôi đồng ý với

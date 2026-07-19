@@ -35,6 +35,9 @@
 	<link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="preconnect" href="https://theme.hstatic.net" crossorigin>
+	<link rel="preconnect" href="https://file.hstatic.net" crossorigin>
+	<link rel="preconnect" href="https://product.hstatic.net" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i&amp;subset=vietnamese" rel="stylesheet">
 	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
@@ -162,7 +165,7 @@
 				<div class="col-xs-12 col-md-3">
 					<div class="logo">
 						<a href="{{ route('home') }}" class="logo-wrapper">
-							<img src="https://theme.hstatic.net/200000157781/1001036201/14/logo.png?v=1061" alt="Thế Giới Trái Cây" width="310" height="86" decoding="async">
+							<img src="https://theme.hstatic.net/200000157781/1001036201/14/logo.png?v=1061" alt="Thế Giới Trái Cây" width="310" height="86" loading="eager" decoding="async" fetchpriority="high">
 						</a>
 					</div>
 				</div>
@@ -456,12 +459,12 @@
 	<section class="tgc-brand-strip">
 		<div class="container">
 			<div class="tgc-brand-grid">
-				<div class="tgc-brand-item"><img src="//theme.hstatic.net/200000157781/1001036201/14/brand1.png?v=1064" alt="Envy"></div>
-				<div class="tgc-brand-item"><img src="//theme.hstatic.net/200000157781/1001036201/14/brand2.png?v=1064" alt="Koala Cherries"></div>
-				<div class="tgc-brand-item"><img src="//theme.hstatic.net/200000157781/1001036201/14/brand3.png?v=1064" alt="Sun World"></div>
-				<div class="tgc-brand-item"><img src="//theme.hstatic.net/200000157781/1001036201/14/brand4.png?v=1064" alt="Pretty Lady"></div>
-				<div class="tgc-brand-item"><img src="//theme.hstatic.net/200000157781/1001036201/14/brand5.png?v=1064" alt="Zespri"></div>
-				<div class="tgc-brand-item"><img src="//theme.hstatic.net/200000157781/1001036201/14/brand6.png?v=1064" alt="Sunkist"></div>
+				<div class="tgc-brand-item"><img src="https://theme.hstatic.net/200000157781/1001036201/14/brand1.png?v=1064" alt="Envy" width="180" height="90" loading="lazy" decoding="async"></div>
+				<div class="tgc-brand-item"><img src="https://theme.hstatic.net/200000157781/1001036201/14/brand2.png?v=1064" alt="Koala Cherries" width="180" height="90" loading="lazy" decoding="async"></div>
+				<div class="tgc-brand-item"><img src="https://theme.hstatic.net/200000157781/1001036201/14/brand3.png?v=1064" alt="Sun World" width="180" height="90" loading="lazy" decoding="async"></div>
+				<div class="tgc-brand-item"><img src="https://theme.hstatic.net/200000157781/1001036201/14/brand4.png?v=1064" alt="Pretty Lady" width="180" height="90" loading="lazy" decoding="async"></div>
+				<div class="tgc-brand-item"><img src="https://theme.hstatic.net/200000157781/1001036201/14/brand5.png?v=1064" alt="Zespri" width="180" height="90" loading="lazy" decoding="async"></div>
+				<div class="tgc-brand-item"><img src="https://theme.hstatic.net/200000157781/1001036201/14/brand6.png?v=1064" alt="Sunkist" width="180" height="90" loading="lazy" decoding="async"></div>
 			</div>
 		</div>
 	</section>

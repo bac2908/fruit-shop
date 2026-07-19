@@ -4,7 +4,7 @@
 	<div class="coupon-item__left">
 		<div class="cp-img boxlazy-img">
 			<span class="boxlazy-img__insert">
-				<img src="{{ $img }}" alt="{{ $title }}">
+				<img src="{{ $img }}" alt="{{ $title }}" width="104" height="104" loading="lazy" decoding="async">
 			</span>
 		</div>
 	</div>
