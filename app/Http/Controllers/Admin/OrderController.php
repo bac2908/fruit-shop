@@ -3,356 +3,305 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RefundOrderPaymentRequest;
+use App\Http\Requests\Admin\ResolveOrderReturnRequest;
+use App\Http\Requests\Admin\UpdateOrderShippingRequest;
+use App\Http\Requests\Admin\UpdateOrderStatusRequest;
+use App\Http\Requests\Admin\VerifyOrderPaymentRequest;
 use App\Models\Order;
 use App\Models\OrderCancellationRequest;
-use App\Models\OrderStatusHistory;
-use App\Services\OrderCancellationService;
-use App\Services\OrderAutomationService;
-use App\Services\OrderNotificationService;
-use App\Services\CustomerNotificationService;
+use App\Models\OrderReturnRequest;
+use App\Services\AdminOrderService;
 use App\Services\OrderStateTransitionService;
-use App\Support\LocalDateTime;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class OrderController extends Controller
 {
-    public function index(OrderStateTransitionService $stateTransitions)
+    public function index(Request $request): View
     {
-        $orders = Order::query()
-            ->with(['cancellationRequests.user'])
-            ->latest()
-            ->take(80)
-            ->get();
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', Rule::in(array_keys(Order::statusLabels()))],
+            'payment_status' => ['nullable', Rule::in(array_keys(Order::paymentStatusLabels()))],
+            'payment_method' => ['nullable', Rule::in(array_keys(Order::paymentMethodLabels()))],
+            'attention' => ['nullable', Rule::in(['cancellation', 'return', 'awaiting_payment', 'shipping_setup'])],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'per_page' => ['nullable', 'integer', Rule::in([15, 25, 50])],
+        ]);
+
+        $query = Order::query()->with(['user', 'cancellationRequests', 'returnRequests']);
+        $keyword = trim((string) ($filters['q'] ?? ''));
+
+        if ($keyword !== '') {
+            $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $keyword).'%';
+            $query->where(function ($inner) use ($like) {
+                $inner->where('code', 'like', $like)
+                    ->orWhere('customer_name', 'like', $like)
+                    ->orWhere('customer_phone', 'like', $like)
+                    ->orWhere('customer_email', 'like', $like)
+                    ->orWhere('tracking_code', 'like', $like);
+            });
+        }
+
+        foreach (['status', 'payment_status', 'payment_method'] as $field) {
+            if (! empty($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $attention = $filters['attention'] ?? null;
+        if ($attention === 'cancellation') {
+            $query->whereHas('cancellationRequests', fn ($inner) => $inner->where('status', OrderCancellationRequest::STATUS_PENDING));
+        } elseif ($attention === 'return') {
+            $query->whereHas('returnRequests', fn ($inner) => $inner->where('status', OrderReturnRequest::STATUS_PENDING));
+        } elseif ($attention === 'awaiting_payment') {
+            $query->where('payment_method', Order::PAYMENT_METHOD_BANK_TRANSFER)
+                ->where('payment_status', Order::PAYMENT_STATUS_UNPAID);
+        } elseif ($attention === 'shipping_setup') {
+            $query->where('status', Order::STATUS_CONFIRMED)
+                ->where(function ($inner) {
+                    $inner->whereNull('shipping_provider')->orWhere('shipping_provider', '');
+                });
+        }
+
+        $orders = $query
+            ->latest('created_at')
+            ->paginate((int) ($filters['per_page'] ?? 15))
+            ->appends($request->query());
 
         return view('admin.orders', [
             'orders' => $orders,
             'orderSummary' => $this->getOrderSummary(),
-            'pendingCancellationCount' => OrderCancellationRequest::query()
-                ->where('status', OrderCancellationRequest::STATUS_PENDING)
-                ->count(),
+            'attentionSummary' => $this->getAttentionSummary(),
             'statusLabels' => Order::statusLabels(),
-            'allowedStatusTransitions' => $orders->mapWithKeys(function (Order $order) use ($stateTransitions) {
-                return [$order->id => $stateTransitions->availableStatuses($order)];
-            }),
             'paymentStatusLabels' => Order::paymentStatusLabels(),
-            'cancellationStatusLabels' => OrderCancellationRequest::statusLabels(),
+            'paymentMethodLabels' => Order::paymentMethodLabels(),
+        ]);
+    }
+
+    public function show(Order $order, OrderStateTransitionService $stateTransitions): View
+    {
+        $order->load([
+            'user',
+            'items.product.images',
+            'statusHistories.user',
+            'cancellationRequests.user',
+            'cancellationRequests.reviewer',
+            'returnRequests.user',
+            'returnRequests.reviewer',
+            'paymentVerifier',
+            'refundProcessor',
+        ]);
+
+        return view('admin.orders.show', [
+            'order' => $order,
+            'statusLabels' => Order::statusLabels(),
+            'availableStatuses' => $stateTransitions->availableStatuses($order),
         ]);
     }
 
     public function updateStatus(
-        Request $request,
+        UpdateOrderStatusRequest $request,
         Order $order,
-        OrderCancellationService $cancellationService,
-        OrderAutomationService $orderAutomation,
-        OrderNotificationService $orderNotifications,
-        CustomerNotificationService $customerNotifications,
-        OrderStateTransitionService $stateTransitions
-    )
-    {
-        $request->merge([
-            'admin_note' => $this->cleanTextInput($request->input('admin_note'), true),
-        ]);
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->updateStatus(
+                $order,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã cập nhật trạng thái đơn hàng.'
+        );
+    }
 
-        $validated = $request->validate([
-            'status' => ['required', Rule::in(array_keys(Order::statusLabels()))],
-            'admin_note' => ['nullable', 'string', 'max:500', 'not_regex:/[<>]/'],
-        ], [
-            'status.required' => 'Vui long chon trang thai don hang.',
-            'status.in' => 'Trang thai don hang khong hop le.',
-            'admin_note.max' => 'Ghi chu khong duoc vuot qua 500 ky tu.',
-            'admin_note.not_regex' => 'Ghi chu khong duoc chua ky tu HTML.',
-        ]);
+    public function updateShipping(
+        UpdateOrderShippingRequest $request,
+        Order $order,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->updateShipping(
+                $order,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã cập nhật phí và thông tin vận chuyển.'
+        );
+    }
 
-        try {
-            DB::transaction(function () use ($request, $order, $validated, $cancellationService, $orderAutomation, $orderNotifications, $customerNotifications, $stateTransitions) {
-                $order = Order::query()
-                    ->with(['items', 'cancellationRequests'])
-                    ->whereKey($order->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+    public function verifyPayment(
+        VerifyOrderPaymentRequest $request,
+        Order $order,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->verifyBankPayment(
+                $order,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã xác minh thanh toán chuyển khoản.'
+        );
+    }
 
-                if ($order->status === $validated['status']) {
-                    if ($validated['status'] === Order::STATUS_DONE) {
-                        $orderAutomation->autoMarkPaymentCollectedOnCompletion($order, $request->user()->id);
-                    }
-
-                    if ($validated['status'] === Order::STATUS_CONFIRMED) {
-                        $orderNotifications->notifyOrderConfirmed($order, $request->user()->id);
-                    } else {
-                        $customerNotifications->orderStatusChanged($order->refresh(), $validated['status']);
-                    }
-
-                    return;
-                }
-
-                $stateTransitions->ensureCanTransition($order, $validated['status']);
-
-                if (
-                    $order->hasPendingCancellationRequest()
-                    && in_array($validated['status'], [Order::STATUS_SHIPPING, Order::STATUS_DONE], true)
-                ) {
-                    throw ValidationException::withMessages([
-                        'status' => 'Don dang co yeu cau huy. Hay duyet hoac tu choi yeu cau huy truoc khi giao hang.',
-                    ]);
-                }
-
-                if ($validated['status'] === Order::STATUS_CANCELLED) {
-                    $cancellationService->cancelImmediately(
-                        $order,
-                        $request->user()->id,
-                        null,
-                        $validated['admin_note'] ?: 'Admin huy don tu man hinh quan tri.',
-                        true
-                    );
-
-                    return;
-                }
-
-                $statusNote = $validated['admin_note']
-                    ?: 'Admin cap nhat trang thai tu ' . $order->status . ' sang ' . $validated['status'] . '.';
-
-                $stateTransitions->transition(
-                    $order,
-                    $validated['status'],
-                    $request->user()->id,
-                    $statusNote
-                );
-
-                if ($validated['status'] === Order::STATUS_DONE) {
-                    $orderAutomation->autoMarkPaymentCollectedOnCompletion($order, $request->user()->id);
-                }
-
-                if ($validated['status'] === Order::STATUS_CONFIRMED) {
-                    $order->refresh();
-                    $orderNotifications->notifyOrderConfirmed($order, $request->user()->id);
-                } else {
-                    $customerNotifications->orderStatusChanged($order->refresh(), $validated['status']);
-                }
-            });
-        } catch (ValidationException $exception) {
-            return redirect()->route('admin.orders')->with('error', collect($exception->errors())->flatten()->first() ?? 'Khong the cap nhat don hang.');
-        }
-
-        return redirect()->route('admin.orders')->with('success', 'Da cap nhat trang thai don hang.');
+    public function refundPayment(
+        RefundOrderPaymentRequest $request,
+        Order $order,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->refundCancelledPayment(
+                $order,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã ghi nhận hoàn tiền cho đơn bị hủy.'
+        );
     }
 
     public function approveCancellation(
         Request $request,
         OrderCancellationRequest $cancellationRequest,
-        OrderCancellationService $cancellationService
-    ) {
-        $request->merge([
-            'admin_note' => $this->cleanTextInput($request->input('admin_note'), true),
-        ]);
-
+        AdminOrderService $orders
+    ): RedirectResponse {
         $validated = $request->validate([
             'admin_note' => ['nullable', 'string', 'max:500', 'not_regex:/[<>]/'],
         ]);
 
-        DB::transaction(function () use ($request, $cancellationRequest, $validated, $cancellationService) {
-            $cancellationRequest = OrderCancellationRequest::query()
-                ->whereKey($cancellationRequest->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($cancellationRequest->status !== OrderCancellationRequest::STATUS_PENDING) {
-                throw ValidationException::withMessages([
-                    'cancellation' => 'Yeu cau huy nay da duoc xu ly truoc do.',
-                ]);
-            }
-
-            $order = Order::query()
-                ->with('items')
-                ->whereKey($cancellationRequest->order_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $cancellationRequest->forceFill([
-                'status' => OrderCancellationRequest::STATUS_APPROVED,
-                'resolved_by' => $request->user()->id,
-                'resolved_at' => now(),
-                'admin_note' => $validated['admin_note'] ?: 'Shop da duyet yeu cau huy don.',
-            ])->save();
-
-            $cancellationService->cancelImmediately(
-                $order,
-                $request->user()->id,
+        return $this->runAction(
+            fn () => $orders->approveCancellation(
                 $cancellationRequest,
-                'Shop duyet yeu cau huy don. Ly do: ' . $cancellationRequest->reason_label,
-                true
-            );
-        });
-
-        return redirect()->route('admin.orders')->with('success', 'Da duyet yeu cau huy va cap nhat don hang.');
+                $this->cleanText($validated['admin_note'] ?? null),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã duyệt yêu cầu hủy và hoàn lại tồn kho.'
+        );
     }
 
-    public function rejectCancellation(Request $request, OrderCancellationRequest $cancellationRequest)
-    {
-        $request->merge([
-            'admin_note' => $this->cleanTextInput($request->input('admin_note'), true),
-        ]);
-
+    public function rejectCancellation(
+        Request $request,
+        OrderCancellationRequest $cancellationRequest,
+        AdminOrderService $orders
+    ): RedirectResponse {
         $validated = $request->validate([
             'admin_note' => ['required', 'string', 'min:5', 'max:500', 'not_regex:/[<>]/'],
         ], [
-            'admin_note.required' => 'Vui long nhap ly do tu choi de khach hang hieu.',
-            'admin_note.min' => 'Ly do tu choi can co it nhat 5 ky tu.',
-            'admin_note.max' => 'Ly do tu choi khong duoc vuot qua 500 ky tu.',
-            'admin_note.not_regex' => 'Ly do tu choi khong duoc chua ky tu HTML.',
+            'admin_note.required' => 'Vui lòng nhập lý do từ chối để khách hàng hiểu.',
+            'admin_note.min' => 'Lý do từ chối cần có ít nhất 5 ký tự.',
         ]);
 
-        DB::transaction(function () use ($request, $cancellationRequest, $validated) {
-            $cancellationRequest = OrderCancellationRequest::query()
-                ->whereKey($cancellationRequest->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($cancellationRequest->status !== OrderCancellationRequest::STATUS_PENDING) {
-                throw ValidationException::withMessages([
-                    'cancellation' => 'Yeu cau huy nay da duoc xu ly truoc do.',
-                ]);
-            }
-
-            $order = Order::query()
-                ->whereKey($cancellationRequest->order_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $rejectNote = 'Shop tu choi yeu cau huy don: ' . $validated['admin_note'];
-
-            $cancellationRequest->forceFill([
-                'status' => OrderCancellationRequest::STATUS_REJECTED,
-                'resolved_by' => $request->user()->id,
-                'resolved_at' => now(),
-                'admin_note' => $validated['admin_note'],
-            ])->save();
-
-            $order->forceFill([
-                'admin_note' => $this->appendNoteText($order->admin_note, $rejectNote),
-            ])->save();
-
-            OrderStatusHistory::query()->create([
-                'order_id' => $order->id,
-                'user_id' => $request->user()->id,
-                'previous_status' => $order->status,
-                'status' => 'cancel_rejected',
-                'note' => $rejectNote,
-                'created_at' => now(),
-            ]);
-        });
-
-        return redirect()->route('admin.orders')->with('success', 'Da tu choi yeu cau huy don.');
+        return $this->runAction(
+            fn () => $orders->rejectCancellation(
+                $cancellationRequest,
+                $this->cleanText($validated['admin_note']),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã từ chối yêu cầu hủy đơn.'
+        );
     }
 
-    public function updateShipping(
-        Request $request,
-        Order $order,
-        OrderNotificationService $orderNotifications,
-        OrderStateTransitionService $stateTransitions
-    )
+    public function approveReturn(
+        ResolveOrderReturnRequest $request,
+        OrderReturnRequest $returnRequest,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->approveReturn(
+                $returnRequest,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã duyệt yêu cầu đổi trả.'
+        );
+    }
+
+    public function rejectReturn(
+        ResolveOrderReturnRequest $request,
+        OrderReturnRequest $returnRequest,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->rejectReturn(
+                $returnRequest,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã từ chối yêu cầu đổi trả.'
+        );
+    }
+
+    public function refundReturn(
+        ResolveOrderReturnRequest $request,
+        OrderReturnRequest $returnRequest,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->refundReturn(
+                $returnRequest,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã ghi nhận hoàn tiền cho yêu cầu đổi trả.'
+        );
+    }
+
+    public function completeReturn(
+        ResolveOrderReturnRequest $request,
+        OrderReturnRequest $returnRequest,
+        AdminOrderService $orders
+    ): RedirectResponse {
+        return $this->runAction(
+            fn () => $orders->completeReturn(
+                $returnRequest,
+                $request->validated(),
+                $request->user()->id,
+                $this->auditContext($request)
+            ),
+            'Đã xác nhận hoàn tất đổi sản phẩm.'
+        );
+    }
+
+    private function runAction(callable $action, string $successMessage): RedirectResponse
     {
-        $request->merge([
-            'shipping_delivery_note' => $this->cleanTextInput($request->input('shipping_delivery_note'), true),
-        ]);
-
-        $validated = $request->validate([
-            'shipping_fee' => ['required', 'integer', 'min:0', 'max:2000000'],
-            'shipping_delivery_note' => ['nullable', 'string', 'max:500', 'not_regex:/[<>]/'],
-        ], [
-            'shipping_fee.required' => 'Vui long nhap phi giao hang.',
-            'shipping_fee.integer' => 'Phi giao hang phai la so nguyen VND.',
-            'shipping_fee.min' => 'Phi giao hang khong duoc am.',
-            'shipping_fee.max' => 'Phi giao hang qua lon, vui long kiem tra lai.',
-            'shipping_delivery_note.max' => 'Ghi chu giao hang khong duoc vuot qua 500 ky tu.',
-            'shipping_delivery_note.not_regex' => 'Ghi chu giao hang khong duoc chua ky tu HTML.',
-        ]);
-
         try {
-            DB::transaction(function () use ($request, $order, $validated, $orderNotifications, $stateTransitions) {
-                $order = Order::query()
-                    ->whereKey($order->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                if ($order->status === Order::STATUS_CANCELLED) {
-                    throw ValidationException::withMessages([
-                        'shipping_fee' => 'Don da huy nen khong the chot phi giao hang.',
-                    ]);
-                }
-
-                $previousStatus = $order->status;
-                $previousShippingFee = (int) $order->shipping_fee;
-                $shippingFee = (int) $validated['shipping_fee'];
-                $total = max(0, (int) $order->subtotal + $shippingFee - (int) $order->discount_total);
-
-                if (
-                    $order->payment_status === Order::PAYMENT_STATUS_PAID
-                    && ($shippingFee !== $previousShippingFee || $total !== (int) $order->total)
-                ) {
-                    throw ValidationException::withMessages([
-                        'shipping_fee' => 'Đơn đã thanh toán nên không thể thay đổi phí giao hàng hoặc tổng tiền.',
-                    ]);
-                }
-                $note = $validated['shipping_delivery_note']
-                    ?: 'Admin chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.';
-
-                $changes = [
-                    'shipping_fee' => $shippingFee,
-                    'shipping_fee_status' => Order::SHIPPING_FEE_STATUS_CONFIRMED,
-                    'shipping_delivery_note' => $note,
-                    'total' => $total,
-                    'admin_note' => $this->appendNoteText(
-                        $order->admin_note,
-                        'Chot phi ship tu ' . number_format($previousShippingFee, 0, ',', '.') . ' VND sang ' . number_format($shippingFee, 0, ',', '.') . ' VND. ' . $note
-                    ),
-                ];
-
-                $shouldAutoConfirm = $order->status === Order::STATUS_PENDING
-                    && !$order->hasPendingCancellationRequest()
-                    && (
-                        $order->payment_method === Order::PAYMENT_METHOD_COD
-                        || $order->payment_status === Order::PAYMENT_STATUS_PAID
-                    );
-
-                $order->forceFill($changes)->save();
-
-                if ($shouldAutoConfirm) {
-                    $stateTransitions->transition(
-                        $order,
-                        Order::STATUS_CONFIRMED,
-                        $request->user()->id,
-                        'Shop da chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.'
-                    );
-                    $order->refresh();
-                    $orderNotifications->notifyOrderConfirmed($order, $request->user()->id);
-                } else {
-                    OrderStatusHistory::query()->create([
-                        'order_id' => $order->id,
-                        'user_id' => $request->user()->id,
-                        'previous_status' => $previousStatus,
-                        'status' => 'shipping_fee_confirmed',
-                        'note' => 'Shop da chot phi giao hang: ' . number_format($shippingFee, 0, ',', '.') . ' VND.',
-                        'created_at' => now(),
-                    ]);
-                }
-            });
+            $action();
         } catch (ValidationException $exception) {
-            return redirect()->route('admin.orders')->with('error', collect($exception->errors())->flatten()->first() ?? 'Khong the chot phi giao hang.');
+            return back()
+                ->withInput()
+                ->withErrors($exception->errors())
+                ->with('error', collect($exception->errors())->flatten()->first());
         }
 
-        return redirect()->route('admin.orders')->with('success', 'Da chot phi giao hang va cap nhat tong tien don.');
+        return back()->with('success', $successMessage);
     }
 
     private function getOrderSummary(): array
     {
         $summary = array_fill_keys(array_keys(Order::statusLabels()), 0);
-
-        Order::query()
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
+        Order::query()->selectRaw('status, COUNT(*) as total')->groupBy('status')
             ->pluck('total', 'status')
             ->each(function ($total, $status) use (&$summary) {
                 $summary[$status] = (int) $total;
@@ -361,22 +310,38 @@ class OrderController extends Controller
         return $summary;
     }
 
-    private function cleanTextInput($value, bool $nullable = false): ?string
+    private function getAttentionSummary(): array
     {
-        $cleaned = preg_replace('/\s+/u', ' ', trim((string) $value));
-
-        if ($nullable && $cleaned === '') {
-            return null;
-        }
-
-        return $cleaned;
+        return [
+            'cancellation' => OrderCancellationRequest::query()->where('status', OrderCancellationRequest::STATUS_PENDING)->count(),
+            'return' => OrderReturnRequest::query()->where('status', OrderReturnRequest::STATUS_PENDING)->count(),
+            'awaiting_payment' => Order::query()
+                ->where('payment_method', Order::PAYMENT_METHOD_BANK_TRANSFER)
+                ->where('payment_status', Order::PAYMENT_STATUS_UNPAID)
+                ->whereNotIn('status', [Order::STATUS_CANCELLED, Order::STATUS_DONE])
+                ->count(),
+            'shipping_setup' => Order::query()
+                ->where('status', Order::STATUS_CONFIRMED)
+                ->where(function ($query) {
+                    $query->whereNull('shipping_provider')->orWhere('shipping_provider', '');
+                })
+                ->count(),
+        ];
     }
 
-    private function appendNoteText(?string $existingNote, string $note): string
+    private function cleanText($value): ?string
     {
-        $existingNote = trim((string) $existingNote);
-        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
+        $value = preg_replace('/\s+/u', ' ', trim((string) $value));
 
-        return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
+        return $value === '' ? null : $value;
+    }
+
+    private function auditContext(Request $request): array
+    {
+        return [
+            'user_id' => optional($request->user())->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 1000),
+        ];
     }
 }

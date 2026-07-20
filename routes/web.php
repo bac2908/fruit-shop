@@ -99,10 +99,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::delete('/products/{product}/images/{image}', [AdminProductController::class, 'destroyImage'])->name('products.images.destroy');
 
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
+    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
     Route::patch('/orders/{order}/shipping', [AdminOrderController::class, 'updateShipping'])->name('orders.shipping');
+    Route::patch('/orders/{order}/payment/verify', [AdminOrderController::class, 'verifyPayment'])->name('orders.payment.verify');
+    Route::patch('/orders/{order}/payment/refund', [AdminOrderController::class, 'refundPayment'])->name('orders.payment.refund');
     Route::patch('/orders/cancellations/{cancellationRequest}/approve', [AdminOrderController::class, 'approveCancellation'])->name('orders.cancellations.approve');
     Route::patch('/orders/cancellations/{cancellationRequest}/reject', [AdminOrderController::class, 'rejectCancellation'])->name('orders.cancellations.reject');
+    Route::patch('/orders/returns/{returnRequest}/approve', [AdminOrderController::class, 'approveReturn'])->name('orders.returns.approve');
+    Route::patch('/orders/returns/{returnRequest}/reject', [AdminOrderController::class, 'rejectReturn'])->name('orders.returns.reject');
+    Route::patch('/orders/returns/{returnRequest}/refund', [AdminOrderController::class, 'refundReturn'])->name('orders.returns.refund');
+    Route::patch('/orders/returns/{returnRequest}/complete', [AdminOrderController::class, 'completeReturn'])->name('orders.returns.complete');
 
     Route::get('/customers', function () {
         return view('admin.customers');

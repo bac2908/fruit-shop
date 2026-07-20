@@ -15,11 +15,11 @@ class CustomerNotificationService
     public function voucherReceived(User $user, Coupon $coupon, UserVoucher $voucher): ?DatabaseNotification
     {
         return $this->send($user, [
-            'event_key' => 'voucher-received:' . $voucher->id,
+            'event_key' => 'voucher-received:'.$voucher->id,
             'category' => 'voucher',
             'icon' => 'ticket',
-            'title' => 'Bạn đã nhận voucher ' . $coupon->code,
-            'message' => $coupon->benefit_label . '. ' . $coupon->condition_label . '.',
+            'title' => 'Bạn đã nhận voucher '.$coupon->code,
+            'message' => $coupon->benefit_label.'. '.$coupon->condition_label.'.',
             'action_url' => route('account.profile', ['tab' => 'vouchers']),
             'action_label' => 'Xem kho voucher',
             'related_type' => 'coupon',
@@ -30,11 +30,11 @@ class CustomerNotificationService
     public function orderPlaced(Order $order): ?DatabaseNotification
     {
         return $this->sendToOrderUser($order, [
-            'event_key' => 'order:' . $order->id . ':placed',
+            'event_key' => 'order:'.$order->id.':placed',
             'category' => 'order',
             'icon' => 'shopping-bag',
-            'title' => 'Đã tiếp nhận đơn ' . $order->code,
-            'message' => 'Đơn hàng trị giá ' . number_format((int) $order->total, 0, ',', '.') . 'đ đã được ghi nhận.',
+            'title' => 'Đã tiếp nhận đơn '.$order->code,
+            'message' => 'Đơn hàng trị giá '.number_format((int) $order->total, 0, ',', '.').'đ đã được ghi nhận.',
             'action_label' => 'Xem đơn hàng',
         ]);
     }
@@ -42,18 +42,18 @@ class CustomerNotificationService
     public function orderStatusChanged(Order $order, string $status): ?DatabaseNotification
     {
         $content = [
-            Order::STATUS_CONFIRMED => ['Đơn hàng đã được xác nhận', 'Shop đang chuẩn bị sản phẩm cho đơn ' . $order->code . '.', 'check-circle'],
-            Order::STATUS_SHIPPING => ['Đơn hàng đang được giao', 'Đơn ' . $order->code . ' đã rời shop và đang trên đường giao đến bạn.', 'truck'],
-            Order::STATUS_DONE => ['Đơn hàng đã hoàn tất', 'Đơn ' . $order->code . ' đã được giao thành công. Cảm ơn bạn đã mua hàng.', 'gift'],
-            Order::STATUS_CANCELLED => ['Đơn hàng đã hủy', 'Đơn ' . $order->code . ' đã được hủy. Voucher hợp lệ sẽ được hoàn lại.', 'times-circle'],
+            Order::STATUS_CONFIRMED => ['Đơn hàng đã được xác nhận', 'Shop đang chuẩn bị sản phẩm cho đơn '.$order->code.'.', 'check-circle'],
+            Order::STATUS_SHIPPING => ['Đơn hàng đang được giao', 'Đơn '.$order->code.' đã rời shop và đang trên đường giao đến bạn.', 'truck'],
+            Order::STATUS_DONE => ['Đơn hàng đã hoàn tất', 'Đơn '.$order->code.' đã được giao thành công. Cảm ơn bạn đã mua hàng.', 'gift'],
+            Order::STATUS_CANCELLED => ['Đơn hàng đã hủy', 'Đơn '.$order->code.' đã được hủy. Voucher hợp lệ sẽ được hoàn lại.', 'times-circle'],
         ][$status] ?? null;
 
-        if (!$content) {
+        if (! $content) {
             return null;
         }
 
         return $this->sendToOrderUser($order, [
-            'event_key' => 'order:' . $order->id . ':status:' . $status,
+            'event_key' => 'order:'.$order->id.':status:'.$status,
             'category' => 'order',
             'icon' => $content[2],
             'title' => $content[0],
@@ -65,12 +65,26 @@ class CustomerNotificationService
     public function paymentReceived(Order $order): ?DatabaseNotification
     {
         return $this->sendToOrderUser($order, [
-            'event_key' => 'order:' . $order->id . ':payment:paid',
+            'event_key' => 'order:'.$order->id.':payment:paid',
             'category' => 'payment',
             'icon' => 'credit-card',
             'title' => 'Thanh toán thành công',
-            'message' => 'Shop đã nhận thanh toán cho đơn ' . $order->code . '.',
+            'message' => 'Shop đã nhận thanh toán cho đơn '.$order->code.'.',
             'action_label' => 'Xem thanh toán',
+        ]);
+    }
+
+    public function paymentRefunded(Order $order, int $amount, ?string $reference = null): ?DatabaseNotification
+    {
+        $eventSuffix = $reference ?: (string) $amount;
+
+        return $this->sendToOrderUser($order, [
+            'event_key' => 'order:'.$order->id.':payment:refunded:'.$eventSuffix,
+            'category' => 'payment',
+            'icon' => 'refund-2',
+            'title' => 'Shop đã hoàn tiền',
+            'message' => 'Shop đã ghi nhận hoàn '.number_format($amount, 0, ',', '.').'đ cho đơn '.$order->code.'.',
+            'action_label' => 'Xem chi tiết',
         ]);
     }
 
@@ -78,7 +92,7 @@ class CustomerNotificationService
     {
         $user = $order->relationLoaded('user') ? $order->user : $order->user()->first();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -94,7 +108,7 @@ class CustomerNotificationService
 
     private function send(User $user, array $payload): ?DatabaseNotification
     {
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return null;
         }
 

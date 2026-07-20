@@ -37,22 +37,35 @@ class OrderReturnRequest extends Model
     ];
 
     const STATUS_PENDING = 'pending';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_REJECTED = 'rejected';
+
     const STATUS_REFUNDED = 'refunded';
 
+    const STATUS_COMPLETED = 'completed';
+
     const TYPE_EXCHANGE = 'exchange';
+
     const TYPE_REFUND = 'refund';
 
     const REFUND_METHOD_BANK = 'bank_transfer';
+
     const REFUND_METHOD_MOMO = 'momo';
+
     const REFUND_METHOD_CONTACT = 'contact';
 
     const REASON_DAMAGED = 'damaged';
+
     const REASON_WRONG_ITEM = 'wrong_item';
+
     const REASON_MISSING_ITEM = 'missing_item';
+
     const REASON_SPOILED = 'spoiled';
+
     const REASON_QUALITY = 'quality_issue';
+
     const REASON_OTHER = 'other';
 
     public static function statusLabels(): array
@@ -62,6 +75,7 @@ class OrderReturnRequest extends Model
             self::STATUS_APPROVED => 'Đã duyệt xử lý',
             self::STATUS_REJECTED => 'Shop từ chối',
             self::STATUS_REFUNDED => 'Đã hoàn tiền',
+            self::STATUS_COMPLETED => 'Đã đổi sản phẩm',
         ];
     }
 
@@ -116,11 +130,11 @@ class OrderReturnRequest extends Model
 
     public function getEvidenceUrlAttribute(): ?string
     {
-        if (!$this->evidence_path) {
+        if (! $this->evidence_path) {
             return null;
         }
 
-        return asset('storage/' . ltrim($this->evidence_path, '/'));
+        return asset('storage/'.ltrim($this->evidence_path, '/'));
     }
 
     public function order()

@@ -17,10 +17,15 @@ use Throwable;
 class OrderNotificationService
 {
     private const HISTORY_PLACED_EMAIL_SENT = 'placed_email_sent';
+
     private const HISTORY_PLACED_EMAIL_FAILED = 'placed_email_failed';
+
     private const HISTORY_CONFIRMED_EMAIL_SENT = 'confirmed_email_sent';
+
     private const HISTORY_CONFIRMED_EMAIL_FAILED = 'confirmed_email_failed';
+
     private const HISTORY_CANCELLED_EMAIL_SENT = 'cancelled_email_sent';
+
     private const HISTORY_CANCELLED_EMAIL_FAILED = 'cancelled_email_failed';
 
     private $customerNotifications;
@@ -32,7 +37,7 @@ class OrderNotificationService
 
     public function notifyOrderPlaced(Order $order, ?int $actorId = null): bool
     {
-        if (!config('shop.order_automation.order_placed_email_enabled', true)) {
+        if (! config('shop.order_automation.order_placed_email_enabled', true)) {
             return false;
         }
 
@@ -46,7 +51,7 @@ class OrderNotificationService
                 ->whereKey($order->id)
                 ->first();
 
-            if (!$freshOrder || $freshOrder->status === Order::STATUS_CANCELLED) {
+            if (! $freshOrder || $freshOrder->status === Order::STATUS_CANCELLED) {
                 return;
             }
 
@@ -74,7 +79,7 @@ class OrderNotificationService
                     $freshOrder,
                     $actorId,
                     self::HISTORY_PLACED_EMAIL_SENT,
-                    'Da gui email tiep nhan don hang den ' . $email . '.'
+                    'Da gui email tiep nhan don hang den '.$email.'.'
                 );
             } catch (Throwable $exception) {
                 Log::warning('Cannot send order placed email.', [
@@ -88,7 +93,7 @@ class OrderNotificationService
                     $freshOrder,
                     $actorId,
                     self::HISTORY_PLACED_EMAIL_FAILED,
-                    'Gui email tiep nhan don hang that bai: ' . $exception->getMessage()
+                    'Gui email tiep nhan don hang that bai: '.$exception->getMessage()
                 );
             }
         };
@@ -110,7 +115,7 @@ class OrderNotificationService
 
         $this->customerNotifications->orderStatusChanged($order, Order::STATUS_CONFIRMED);
 
-        if (!config('shop.order_automation.order_confirmed_email_enabled', true)) {
+        if (! config('shop.order_automation.order_confirmed_email_enabled', true)) {
             return true;
         }
 
@@ -124,7 +129,7 @@ class OrderNotificationService
                 ->whereKey($order->id)
                 ->first();
 
-            if (!$freshOrder || $freshOrder->status !== Order::STATUS_CONFIRMED) {
+            if (! $freshOrder || $freshOrder->status !== Order::STATUS_CONFIRMED) {
                 return;
             }
 
@@ -135,6 +140,7 @@ class OrderNotificationService
             $email = trim((string) ($freshOrder->customer_email ?: optional($freshOrder->user)->email));
             if ($email === '') {
                 $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CONFIRMED_EMAIL_FAILED, 'Khong gui duoc email xac nhan vi don hang khong co email khach.');
+
                 return;
             }
 
@@ -142,7 +148,7 @@ class OrderNotificationService
                 Notification::route('mail', $email)
                     ->notify(new OrderConfirmedNotification($freshOrder));
 
-                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CONFIRMED_EMAIL_SENT, 'Da gui email thong bao don hang duoc xac nhan den ' . $email . '.');
+                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CONFIRMED_EMAIL_SENT, 'Da gui email thong bao don hang duoc xac nhan den '.$email.'.');
             } catch (Throwable $exception) {
                 Log::warning('Cannot send order confirmed email.', [
                     'order_id' => $freshOrder->id,
@@ -151,7 +157,7 @@ class OrderNotificationService
                     'error' => $exception->getMessage(),
                 ]);
 
-                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CONFIRMED_EMAIL_FAILED, 'Gui email xac nhan don hang that bai: ' . $exception->getMessage());
+                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CONFIRMED_EMAIL_FAILED, 'Gui email xac nhan don hang that bai: '.$exception->getMessage());
             }
         };
 
@@ -166,16 +172,16 @@ class OrderNotificationService
 
     public function notifyReturnRequestUpdated(OrderReturnRequest $returnRequest, string $event, ?int $actorId = null): bool
     {
-        if (!config('shop.returns.email_enabled', true)) {
+        if (! config('shop.returns.email_enabled', true)) {
             return false;
         }
 
-        if (!in_array($event, ['requested', 'approved', 'rejected', 'refunded'], true)) {
+        if (! in_array($event, ['requested', 'approved', 'rejected', 'refunded', 'completed'], true)) {
             return false;
         }
 
-        $sentStatus = 'return_' . $event . '_email_sent';
-        $failedStatus = 'return_' . $event . '_email_failed';
+        $sentStatus = 'return_'.$event.'_email_sent';
+        $failedStatus = 'return_'.$event.'_email_failed';
 
         if ($this->returnEmailAlreadySent($returnRequest->order_id, $sentStatus)) {
             return false;
@@ -187,7 +193,7 @@ class OrderNotificationService
                 ->whereKey($returnRequest->id)
                 ->first();
 
-            if (!$freshRequest || !$freshRequest->order) {
+            if (! $freshRequest || ! $freshRequest->order) {
                 return;
             }
 
@@ -199,6 +205,7 @@ class OrderNotificationService
             $email = trim((string) ($order->customer_email ?: optional($order->user)->email));
             if ($email === '') {
                 $this->recordEmailHistory($order, $actorId, $failedStatus, 'Khong gui duoc email doi tra vi don hang khong co email khach.');
+
                 return;
             }
 
@@ -206,7 +213,7 @@ class OrderNotificationService
                 Notification::route('mail', $email)
                     ->notify(new OrderReturnRequestNotification($freshRequest, $event));
 
-                $this->recordEmailHistory($order, $actorId, $sentStatus, 'Da gui email cap nhat yeu cau doi tra den ' . $email . '.');
+                $this->recordEmailHistory($order, $actorId, $sentStatus, 'Da gui email cap nhat yeu cau doi tra den '.$email.'.');
             } catch (Throwable $exception) {
                 Log::warning('Cannot send return request email.', [
                     'order_id' => $order->id,
@@ -217,7 +224,7 @@ class OrderNotificationService
                     'error' => $exception->getMessage(),
                 ]);
 
-                $this->recordEmailHistory($order, $actorId, $failedStatus, 'Gui email doi tra that bai: ' . $exception->getMessage());
+                $this->recordEmailHistory($order, $actorId, $failedStatus, 'Gui email doi tra that bai: '.$exception->getMessage());
             }
         };
 
@@ -238,7 +245,7 @@ class OrderNotificationService
 
         $this->customerNotifications->orderStatusChanged($order, Order::STATUS_CANCELLED);
 
-        if (!config('shop.order_automation.order_cancelled_email_enabled', true)) {
+        if (! config('shop.order_automation.order_cancelled_email_enabled', true)) {
             return true;
         }
 
@@ -252,7 +259,7 @@ class OrderNotificationService
                 ->whereKey($order->id)
                 ->first();
 
-            if (!$freshOrder || $freshOrder->status !== Order::STATUS_CANCELLED) {
+            if (! $freshOrder || $freshOrder->status !== Order::STATUS_CANCELLED) {
                 return;
             }
 
@@ -263,6 +270,7 @@ class OrderNotificationService
             $email = trim((string) ($freshOrder->customer_email ?: optional($freshOrder->user)->email));
             if ($email === '') {
                 $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CANCELLED_EMAIL_FAILED, 'Khong gui duoc email huy don vi don hang khong co email khach.');
+
                 return;
             }
 
@@ -270,7 +278,7 @@ class OrderNotificationService
                 Notification::route('mail', $email)
                     ->notify(new OrderCancelledNotification($freshOrder, $reason));
 
-                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CANCELLED_EMAIL_SENT, 'Da gui email thong bao huy don den ' . $email . '.');
+                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CANCELLED_EMAIL_SENT, 'Da gui email thong bao huy don den '.$email.'.');
             } catch (Throwable $exception) {
                 Log::warning('Cannot send order cancelled email.', [
                     'order_id' => $freshOrder->id,
@@ -279,7 +287,7 @@ class OrderNotificationService
                     'error' => $exception->getMessage(),
                 ]);
 
-                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CANCELLED_EMAIL_FAILED, 'Gui email huy don that bai: ' . $exception->getMessage());
+                $this->recordEmailHistory($freshOrder, $actorId, self::HISTORY_CANCELLED_EMAIL_FAILED, 'Gui email huy don that bai: '.$exception->getMessage());
             }
         };
 

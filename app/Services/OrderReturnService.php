@@ -12,14 +12,19 @@ class OrderReturnService
 {
     private $notifications;
 
-    public function __construct(OrderNotificationService $notifications)
-    {
+    private $customerNotifications;
+
+    public function __construct(
+        OrderNotificationService $notifications,
+        CustomerNotificationService $customerNotifications
+    ) {
         $this->notifications = $notifications;
+        $this->customerNotifications = $customerNotifications;
     }
 
     public function createCustomerRequest(Order $order, int $userId, array $payload): OrderReturnRequest
     {
-        if (!$order->isReturnRequestable()) {
+        if (! $order->isReturnRequestable()) {
             throw ValidationException::withMessages([
                 'order' => 'Don hang nay khong con trong thoi gian ho tro doi tra/hoan tien.',
             ]);
@@ -43,7 +48,7 @@ class OrderReturnService
             'user_id' => $userId,
             'previous_status' => $order->status,
             'status' => 'return_requested',
-            'note' => 'Khach gui yeu cau ' . $returnRequest->type_label . '. Ly do: ' . $returnRequest->reason_label . '.',
+            'note' => 'Khach gui yeu cau '.$returnRequest->type_label.'. Ly do: '.$returnRequest->reason_label.'.',
             'created_at' => now(),
         ]);
 
@@ -75,7 +80,7 @@ class OrderReturnService
         ])->save();
 
         $order->forceFill([
-            'admin_note' => $this->appendNoteText($order->admin_note, 'Duyet yeu cau ' . $returnRequest->type_label . ': ' . $note),
+            'admin_note' => $this->appendNoteText($order->admin_note, 'Duyet yeu cau '.$returnRequest->type_label.': '.$note),
         ])->save();
 
         OrderStatusHistory::query()->create([
@@ -109,7 +114,7 @@ class OrderReturnService
         ])->save();
 
         $order->forceFill([
-            'admin_note' => $this->appendNoteText($order->admin_note, 'Tu choi yeu cau doi tra: ' . $adminNote),
+            'admin_note' => $this->appendNoteText($order->admin_note, 'Tu choi yeu cau doi tra: '.$adminNote),
         ])->save();
 
         OrderStatusHistory::query()->create([
@@ -124,8 +129,53 @@ class OrderReturnService
         $this->notifications->notifyReturnRequestUpdated($returnRequest, 'rejected', $actorId);
     }
 
-    public function markRefunded(OrderReturnRequest $returnRequest, int $actorId, ?int $refundAmount, ?string $adminNote): void
+    public function completeExchange(OrderReturnRequest $returnRequest, int $actorId, string $adminNote): void
     {
+        if ($returnRequest->type !== OrderReturnRequest::TYPE_EXCHANGE) {
+            throw ValidationException::withMessages([
+                'return_request' => 'Chỉ yêu cầu đổi sản phẩm mới có thể đánh dấu đã hoàn tất đổi hàng.',
+            ]);
+        }
+
+        if ($returnRequest->status !== OrderReturnRequest::STATUS_APPROVED) {
+            throw ValidationException::withMessages([
+                'return_request' => 'Cần duyệt yêu cầu trước khi xác nhận đã đổi sản phẩm.',
+            ]);
+        }
+
+        $returnRequest->loadMissing('order');
+        $order = $returnRequest->order;
+
+        $returnRequest->forceFill([
+            'status' => OrderReturnRequest::STATUS_COMPLETED,
+            'resolved_by' => $actorId,
+            'resolved_at' => $returnRequest->resolved_at ?: now(),
+            'admin_note' => $this->appendNoteText($returnRequest->admin_note, $adminNote),
+        ])->save();
+
+        $order->forceFill([
+            'admin_note' => $this->appendNoteText($order->admin_note, 'Hoàn tất đổi sản phẩm: '.$adminNote),
+        ])->save();
+
+        OrderStatusHistory::query()->create([
+            'order_id' => $order->id,
+            'user_id' => $actorId,
+            'previous_status' => $order->status,
+            'status' => 'return_completed',
+            'note' => $adminNote,
+            'created_at' => now(),
+        ]);
+
+        $this->notifications->notifyReturnRequestUpdated($returnRequest, 'completed', $actorId);
+    }
+
+    public function markRefunded(
+        OrderReturnRequest $returnRequest,
+        int $actorId,
+        ?int $refundAmount,
+        ?string $adminNote,
+        string $refundReference
+    ): void {
         if ($returnRequest->type !== OrderReturnRequest::TYPE_REFUND) {
             throw ValidationException::withMessages([
                 'return_request' => 'Chi yeu cau hoan tien moi co the danh dau da hoan tien.',
@@ -153,11 +203,20 @@ class OrderReturnService
         ])->save();
 
         $orderPayload = [
-            'admin_note' => $this->appendNoteText($order->admin_note, 'Hoan tien ' . number_format($amount, 0, ',', '.') . 'd. ' . $note),
+            'admin_note' => $this->appendNoteText($order->admin_note, 'Hoan tien '.number_format($amount, 0, ',', '.').'d. '.$note),
+            'refund_reference' => $refundReference,
+            'refunded_by' => $actorId,
+            'refunded_at' => now(),
         ];
 
-        if ($amount >= (int) $order->total && $order->payment_status === Order::PAYMENT_STATUS_PAID) {
-            $orderPayload['payment_status'] = Order::PAYMENT_STATUS_REFUNDED;
+        if (in_array($order->payment_status, [Order::PAYMENT_STATUS_PAID, Order::PAYMENT_STATUS_PARTIALLY_REFUNDED], true)) {
+            $refundedBefore = (int) $order->returnRequests()
+                ->where('status', OrderReturnRequest::STATUS_REFUNDED)
+                ->where('id', '!=', $returnRequest->id)
+                ->sum('refund_amount');
+            $orderPayload['payment_status'] = ($refundedBefore + $amount) >= (int) $order->total
+                ? Order::PAYMENT_STATUS_REFUNDED
+                : Order::PAYMENT_STATUS_PARTIALLY_REFUNDED;
         }
 
         $order->forceFill($orderPayload)->save();
@@ -167,18 +226,19 @@ class OrderReturnService
             'user_id' => $actorId,
             'previous_status' => $order->status,
             'status' => 'return_refunded',
-            'note' => $note . ' So tien: ' . number_format($amount, 0, ',', '.') . 'd.',
+            'note' => $note.' Số tiền: '.number_format($amount, 0, ',', '.').'đ. Mã tham chiếu: '.$refundReference.'.',
             'created_at' => now(),
         ]);
 
+        $this->customerNotifications->paymentRefunded($order->refresh(), $amount, $refundReference);
         $this->notifications->notifyReturnRequestUpdated($returnRequest, 'refunded', $actorId);
     }
 
     private function appendNoteText(?string $existingNote, string $note): string
     {
         $existingNote = trim((string) $existingNote);
-        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
+        $newNote = '['.LocalDateTime::format(now()).'] '.$note;
 
-        return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
+        return $existingNote !== '' ? $existingNote.PHP_EOL.$newNote : $newNote;
     }
 }

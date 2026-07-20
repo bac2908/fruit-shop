@@ -31,6 +31,12 @@ class Order extends Model
         'status',
         'payment_method',
         'payment_status',
+        'payment_reference',
+        'payment_verified_by',
+        'payment_verified_at',
+        'refund_reference',
+        'refunded_by',
+        'refunded_at',
         'momo_request_id',
         'momo_transaction_id',
         'payment_expires_at',
@@ -51,6 +57,8 @@ class Order extends Model
         'total' => 'integer',
         'status' => 'string',
         'payment_status' => 'string',
+        'payment_verified_at' => 'datetime',
+        'refunded_at' => 'datetime',
         'payment_expires_at' => 'datetime',
         'shipping_status' => 'string',
         'paid_at' => 'datetime',
@@ -61,40 +69,62 @@ class Order extends Model
 
     // Order statuses
     const STATUS_PENDING = 'pending';
+
     const STATUS_CONFIRMED = 'confirmed';
+
     const STATUS_SHIPPING = 'shipping';
+
     const STATUS_DONE = 'done';
+
     const STATUS_CANCELLED = 'cancelled';
 
     const PAYMENT_STATUS_UNPAID = 'unpaid';
+
     const PAYMENT_STATUS_PAID = 'paid';
+
+    const PAYMENT_STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
+
     const PAYMENT_STATUS_REFUNDED = 'refunded';
 
     const PAYMENT_METHOD_COD = 'cod';
+
     const PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
+
     const PAYMENT_METHOD_MOMO = 'momo';
 
     const SHIPPING_STATUS_PENDING = 'pending';
+
     const SHIPPING_STATUS_PREPARING = 'preparing';
+
     const SHIPPING_STATUS_SHIPPING = 'shipping';
+
     const SHIPPING_STATUS_DELIVERED = 'delivered';
+
     const SHIPPING_STATUS_FAILED = 'failed';
 
     const SHIPPING_FEE_STATUS_CONFIRMED = 'confirmed';
+
     const SHIPPING_FEE_STATUS_ESTIMATED = 'estimated';
+
     const SHIPPING_FEE_STATUS_PENDING_ADDRESS = 'pending_address';
 
     const DELIVERY_METHOD_LOCAL_EXPRESS = 'local_express';
+
     const DELIVERY_METHOD_PROVINCE_PARTNER = 'province_partner';
+
     const DELIVERY_METHOD_CONTACT_REQUIRED = 'contact_required';
 
     protected static function booted()
     {
         static::updating(function (Order $order) {
-            $wasPaid = $order->getOriginal('payment_status') === self::PAYMENT_STATUS_PAID;
+            $moneyIsLocked = in_array($order->getOriginal('payment_status'), [
+                self::PAYMENT_STATUS_PAID,
+                self::PAYMENT_STATUS_PARTIALLY_REFUNDED,
+                self::PAYMENT_STATUS_REFUNDED,
+            ], true);
             $moneyFields = ['subtotal', 'shipping_fee', 'discount_total', 'total'];
 
-            if ($wasPaid && $order->isDirty($moneyFields)) {
+            if ($moneyIsLocked && $order->isDirty($moneyFields)) {
                 throw new \LogicException('Không thể thay đổi giá trị đơn hàng sau khi đã thanh toán.');
             }
         });
@@ -125,6 +155,7 @@ class Order extends Model
         return [
             self::PAYMENT_STATUS_UNPAID => 'Chưa thanh toán',
             self::PAYMENT_STATUS_PAID => 'Đã thanh toán',
+            self::PAYMENT_STATUS_PARTIALLY_REFUNDED => 'Đã hoàn một phần',
             self::PAYMENT_STATUS_REFUNDED => 'Đã hoàn tiền',
         ];
     }
@@ -225,7 +256,7 @@ class Order extends Model
         }
 
         $completedAt = $this->completedAtForReturnPolicy();
-        if (!$completedAt) {
+        if (! $completedAt) {
             return false;
         }
 
@@ -389,6 +420,16 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function paymentVerifier()
+    {
+        return $this->belongsTo(User::class, 'payment_verified_by');
+    }
+
+    public function refundProcessor()
+    {
+        return $this->belongsTo(User::class, 'refunded_by');
     }
 
     public function items()

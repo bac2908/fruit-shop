@@ -3,20 +3,22 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Support\LocalDateTime;
 
 class OrderAutomationService
 {
     private $notifications;
+
     private $customerNotifications;
+
     private $stateTransitions;
 
     public function __construct(
         OrderNotificationService $notifications,
         CustomerNotificationService $customerNotifications,
         OrderStateTransitionService $stateTransitions
-    )
-    {
+    ) {
         $this->notifications = $notifications;
         $this->customerNotifications = $customerNotifications;
         $this->stateTransitions = $stateTransitions;
@@ -24,7 +26,7 @@ class OrderAutomationService
 
     public function autoConfirmAfterStockReserved(Order $order, ?int $actorId = null, ?string $reason = null): bool
     {
-        if (!config('shop.order_automation.auto_confirm_stock_reserved', true)) {
+        if (! config('shop.order_automation.auto_confirm_stock_reserved', true)) {
             return false;
         }
 
@@ -57,7 +59,7 @@ class OrderAutomationService
 
     public function autoMarkPaymentCollectedOnCompletion(Order $order, ?int $actorId = null): bool
     {
-        if (!config('shop.order_automation.auto_mark_cod_paid_on_done', true)) {
+        if (! config('shop.order_automation.auto_mark_cod_paid_on_done', true)) {
             return false;
         }
 
@@ -94,8 +96,8 @@ class OrderAutomationService
     private function appendNoteText(?string $existingNote, string $note): string
     {
         $existingNote = trim((string) $existingNote);
-        $newNote = '[' . LocalDateTime::format(now()) . '] ' . $note;
+        $newNote = '['.LocalDateTime::format(now()).'] '.$note;
 
-        return $existingNote !== '' ? $existingNote . PHP_EOL . $newNote : $newNote;
+        return $existingNote !== '' ? $existingNote.PHP_EOL.$newNote : $newNote;
     }
 }

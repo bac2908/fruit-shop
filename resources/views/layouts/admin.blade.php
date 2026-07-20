@@ -670,7 +670,7 @@
                 <i class="ri-dashboard-horizontal-line"></i>
                 <span>Tong quan</span>
             </a>
-            <a href="{{ route('admin.orders') }}" class="menu-link {{ request()->routeIs('admin.orders') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders') }}" class="menu-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
                 <i class="ri-file-list-3-line"></i>
                 <span>Don hang</span>
             </a>

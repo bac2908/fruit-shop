@@ -1,421 +1,178 @@
 @extends('layouts.admin')
 
-@section('title', 'Quan ly don hang | FruitShop Admin')
+@section('title', 'Quản lý đơn hàng | FruitShop Admin')
 
-@section('head')
-    <style>
-        .admin-alert {
-            border-radius: 14px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 14px;
-            padding: 12px 14px;
-        }
-
-        .admin-alert.success {
-            background: #edf8e8;
-            border: 1px solid #b9dcac;
-            color: #2d6d24;
-        }
-
-        .admin-alert.error {
-            background: #fff0ec;
-            border: 1px solid #f1b9aa;
-            color: #a13e2c;
-        }
-
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .status-card {
-            border: 1px solid #dae5d9;
-            border-radius: 12px;
-            background: #fff;
-            padding: 12px;
-        }
-
-        .status-card small {
-            color: #5f7368;
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .status-card strong {
-            font-family: 'Sora', sans-serif;
-            font-size: 24px;
-            line-height: 1.1;
-        }
-
-        .status-card.pending strong,
-        .status-card.cancel-request strong {
-            color: #936c00;
-        }
-
-        .status-card.confirmed strong {
-            color: #2d7040;
-        }
-
-        .status-card.shipping strong {
-            color: #1d6b90;
-        }
-
-        .status-card.done strong {
-            color: #255332;
-        }
-
-        .status-card.cancelled strong {
-            color: #9a3e2c;
-        }
-
-        .order-code {
-            display: grid;
-            gap: 4px;
-        }
-
-        .order-code small,
-        .muted {
-            color: #6c7b70;
-            font-size: 12px;
-        }
-
-        .payment-stack,
-        .order-update-form,
-        .shipping-update-form,
-        .cancel-request-box {
-            display: grid;
-            gap: 7px;
-        }
-
-        .order-update-form select,
-        .order-update-form input,
-        .shipping-update-form input,
-        .cancel-request-box input {
-            border: 1px solid #d7e2d2;
-            border-radius: 9px;
-            color: #1d3325;
-            font-family: inherit;
-            font-size: 12px;
-            height: 34px;
-            outline: none;
-            padding: 0 10px;
-            width: 100%;
-        }
-
-        .order-update-form button,
-        .shipping-update-form button,
-        .cancel-request-actions button {
-            border: 0;
-            border-radius: 9px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
-            font-weight: 700;
-            min-height: 34px;
-            padding: 0 11px;
-        }
-
-        .order-update-form button {
-            background: #1f7a4a;
-            color: #fff;
-        }
-
-        .shipping-update-form {
-            background: #f6fbf3;
-            border: 1px solid #d7e8ce;
-            border-radius: 12px;
-            margin-top: 8px;
-            min-width: 230px;
-            padding: 8px;
-        }
-
-        .shipping-update-form button {
-            background: #f59b18;
-            color: #fff;
-        }
-
-        .cancel-request-box {
-            background: #fffaf0;
-            border: 1px solid #f0d8a2;
-            border-radius: 12px;
-            min-width: 260px;
-            padding: 10px;
-        }
-
-        .cancel-request-box strong {
-            color: #7a5500;
-        }
-
-        .cancel-request-box p {
-            color: #5f5540;
-            font-size: 12px;
-            line-height: 1.45;
-            margin: 0;
-        }
-
-        .cancel-request-actions {
-            display: grid;
-            gap: 7px;
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .cancel-request-actions form {
-            display: grid;
-            gap: 7px;
-        }
-
-        .cancel-request-actions form:first-child button {
-            background: #1f7a4a;
-            color: #fff;
-        }
-
-        .cancel-request-actions form:last-child button {
-            background: #fff0ec;
-            border: 1px solid #f1b9aa;
-            color: #a13e2c;
-        }
-
-        .status-pill.refunded,
-        .status-pill.paid {
-            color: #2d6a3d;
-            background: #e9f8ef;
-        }
-
-        .status-pill.unpaid {
-            color: #8b6200;
-            background: #fff6db;
-        }
-
-        .status-pill.estimated {
-            color: #8b6200;
-            background: #fff6db;
-        }
-
-        .status-pill.confirmed {
-            color: #2d6a3d;
-            background: #e9f8ef;
-        }
-
-        .admin-order-link {
-            color: #1f7a4a;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        tr.has-cancel-request td {
-            background: #fffdf6;
-        }
-
-        @media (max-width: 1250px) {
-            .status-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 768px) {
-            .status-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .cancel-request-actions {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-@endsection
+@include('admin.orders._styles')
 
 @section('admin_content')
-    <section class="page-head reveal" style="--delay: 0ms;">
+    @php
+        $hasFilters = collect(['q', 'status', 'payment_status', 'payment_method', 'attention', 'date_from', 'date_to'])
+            ->contains(fn ($field) => request()->filled($field));
+    @endphp
+
+    <section class="page-head reveal">
         <div>
-            <h1 class="page-title">Quan ly don hang</h1>
-            <p class="page-subtitle">Theo doi don that tu MySQL, duyet huy don, cap nhat trang thai va fulfillment.</p>
+            <h1 class="page-title">Quản lý đơn hàng</h1>
+            <p class="page-subtitle">Theo dõi thanh toán, giao hàng, yêu cầu hủy và đổi trả trên cùng một luồng vận hành.</p>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <a href="{{ route('admin.coupons') }}" class="btn btn-ghost"><i class="ri-coupon-2-line"></i>Voucher</a>
-            <a href="{{ route('admin.dashboard') }}" class="btn btn-primary"><i class="ri-dashboard-line"></i>Tong quan</a>
+        <div class="page-actions">
+            <a href="{{ route('admin.dashboard') }}" class="btn btn-ghost"><i class="ri-dashboard-line"></i>Tổng quan</a>
         </div>
     </section>
 
-    @if(session('success'))
-        <div class="admin-alert success">{{ session('success') }}</div>
-    @endif
+    @if(session('success'))<div class="admin-alert success">{{ session('success') }}</div>@endif
+    @if(session('error'))<div class="admin-alert error">{{ session('error') }}</div>@endif
+    @if($errors->any())<div class="admin-alert error">{{ $errors->first() }}</div>@endif
 
-    @if(session('error'))
-        <div class="admin-alert error">{{ session('error') }}</div>
-    @endif
+    <section class="status-grid reveal" style="--delay: 40ms;">
+        @foreach([
+            'pending' => ['Chờ xác nhận', 'pending'],
+            'confirmed' => ['Đã xác nhận', 'confirmed'],
+            'shipping' => ['Đang giao', 'shipping'],
+            'done' => ['Hoàn tất', 'done'],
+            'cancelled' => ['Đã hủy', 'cancelled'],
+        ] as $status => [$label, $class])
+            <a class="status-card {{ $class }}" href="{{ route('admin.orders', ['status' => $status]) }}">
+                <small>{{ $label }}</small>
+                <strong>{{ number_format($orderSummary[$status] ?? 0) }}</strong>
+            </a>
+        @endforeach
+    </section>
 
-    @if($errors->any())
-        <div class="admin-alert error">{{ $errors->first() }}</div>
-    @endif
+    <section class="attention-strip reveal" style="--delay: 70ms;">
+        @foreach([
+            'cancellation' => ['ri-close-circle-line', 'Yêu cầu hủy'],
+            'return' => ['ri-refund-2-line', 'Yêu cầu đổi trả'],
+            'awaiting_payment' => ['ri-bank-card-line', 'Chờ đối soát tiền'],
+            'shipping_setup' => ['ri-truck-line', 'Chưa gán vận chuyển'],
+        ] as $key => [$icon, $label])
+            <a class="attention-link {{ ($attentionSummary[$key] ?? 0) > 0 ? 'has-work' : '' }}" href="{{ route('admin.orders', ['attention' => $key]) }}">
+                <span><i class="{{ $icon }}"></i> {{ $label }}</span>
+                <strong>{{ $attentionSummary[$key] ?? 0 }}</strong>
+            </a>
+        @endforeach
+    </section>
 
-    <section class="panel reveal" style="--delay: 90ms; margin-bottom: 14px;">
+    <section class="panel reveal" style="--delay: 90ms; margin-bottom:14px;">
         <div class="panel-head">
             <div>
-                <h2 class="panel-title">Trang thai don hang</h2>
-                <p class="panel-sub">Snapshot pipeline xu ly don va so yeu cau huy dang cho shop duyet.</p>
-            </div>
-            <span class="tag">Operation pulse</span>
-        </div>
-
-        <div class="status-grid">
-            <div class="status-card pending">
-                <small>Cho xac nhan</small>
-                <strong>{{ $orderSummary['pending'] ?? 0 }}</strong>
-            </div>
-            <div class="status-card confirmed">
-                <small>Da xac nhan</small>
-                <strong>{{ $orderSummary['confirmed'] ?? 0 }}</strong>
-            </div>
-            <div class="status-card shipping">
-                <small>Dang giao</small>
-                <strong>{{ $orderSummary['shipping'] ?? 0 }}</strong>
-            </div>
-            <div class="status-card done">
-                <small>Hoan tat</small>
-                <strong>{{ $orderSummary['done'] ?? 0 }}</strong>
-            </div>
-            <div class="status-card cancelled">
-                <small>Da huy</small>
-                <strong>{{ $orderSummary['cancelled'] ?? 0 }}</strong>
-            </div>
-            <div class="status-card cancel-request">
-                <small>Yeu cau huy</small>
-                <strong>{{ $pendingCancellationCount ?? 0 }}</strong>
+                <h2 class="panel-title">Tìm và lọc đơn</h2>
+                <p class="panel-sub">Có thể tìm bằng mã đơn, tên, email, số điện thoại hoặc mã vận đơn.</p>
             </div>
         </div>
+        <form method="get" action="{{ route('admin.orders') }}">
+            <div class="filter-grid">
+                <div class="field">
+                    <label for="q">Từ khóa</label>
+                    <input class="input" id="q" name="q" value="{{ request('q') }}" placeholder="DH..., khách hàng, số điện thoại...">
+                </div>
+                <div class="field">
+                    <label for="status">Trạng thái đơn</label>
+                    <select class="select" id="status" name="status">
+                        <option value="">Tất cả</option>
+                        @foreach($statusLabels as $value => $label)
+                            <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="payment_status">Thanh toán</label>
+                    <select class="select" id="payment_status" name="payment_status">
+                        <option value="">Tất cả</option>
+                        @foreach($paymentStatusLabels as $value => $label)
+                            <option value="{{ $value }}" @selected(request('payment_status') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="payment_method">Phương thức</label>
+                    <select class="select" id="payment_method" name="payment_method">
+                        <option value="">Tất cả</option>
+                        @foreach($paymentMethodLabels as $value => $label)
+                            <option value="{{ $value }}" @selected(request('payment_method') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="filter-grid secondary">
+                <div class="field">
+                    <label for="attention">Việc cần xử lý</label>
+                    <select class="select" id="attention" name="attention">
+                        <option value="">Tất cả</option>
+                        <option value="cancellation" @selected(request('attention') === 'cancellation')>Yêu cầu hủy</option>
+                        <option value="return" @selected(request('attention') === 'return')>Yêu cầu đổi trả</option>
+                        <option value="awaiting_payment" @selected(request('attention') === 'awaiting_payment')>Chờ đối soát tiền</option>
+                        <option value="shipping_setup" @selected(request('attention') === 'shipping_setup')>Chưa gán vận chuyển</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="date_from">Từ ngày</label>
+                    <input class="input" id="date_from" name="date_from" type="date" value="{{ request('date_from') }}">
+                </div>
+                <div class="field">
+                    <label for="date_to">Đến ngày</label>
+                    <input class="input" id="date_to" name="date_to" type="date" value="{{ request('date_to') }}">
+                </div>
+                <div class="field">
+                    <label for="per_page">Mỗi trang</label>
+                    <select class="select" id="per_page" name="per_page">
+                        @foreach([15, 25, 50] as $size)<option value="{{ $size }}" @selected((int) request('per_page', 15) === $size)>{{ $size }}</option>@endforeach
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-primary" type="submit"><i class="ri-search-line"></i>Lọc</button>
+                    @if($hasFilters)<a class="btn btn-ghost" href="{{ route('admin.orders') }}"><i class="ri-refresh-line"></i>Xóa lọc</a>@endif
+                </div>
+            </div>
+        </form>
+    </section>
 
+    <section class="panel reveal" style="--delay: 120ms;">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Danh sách đơn hàng</h2>
+                <p class="panel-sub">Mở chi tiết để cập nhật thanh toán, vận chuyển hoặc xử lý yêu cầu của khách.</p>
+            </div>
+            <span class="tag">{{ number_format($orders->total()) }} đơn</span>
+        </div>
         <div class="table-wrap">
             <table>
-                <thead>
-                <tr>
-                    <th>Ma don</th>
-                    <th>Khach hang</th>
-                    <th>Giao hang</th>
-                    <th>Thanh toan</th>
-                    <th>Trang thai</th>
-                    <th>Yeu cau huy</th>
-                    <th>Cap nhat</th>
-                </tr>
-                </thead>
+                <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Giao hàng</th><th>Trạng thái</th><th>Cần xử lý</th><th></th></tr></thead>
                 <tbody>
                 @forelse($orders as $order)
                     @php
-                        $latestCancellationRequest = $order->latest_cancellation_request;
-                        $hasPendingCancellation = $latestCancellationRequest && $latestCancellationRequest->status === \App\Models\OrderCancellationRequest::STATUS_PENDING;
+                        $pendingCancellation = $order->cancellationRequests->contains('status', \App\Models\OrderCancellationRequest::STATUS_PENDING);
+                        $pendingReturn = $order->returnRequests->contains('status', \App\Models\OrderReturnRequest::STATUS_PENDING);
+                        $awaitingPayment = $order->payment_method === \App\Models\Order::PAYMENT_METHOD_BANK_TRANSFER && $order->payment_status === \App\Models\Order::PAYMENT_STATUS_UNPAID;
                     @endphp
-                    <tr class="{{ $hasPendingCancellation ? 'has-cancel-request' : '' }}">
-                        <td>
-                            <span class="order-code">
-                                <strong>{{ $order->code }}</strong>
-                                <small>{{ \App\Support\LocalDateTime::format($order->created_at) }}</small>
-                                <a class="admin-order-link" href="{{ route('checkout.thankyou', ['code' => $order->code, 'token' => $order->public_token]) }}" target="_blank" rel="noopener">Xem trang khach</a>
-                            </span>
-                        </td>
-                        <td>
-                            <strong>{{ $order->customer_name }}</strong><br>
-                            <span class="muted">{{ $order->customer_phone ?? $order->customer_email ?? '-' }}</span>
-                        </td>
-                        <td>
-                            <span class="payment-stack">
-                                <strong>{{ $order->shipping_fee_status === \App\Models\Order::SHIPPING_FEE_STATUS_ESTIMATED ? 'Tam tinh ' : '' }}{{ (int) $order->shipping_fee > 0 ? number_format((int) $order->shipping_fee, 0, ',', '.') . ' VND' : 'Mien phi' }}</strong>
-                                <span class="status-pill {{ $order->shipping_fee_status }}">{{ $order->shipping_fee_status_label }}</span>
-                                <span class="muted">{{ $order->delivery_method_label }}{{ $order->shipping_delivery_eta ? ' · ' . $order->shipping_delivery_eta : '' }}</span>
-                                <span class="muted">{{ $order->shipping_address ?: 'Chua co dia chi' }}</span>
-                                @if($order->shipping_delivery_note)
-                                    <span class="muted">{{ $order->shipping_delivery_note }}</span>
-                                @endif
-                                @if($order->status !== \App\Models\Order::STATUS_CANCELLED && $order->payment_status !== \App\Models\Order::PAYMENT_STATUS_PAID)
-                                    <form method="post" action="{{ route('admin.orders.shipping', $order) }}" class="shipping-update-form">
-                                        @csrf
-                                        @method('PATCH')
-                                        <span class="muted">{{ $order->shipping_fee_status === \App\Models\Order::SHIPPING_FEE_STATUS_CONFIRMED ? 'Sua phi ship neu can' : 'Chot phi ship thuc te' }}</span>
-                                        <input type="number" name="shipping_fee" min="0" max="2000000" step="1000" value="{{ (int) $order->shipping_fee }}" required>
-                                        <input type="text" name="shipping_delivery_note" maxlength="500" value="{{ $order->shipping_delivery_note }}" placeholder="Ghi chu giao hang">
-                                        <button type="submit">{{ $order->shipping_fee_status === \App\Models\Order::SHIPPING_FEE_STATUS_CONFIRMED ? 'Cap nhat phi' : 'Chot phi' }}</button>
-                                    </form>
-                                @elseif($order->payment_status === \App\Models\Order::PAYMENT_STATUS_PAID)
-                                    <span class="muted">Tổng tiền đã khóa sau thanh toán</span>
-                                @endif
-                            </span>
-                        </td>
-                        <td>
-                            <span class="payment-stack">
-                                <strong>{{ number_format((int) $order->total, 0, ',', '.') }} VND</strong>
-                                <span class="status-pill {{ $order->payment_status }}">{{ $order->payment_status_label }}</span>
-                                <span class="muted">{{ $order->payment_method_label }}</span>
-                                @if($order->coupon_code)
-                                    <span class="status-pill confirmed">Voucher: {{ $order->coupon_code }}</span>
-                                @endif
-                            </span>
-                        </td>
-                        <td>
-                            <span class="status-pill {{ $order->status }}">{{ $order->status_label }}</span>
-                            @if($order->admin_note)
-                                <div class="muted" style="margin-top:6px; line-height:1.45;">{!! nl2br(e($order->admin_note)) !!}</div>
-                            @endif
-                        </td>
-                        <td>
-                            @if($latestCancellationRequest)
-                                <div class="cancel-request-box">
-                                    <strong>{{ $latestCancellationRequest->status_label }}</strong>
-                                    <p>Ly do: {{ $latestCancellationRequest->reason_label }}</p>
-                                    @if($latestCancellationRequest->note)
-                                        <p>Khach ghi chu: {{ $latestCancellationRequest->note }}</p>
-                                    @endif
-                                    @if($latestCancellationRequest->admin_note)
-                                        <p>Shop phan hoi: {{ $latestCancellationRequest->admin_note }}</p>
-                                    @endif
-
-                                    @if($hasPendingCancellation)
-                                        <div class="cancel-request-actions">
-                                            <form method="post" action="{{ route('admin.orders.cancellations.approve', $latestCancellationRequest) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="text" name="admin_note" maxlength="500" placeholder="Ghi chu duyet">
-                                                <button type="submit">Duyet huy</button>
-                                            </form>
-                                            <form method="post" action="{{ route('admin.orders.cancellations.reject', $latestCancellationRequest) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="text" name="admin_note" maxlength="500" placeholder="Ly do tu choi" required>
-                                                <button type="submit">Tu choi</button>
-                                            </form>
-                                        </div>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="muted">Chua co yeu cau</span>
-                            @endif
-                        </td>
-                        <td>
-                            <form method="post" action="{{ route('admin.orders.status', $order) }}" class="order-update-form">
-                                @csrf
-                                @method('PATCH')
-                                <select name="status" required>
-                                    @foreach(($allowedStatusTransitions[$order->id] ?? [$order->status]) as $statusValue)
-                                        <option value="{{ $statusValue }}" {{ $order->status === $statusValue ? 'selected' : '' }}>{{ $statusLabels[$statusValue] ?? $statusValue }}</option>
-                                    @endforeach
-                                </select>
-                                <input type="text" name="admin_note" maxlength="500" placeholder="Ghi chu noi bo">
-                                <button type="submit">Luu trang thai</button>
-                            </form>
-                        </td>
+                    <tr>
+                        <td><div class="order-code"><a href="{{ route('admin.orders.show', $order) }}">{{ $order->code }}</a><small class="muted">{{ \App\Support\LocalDateTime::format($order->created_at) }}</small></div></td>
+                        <td><div class="cell-stack"><strong>{{ $order->customer_name }}</strong><span class="muted">{{ $order->customer_phone ?: $order->customer_email ?: '-' }}</span></div></td>
+                        <td><div class="cell-stack"><span class="money">{{ number_format((int) $order->total, 0, ',', '.') }}đ</span><span class="status-pill {{ $order->payment_status }}">{{ $order->payment_status_label }}</span><span class="muted">{{ $order->payment_method_label }}</span></div></td>
+                        <td><div class="cell-stack"><strong>{{ $order->shipping_provider ?: 'Chưa gán' }}</strong><span class="muted">{{ $order->tracking_code ?: $order->delivery_method_label }}</span></div></td>
+                        <td><span class="status-pill {{ $order->status }}">{{ $order->status_label }}</span></td>
+                        <td><div class="attention-badges">
+                            @if($pendingCancellation)<span class="attention-badge">Hủy đơn</span>@endif
+                            @if($pendingReturn)<span class="attention-badge return">Đổi trả</span>@endif
+                            @if($awaitingPayment)<span class="attention-badge payment">Đối soát tiền</span>@endif
+                            @if(!$pendingCancellation && !$pendingReturn && !$awaitingPayment)<span class="muted">Không có</span>@endif
+                        </div></td>
+                        <td><a class="btn btn-ghost" href="{{ route('admin.orders.show', $order) }}"><i class="ri-eye-line"></i>Chi tiết</a></td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-box">
-                                <i class="ri-truck-line"></i>
-                                <div>Chua co don hang nao trong database.</div>
-                            </div>
-                        </td>
-                    </tr>
+                    <tr><td colspan="7"><div class="empty-box"><i class="ri-inbox-2-line"></i><div>Không tìm thấy đơn hàng phù hợp.</div></div></td></tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
+        @if($orders->hasPages())
+            <div class="admin-pager">
+                <span>Trang {{ $orders->currentPage() }} / {{ $orders->lastPage() }}</span>
+                <div class="admin-pager-actions">
+                    @if($orders->onFirstPage())<span class="disabled">Trước</span>@else<a href="{{ $orders->previousPageUrl() }}">Trước</a>@endif
+                    @if($orders->hasMorePages())<a href="{{ $orders->nextPageUrl() }}">Sau</a>@else<span class="disabled">Sau</span>@endif
+                </div>
+            </div>
+        @endif
     </section>
 @endsection
