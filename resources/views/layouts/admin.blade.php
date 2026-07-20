@@ -674,7 +674,7 @@
                 <i class="ri-file-list-3-line"></i>
                 <span>Don hang</span>
             </a>
-            <a href="{{ route('admin.products') }}" class="menu-link {{ request()->routeIs('admin.products') ? 'active' : '' }}">
+            <a href="{{ route('admin.products') }}" class="menu-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
                 <i class="ri-apple-line"></i>
                 <span>San pham</span>
             </a>

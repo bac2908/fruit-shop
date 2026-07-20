@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Quan ly san pham | FruitShop Admin')
+@section('title', 'Quản lý sản phẩm | FruitShop Admin')
 
 @section('head')
     <style>
@@ -16,6 +16,12 @@
             color: #245f35;
             border: 1px solid #bfe3c8;
             background: #edf9f0;
+        }
+
+        .admin-alert.error {
+            color: #8f3122;
+            border: 1px solid #f0bcb1;
+            background: #fff1ee;
         }
 
         .filter-grid {
@@ -161,11 +167,14 @@
             border: 1px solid #d9e4d5;
             background: #fff;
             color: #244b35;
+            cursor: pointer;
+            font-family: inherit;
         }
 
-        .btn[disabled] {
-            cursor: not-allowed;
-            opacity: 0.55;
+        .action-link.danger {
+            color: var(--admin-danger);
+            border-color: #f0c8c0;
+            background: #fff7f5;
         }
 
         .admin-pager {
@@ -264,61 +273,66 @@
         <div class="admin-alert success">{{ session('success') }}</div>
     @endif
 
+    @if(session('error'))
+        <div class="admin-alert error">{{ session('error') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="admin-alert error">{{ $errors->first() }}</div>
+    @endif
+
     <section class="page-head reveal" style="--delay: 0ms;">
         <div>
-            <h1 class="page-title">Quan ly san pham</h1>
-            <p class="page-subtitle">Doc san pham tu MySQL, loc catalog, kiem ton kho va dieu khien hien thi storefront.</p>
+            <h1 class="page-title">Quản lý sản phẩm</h1>
+            <p class="page-subtitle">Quản lý danh mục bán hàng, giá, hình ảnh, tồn kho và trạng thái hiển thị trên cửa hàng.</p>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-ghost" type="button" disabled title="Buoc sau se lam import Excel/CSV">
-                <i class="ri-upload-cloud-2-line"></i>Import
-            </button>
-            <button class="btn btn-primary" type="button" disabled title="Buoc 2 se lam form them/sua san pham">
-                <i class="ri-add-line"></i>Them san pham
-            </button>
+            <a class="btn btn-primary" href="{{ route('admin.products.create') }}">
+                <i class="ri-add-line"></i>Thêm sản phẩm
+            </a>
         </div>
     </section>
 
     <section class="stats-grid reveal" style="--delay: 40ms;">
         <article class="kpi-card">
-            <div class="kpi-label">Tong san pham</div>
+            <div class="kpi-label">Tổng sản phẩm</div>
             <p class="kpi-value">{{ number_format($stats['total'] ?? 0) }}</p>
-            <div class="kpi-foot">Tat ca ban ghi trong bang products</div>
+            <div class="kpi-foot"><strong>{{ number_format($stats['deleted'] ?? 0) }}</strong> sản phẩm trong thùng rác</div>
         </article>
         <article class="kpi-card">
-            <div class="kpi-label">Dang hien thi</div>
+            <div class="kpi-label">Đang hiển thị</div>
             <p class="kpi-value">{{ number_format($stats['active'] ?? 0) }}</p>
-            <div class="kpi-foot"><strong>{{ number_format($stats['hidden'] ?? 0) }}</strong> san pham dang an</div>
+            <div class="kpi-foot"><strong>{{ number_format($stats['hidden'] ?? 0) }}</strong> sản phẩm đang ẩn</div>
         </article>
         <article class="kpi-card">
-            <div class="kpi-label">Sap het hang</div>
+            <div class="kpi-label">Sắp hết hàng</div>
             <p class="kpi-value">{{ number_format($stats['low_stock'] ?? 0) }}</p>
-            <div class="kpi-foot">Can canh bao de nhap hang kip</div>
+            <div class="kpi-foot">Cần nhập hàng để tránh gián đoạn bán</div>
         </article>
         <article class="kpi-card">
-            <div class="kpi-label">Het hang</div>
+            <div class="kpi-label">Hết hàng</div>
             <p class="kpi-value">{{ number_format($stats['out_of_stock'] ?? 0) }}</p>
-            <div class="kpi-foot">Nen an hoac cap nhat ton kho</div>
+            <div class="kpi-foot">Nên tạm ẩn hoặc cập nhật tồn kho</div>
         </article>
     </section>
 
     <section class="panel reveal" style="--delay: 80ms; margin-bottom: 14px;">
         <div class="panel-head">
             <div>
-                <h2 class="panel-title">Bo loc va tim kiem</h2>
-                <p class="panel-sub">Loc truc tiep tren DB theo ten, SKU, danh muc, trang thai va ton kho.</p>
+                <h2 class="panel-title">Bộ lọc và tìm kiếm</h2>
+                <p class="panel-sub">Tìm theo tên, SKU hoặc slug; lọc theo danh mục, trạng thái và tồn kho.</p>
             </div>
         </div>
 
         <form class="filter-grid" method="get" action="{{ route('admin.products') }}">
             <div class="field">
-                <label for="q">Tim theo ten / SKU / slug</label>
-                <input id="q" class="input" name="q" type="text" value="{{ request('q') }}" placeholder="Vi du: nho xanh, tao Envy...">
+                <label for="q">Tìm theo tên / SKU / slug</label>
+                <input id="q" class="input" name="q" type="text" value="{{ request('q') }}" placeholder="Ví dụ: nho xanh, táo Envy...">
             </div>
             <div class="field">
-                <label for="category">Danh muc</label>
+                <label for="category">Danh mục</label>
                 <select id="category" class="select" name="category">
-                    <option value="">Tat ca danh muc</option>
+                    <option value="">Tất cả danh mục</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" @selected((string) request('category') === (string) $category->id)>
                             {{ $category->name }}
@@ -327,24 +341,25 @@
                 </select>
             </div>
             <div class="field">
-                <label for="status">Trang thai</label>
+                <label for="status">Trạng thái</label>
                 <select id="status" class="select" name="status">
-                    <option value="">Tat ca trang thai</option>
-                    <option value="active" @selected(request('status') === 'active')>Dang hien thi</option>
-                    <option value="hidden" @selected(request('status') === 'hidden')>Tam an</option>
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active" @selected(request('status') === 'active')>Đang hiển thị</option>
+                    <option value="hidden" @selected(request('status') === 'hidden')>Tạm ẩn</option>
+                    <option value="trashed" @selected(request('status') === 'trashed')>Thùng rác</option>
                 </select>
             </div>
             <div class="field">
-                <label for="stock">Ton kho</label>
+                <label for="stock">Tồn kho</label>
                 <select id="stock" class="select" name="stock">
-                    <option value="">Tat ca ton kho</option>
-                    <option value="low" @selected(request('stock') === 'low')>Sap het hang</option>
-                    <option value="in_stock" @selected(request('stock') === 'in_stock')>Con hang</option>
-                    <option value="out" @selected(request('stock') === 'out')>Het hang</option>
+                    <option value="">Tất cả tồn kho</option>
+                    <option value="low" @selected(request('stock') === 'low')>Sắp hết hàng</option>
+                    <option value="in_stock" @selected(request('stock') === 'in_stock')>Còn hàng</option>
+                    <option value="out" @selected(request('stock') === 'out')>Hết hàng</option>
                 </select>
             </div>
             <div class="field">
-                <label for="per_page">Moi trang</label>
+                <label for="per_page">Mỗi trang</label>
                 <select id="per_page" class="select" name="per_page">
                     @foreach([15, 25, 50] as $size)
                         <option value="{{ $size }}" @selected((int) request('per_page', 15) === $size)>{{ $size }}</option>
@@ -352,9 +367,9 @@
                 </select>
             </div>
             <div class="filter-actions">
-                <button class="btn btn-primary" type="submit"><i class="ri-search-line"></i>Loc</button>
+                <button class="btn btn-primary" type="submit"><i class="ri-search-line"></i>Lọc</button>
                 @if($hasFilters)
-                    <a class="btn btn-ghost" href="{{ route('admin.products') }}"><i class="ri-refresh-line"></i>Xoa loc</a>
+                    <a class="btn btn-ghost" href="{{ route('admin.products') }}"><i class="ri-refresh-line"></i>Xóa lọc</a>
                 @endif
             </div>
         </form>
@@ -364,14 +379,12 @@
         <article class="panel reveal" style="--delay: 140ms;">
             <div class="toolbar">
                 <div class="toolbar-left">
-                    <button class="btn btn-ghost" type="button" disabled><i class="ri-checkbox-multiple-line"></i>Chon tat ca</button>
-                    <button class="btn btn-ghost" type="button" disabled><i class="ri-edit-2-line"></i>Sua hang loat</button>
-                    <button class="btn btn-ghost" type="button" disabled><i class="ri-price-tag-3-line"></i>Cap nhat gia</button>
+                    <span class="panel-sub">Giá, ảnh và kho được cập nhật trong trang sửa của từng sản phẩm.</span>
                 </div>
                 @if(method_exists($products ?? null, 'total'))
-                    <span class="tag">Dang hien {{ $products->firstItem() ?? 0 }}-{{ $products->lastItem() ?? 0 }} / {{ number_format($products->total()) }}</span>
+                    <span class="tag">Đang hiện {{ $products->firstItem() ?? 0 }}-{{ $products->lastItem() ?? 0 }} / {{ number_format($products->total()) }}</span>
                 @else
-                    <span class="tag">Bang san pham</span>
+                    <span class="tag">Bảng sản phẩm</span>
                 @endif
             </div>
 
@@ -379,13 +392,13 @@
                 <table id="product-table">
                     <thead>
                     <tr>
-                        <th>San pham</th>
-                        <th>Danh muc</th>
-                        <th>Gia</th>
-                        <th>Ton kho</th>
-                        <th>Trang thai</th>
-                        <th>Cap nhat</th>
-                        <th>Thao tac</th>
+                        <th>Sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá</th>
+                        <th>Tồn kho</th>
+                        <th>Trạng thái</th>
+                        <th>Cập nhật</th>
+                        <th>Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -415,7 +428,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ $product->category->name ?? 'Chua phan loai' }}</td>
+                            <td>{{ $product->category->name ?? 'Chưa phân loại' }}</td>
                             <td>
                                 <div class="price-line">
                                     <strong>{{ number_format($displayPrice) }} VND</strong>
@@ -428,32 +441,51 @@
                                 <strong>{{ number_format($stock) }} {{ $product->unit ?? 'sp' }}</strong>
                                 <div class="stock-note">
                                     @if($isOut)
-                                        Het hang
+                                        Hết hàng
                                     @elseif($isLow)
-                                        Sap het hang
+                                        Sắp hết hàng
                                     @else
-                                        Con hang
+                                        Còn hàng
                                     @endif
                                 </div>
                             </td>
                             <td>
-                                <form method="post" action="{{ route('admin.products.visibility', $product) }}" class="inline-form">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="status-pill status-button {{ $product->is_active ? 'done' : 'cancelled' }}" title="Bam de doi trang thai hien thi">
-                                        {{ $product->is_active ? 'Dang hien' : 'Tam an' }}
-                                    </button>
-                                </form>
+                                @if($product->trashed())
+                                    <span class="status-pill cancelled">Đã xóa</span>
+                                @else
+                                    <form method="post" action="{{ route('admin.products.visibility', $product) }}" class="inline-form">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="status-pill status-button {{ $product->is_active ? 'done' : 'cancelled' }}" title="Bấm để đổi trạng thái hiển thị">
+                                            {{ $product->is_active ? 'Đang hiện' : 'Tạm ẩn' }}
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                             <td>{{ \App\Support\LocalDateTime::format($product->updated_at) }}</td>
                             <td>
                                 <div class="action-links">
-                                    <a class="action-link" href="{{ route('products.show', $product->slug) }}" target="_blank" title="Xem ngoai storefront">
-                                        <i class="ri-eye-line"></i>
-                                    </a>
-                                    <button class="action-link" type="button" disabled title="Buoc 2 se lam trang sua san pham">
-                                        <i class="ri-edit-2-line"></i>
-                                    </button>
+                                    @if($product->trashed())
+                                        <form method="post" action="{{ route('admin.products.restore', $product->id) }}" class="inline-form">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="action-link" type="submit" title="Khôi phục sản phẩm" aria-label="Khôi phục sản phẩm"><i class="ri-arrow-go-back-line"></i></button>
+                                        </form>
+                                    @else
+                                        @if($product->is_active)
+                                            <a class="action-link" href="{{ route('products.show', $product->slug) }}" target="_blank" rel="noopener" title="Xem ngoài storefront" aria-label="Xem ngoài storefront">
+                                                <i class="ri-eye-line"></i>
+                                            </a>
+                                        @endif
+                                        <a class="action-link" href="{{ route('admin.products.edit', $product) }}" title="Sửa sản phẩm" aria-label="Sửa sản phẩm">
+                                            <i class="ri-edit-2-line"></i>
+                                        </a>
+                                        <form method="post" action="{{ route('admin.products.destroy', $product) }}" class="inline-form" onsubmit="return confirm('Đưa sản phẩm này vào thùng rác?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="action-link danger" type="submit" title="Xóa mềm sản phẩm" aria-label="Xóa mềm sản phẩm"><i class="ri-delete-bin-6-line"></i></button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -462,7 +494,7 @@
                             <td colspan="7">
                                 <div class="empty-box">
                                     <i class="ri-layout-grid-line"></i>
-                                    <div>Khong tim thay san pham nao phu hop voi bo loc hien tai.</div>
+                                    <div>Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.</div>
                                 </div>
                             </td>
                         </tr>
@@ -476,9 +508,9 @@
                     <div>Trang {{ $products->currentPage() }} / {{ $products->lastPage() }}</div>
                     <div class="admin-pager-actions">
                         @if($products->onFirstPage())
-                            <span class="page-disabled">Truoc</span>
+                            <span class="page-disabled">Trước</span>
                         @else
-                            <a href="{{ $products->previousPageUrl() }}">Truoc</a>
+                            <a href="{{ $products->previousPageUrl() }}">Trước</a>
                         @endif
 
                         @if($products->hasMorePages())
@@ -494,8 +526,8 @@
         <article class="panel reveal" style="--delay: 210ms;">
             <div class="panel-head">
                 <div>
-                    <h2 class="panel-title">Can xu ly</h2>
-                    <p class="panel-sub">Danh sach lay tu DB, uu tien san pham sap het hang.</p>
+                    <h2 class="panel-title">Cần xử lý</h2>
+                    <p class="panel-sub">Danh sách ưu tiên các sản phẩm sắp hết hàng để nhập kho kịp thời.</p>
                 </div>
             </div>
 
@@ -504,8 +536,8 @@
                     @foreach($lowStockProducts as $lowStockProduct)
                         <div class="quick-item">
                             <div>
-                                <strong>{{ $lowStockProduct->name }}</strong>
-                                <span>{{ $lowStockProduct->category->name ?? 'Chua phan loai' }}</span>
+                                <a href="{{ route('admin.products.edit', $lowStockProduct) }}"><strong>{{ $lowStockProduct->name }}</strong></a>
+                                <span>{{ $lowStockProduct->category->name ?? 'Chưa phân loại' }}</span>
                             </div>
                             <strong>{{ number_format((int) $lowStockProduct->stock) }}</strong>
                         </div>
@@ -514,13 +546,9 @@
             @else
                 <div class="empty-box">
                     <i class="ri-checkbox-circle-line"></i>
-                    <div>Chua co san pham sap het hang.</div>
+                    <div>Chưa có sản phẩm sắp hết hàng.</div>
                 </div>
             @endif
-
-            <div class="hero-note" style="margin-top: 12px; margin-bottom: 0;">
-                Buoc 1 da noi admin san pham voi Product/Category that. Buoc 2 nen lam form them/sua san pham, upload anh va cap nhat ton kho co ghi log.
-            </div>
         </article>
     </section>
 @endsection
