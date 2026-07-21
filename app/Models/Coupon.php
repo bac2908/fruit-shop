@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Support\LocalDateTime;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
-use App\Support\LocalDateTime;
 
 class Coupon extends Model
 {
@@ -16,6 +17,8 @@ class Coupon extends Model
         'title',
         'code',
         'type',
+        'gift_product_id',
+        'gift_quantity',
         'value',
         'min_order_total',
         'starts_at',
@@ -36,6 +39,8 @@ class Coupon extends Model
         'is_active' => 'boolean',
         'is_public' => 'boolean',
         'value' => 'integer',
+        'gift_product_id' => 'integer',
+        'gift_quantity' => 'integer',
         'min_order_total' => 'integer',
         'usage_limit' => 'integer',
         'per_customer_limit' => 'integer',
@@ -45,7 +50,9 @@ class Coupon extends Model
 
     // Coupon types
     const TYPE_PERCENT = 'percent';
+
     const TYPE_FIXED = 'fixed';
+
     const TYPE_GIFT = 'gift';
 
     /**
@@ -53,7 +60,7 @@ class Coupon extends Model
      */
     public function isValid(): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -71,12 +78,16 @@ class Coupon extends Model
             return false;
         }
 
+        if ($this->giftInventoryError()) {
+            return false;
+        }
+
         return true;
     }
 
     public function getInvalidReason(int $subtotal = 0, ?int $userId = null, ?string $email = null): ?string
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return 'Voucher này đang tạm ngưng.';
         }
 
@@ -94,16 +105,20 @@ class Coupon extends Model
             return 'Voucher này đã hết lượt sử dụng.';
         }
 
-        if (!$this->is_public && !$this->hasUsableVoucherFor($userId)) {
+        if ($giftError = $this->giftInventoryError()) {
+            return $giftError;
+        }
+
+        if (! $this->is_public && ! $this->hasUsableVoucherFor($userId)) {
             return 'Voucher này chỉ dành cho tài khoản được gán riêng.';
         }
 
         if ($this->min_order_total && $subtotal > 0 && $subtotal < (int) $this->min_order_total) {
-            return 'Đơn hàng cần tối thiểu ' . number_format((int) $this->min_order_total, 0, ',', '.') . 'đ để dùng voucher này.';
+            return 'Đơn hàng cần tối thiểu '.number_format((int) $this->min_order_total, 0, ',', '.').'đ để dùng voucher này.';
         }
 
         if ($this->per_customer_limit && $this->usageCountFor($userId, $email) >= (int) $this->per_customer_limit) {
-            return 'Mã ' . $this->code . ' đã được tài khoản của bạn sử dụng.';
+            return 'Mã '.$this->code.' đã được tài khoản của bạn sử dụng.';
         }
 
         return null;
@@ -113,7 +128,7 @@ class Coupon extends Model
     {
         $email = $email ? strtolower(trim($email)) : null;
 
-        if (!$userId && !$email) {
+        if (! $userId && ! $email) {
             return 0;
         }
 
@@ -140,7 +155,7 @@ class Coupon extends Model
 
     public function hasBeenUsedBy(?int $userId = null, ?string $email = null): bool
     {
-        if (!$this->per_customer_limit) {
+        if (! $this->per_customer_limit) {
             return false;
         }
 
@@ -156,10 +171,52 @@ class Coupon extends Model
         return $this->discount_label;
     }
 
+    public function getAdminStatusKeyAttribute(): string
+    {
+        if ($this->trashed()) {
+            return 'archived';
+        }
+
+        if (! $this->is_active) {
+            return 'inactive';
+        }
+
+        if ($this->starts_at && now()->lessThan($this->starts_at)) {
+            return 'scheduled';
+        }
+
+        if ($this->ends_at && now()->greaterThan($this->ends_at)) {
+            return 'expired';
+        }
+
+        if ($this->usage_limit && (int) $this->used_count >= (int) $this->usage_limit) {
+            return 'exhausted';
+        }
+
+        if ($this->giftInventoryError()) {
+            return 'unavailable';
+        }
+
+        return 'active';
+    }
+
+    public function getAdminStatusLabelAttribute(): string
+    {
+        return [
+            'active' => 'Đang áp dụng',
+            'scheduled' => 'Sắp diễn ra',
+            'expired' => 'Đã hết hạn',
+            'exhausted' => 'Hết lượt',
+            'unavailable' => 'Quà không khả dụng',
+            'inactive' => 'Tạm ngưng',
+            'archived' => 'Đã lưu trữ',
+        ][$this->admin_status_key] ?? 'Không xác định';
+    }
+
     public function getCustomerLimitLabelAttribute(): string
     {
         if ($this->per_customer_limit) {
-            return 'Mỗi tài khoản dùng tối đa ' . number_format((int) $this->per_customer_limit, 0, ',', '.') . ' lần';
+            return 'Mỗi tài khoản dùng tối đa '.number_format((int) $this->per_customer_limit, 0, ',', '.').' lần';
         }
 
         return 'Không giới hạn số lần dùng theo tài khoản';
@@ -176,7 +233,7 @@ class Coupon extends Model
 
     public function hasUsableVoucherFor(?int $userId): bool
     {
-        if (!$userId) {
+        if (! $userId) {
             return false;
         }
 
@@ -193,17 +250,17 @@ class Coupon extends Model
     public function getDiscountLabelAttribute(): string
     {
         if ($this->type === self::TYPE_PERCENT) {
-            $label = 'Giảm ' . (int) $this->value . '%';
+            $label = 'Giảm '.(int) $this->value.'%';
 
             if ($this->max_discount) {
-                $label .= ', tối đa ' . number_format((int) $this->max_discount, 0, ',', '.') . 'đ';
+                $label .= ', tối đa '.number_format((int) $this->max_discount, 0, ',', '.').'đ';
             }
 
             return $label;
         }
 
         if ($this->type === self::TYPE_FIXED) {
-            return 'Giảm ' . number_format((int) $this->value, 0, ',', '.') . 'đ';
+            return 'Giảm '.number_format((int) $this->value, 0, ',', '.').'đ';
         }
 
         return 'Quà tặng';
@@ -212,7 +269,7 @@ class Coupon extends Model
     public function getConditionLabelAttribute(): string
     {
         if ($this->min_order_total) {
-            return 'Đơn từ ' . number_format((int) $this->min_order_total, 0, ',', '.') . 'đ';
+            return 'Đơn từ '.number_format((int) $this->min_order_total, 0, ',', '.').'đ';
         }
 
         return 'Không yêu cầu giá trị đơn tối thiểu';
@@ -221,7 +278,7 @@ class Coupon extends Model
     public function getExpiryLabelAttribute(): string
     {
         if ($this->ends_at) {
-            return 'Hết hạn ' . LocalDateTime::format($this->ends_at);
+            return 'Hết hạn '.LocalDateTime::format($this->ends_at);
         }
 
         return 'Không giới hạn thời gian';
@@ -231,7 +288,8 @@ class Coupon extends Model
     {
         if ($this->usage_limit) {
             $remaining = max(0, (int) $this->usage_limit - (int) $this->used_count);
-            return 'Còn ' . number_format($remaining, 0, ',', '.') . ' lượt';
+
+            return 'Còn '.number_format($remaining, 0, ',', '.').' lượt';
         }
 
         return 'Không giới hạn lượt dùng';
@@ -250,7 +308,7 @@ class Coupon extends Model
      */
     public function calculateDiscount($subtotal): int
     {
-        if (!$this->isValid()) {
+        if (! $this->isValid()) {
             return 0;
         }
 
@@ -291,12 +349,39 @@ class Coupon extends Model
         return $this->hasMany(UserVoucher::class);
     }
 
+    public function giftProduct(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'gift_product_id')->withTrashed();
+    }
+
+    public function giftInventoryError(): ?string
+    {
+        if ($this->type !== self::TYPE_GIFT || ! $this->gift_product_id) {
+            return null;
+        }
+
+        $product = $this->relationLoaded('giftProduct')
+            ? $this->giftProduct
+            : $this->giftProduct()->first();
+
+        if (! $product || $product->trashed() || ! $product->is_active) {
+            return 'Sản phẩm quà tặng hiện không khả dụng.';
+        }
+
+        if ((int) $product->stock < max(1, (int) $this->gift_quantity)) {
+            return 'Quà tặng của voucher hiện đã hết hàng.';
+        }
+
+        return null;
+    }
+
     /**
      * Get primary image URL
      */
     public function getImageUrlAttribute()
     {
         $image = $this->images()->first();
+
         return $image ? $image->url : null;
     }
 
@@ -311,14 +396,15 @@ class Coupon extends Model
     public function scopeValid($query)
     {
         $now = Carbon::now();
+
         return $query->where('is_active', true)
             ->where(function ($q) use ($now) {
                 $q->whereNull('starts_at')
-                  ->orWhere('starts_at', '<=', $now);
+                    ->orWhere('starts_at', '<=', $now);
             })
             ->where(function ($q) use ($now) {
                 $q->whereNull('ends_at')
-                  ->orWhere('ends_at', '>=', $now);
+                    ->orWhere('ends_at', '>=', $now);
             })
             ->where(function ($q) {
                 $q->whereNull('usage_limit')

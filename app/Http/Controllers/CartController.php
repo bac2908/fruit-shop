@@ -532,15 +532,49 @@ class CartController extends Controller
             }
 
             if ($summary['coupon'] && $summary['coupon']->type === Coupon::TYPE_GIFT) {
+                $giftProduct = null;
+                $giftQuantity = max(1, (int) $summary['coupon']->gift_quantity);
+
+                if ($summary['coupon']->gift_product_id) {
+                    $giftProduct = Product::query()
+                        ->whereKey($summary['coupon']->gift_product_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $giftProduct || ! $giftProduct->is_active || (int) $giftProduct->stock < $giftQuantity) {
+                        throw ValidationException::withMessages([
+                            'coupon' => 'Quà tặng của voucher vừa hết hàng. Vui lòng chọn ưu đãi khác.',
+                        ]);
+                    }
+                }
+
                 OrderItem::query()->create([
                     'order_id' => $order->id,
-                    'product_id' => null,
-                    'product_name' => $summary['coupon']->benefit_label,
-                    'unit' => 'quà tặng voucher',
+                    'product_id' => optional($giftProduct)->id,
+                    'product_name' => $giftProduct ? $giftProduct->name : $summary['coupon']->benefit_label,
+                    'unit' => $giftProduct ? $giftProduct->unit : 'quà tặng voucher',
                     'unit_price' => 0,
-                    'qty' => 1,
+                    'qty' => $giftQuantity,
                     'line_total' => 0,
                 ]);
+
+                if ($giftProduct) {
+                    $stockBefore = (int) $giftProduct->stock;
+                    $stockAfter = $stockBefore - $giftQuantity;
+                    $giftProduct->forceFill(['stock' => $stockAfter])->save();
+
+                    InventoryMovement::query()->create([
+                        'product_id' => $giftProduct->id,
+                        'order_id' => $order->id,
+                        'user_id' => $user->id,
+                        'type' => 'coupon_gift',
+                        'quantity' => -1 * $giftQuantity,
+                        'stock_before' => $stockBefore,
+                        'stock_after' => $stockAfter,
+                        'unit_cost' => $giftProduct->cost_price,
+                        'note' => 'Xuất quà voucher '.$summary['coupon']->code.' cho đơn '.$order->code,
+                    ]);
+                }
             }
 
             OrderStatusHistory::query()->create([
@@ -922,6 +956,14 @@ class CartController extends Controller
             throw ValidationException::withMessages([
                 'coupon' => 'Ma giam gia khong hop le hoac da het luot su dung.',
             ]);
+        }
+
+        if ($coupon->type === Coupon::TYPE_GIFT && $coupon->gift_product_id) {
+            $giftProduct = Product::query()
+                ->whereKey($coupon->gift_product_id)
+                ->lockForUpdate()
+                ->first();
+            $coupon->setRelation('giftProduct', $giftProduct);
         }
 
         if ($error = $coupon->getInvalidReason((int) $summary['subtotal'], optional($user)->id, optional($user)->email)) {

@@ -121,11 +121,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/contacts/{contactMessage}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
 
     Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
+    Route::get('/coupons/create', [AdminCouponController::class, 'create'])->name('coupons.create');
     Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
     Route::post('/coupons/assign', [AdminCouponController::class, 'assign'])->name('coupons.assign');
+    Route::get('/coupons/{coupon}', [AdminCouponController::class, 'show'])->name('coupons.show');
+    Route::get('/coupons/{coupon}/edit', [AdminCouponController::class, 'edit'])->name('coupons.edit');
     Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
     Route::patch('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
     Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+    Route::patch('/coupons/{coupon}/restore', [AdminCouponController::class, 'restore'])
+        ->whereNumber('coupon')
+        ->name('coupons.restore');
 
     Route::get('/reports', function () {
         return view('admin.reports');
