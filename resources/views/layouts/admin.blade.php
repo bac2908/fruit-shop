@@ -678,7 +678,7 @@
                 <i class="ri-apple-line"></i>
                 <span>San pham</span>
             </a>
-            <a href="{{ route('admin.customers') }}" class="menu-link {{ request()->routeIs('admin.customers') ? 'active' : '' }}">
+            <a href="{{ route('admin.customers') }}" class="menu-link {{ request()->routeIs('admin.customers*') ? 'active' : '' }}">
                 <i class="ri-team-line"></i>
                 <span>Khach hang</span>
             </a>

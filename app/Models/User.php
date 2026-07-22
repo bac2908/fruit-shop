@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\CustomerResetPasswordNotification;
+use App\Notifications\CustomerVerifyEmailNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,6 +13,10 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
+
+    public const ACCOUNT_STATUS_ACTIVE = 'active';
+
+    public const ACCOUNT_STATUS_SUSPENDED = 'suspended';
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +38,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'notify_order_status',
         'notify_promotions',
         'role',
+        'account_status',
+        'suspended_at',
+        'suspended_by',
+        'suspension_reason',
+        'admin_note',
+        'session_version',
+        'last_login_at',
+        'last_login_ip',
         'password_changed_at',
         'force_password_change',
         'failed_login_attempts',
@@ -60,6 +73,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'notify_order_status' => 'boolean',
         'notify_promotions' => 'boolean',
         'role' => 'string',
+        'suspended_at' => 'datetime',
+        'session_version' => 'integer',
+        'last_login_at' => 'datetime',
         'password_changed_at' => 'datetime',
         'force_password_change' => 'boolean',
         'failed_login_attempts' => 'integer',
@@ -104,12 +120,30 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(UserVoucher::class);
     }
 
+    public function suspendedBy()
+    {
+        return $this->belongsTo(self::class, 'suspended_by');
+    }
+
     /**
      * Check if user is admin
      */
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->account_status === self::ACCOUNT_STATUS_SUSPENDED;
+    }
+
+    public static function accountStatusLabels(): array
+    {
+        return [
+            self::ACCOUNT_STATUS_ACTIVE => 'Đang hoạt động',
+            self::ACCOUNT_STATUS_SUSPENDED => 'Tạm ngưng',
+        ];
     }
 
     public function sendPasswordResetNotification($token)
@@ -119,6 +153,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendEmailVerificationNotification(): void
     {
-        $this->notify(new \App\Notifications\CustomerVerifyEmailNotification());
+        $this->notify(new CustomerVerifyEmailNotification);
     }
 }

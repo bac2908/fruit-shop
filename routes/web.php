@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ContactController as AdminContactController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -111,9 +112,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::patch('/orders/returns/{returnRequest}/refund', [AdminOrderController::class, 'refundReturn'])->name('orders.returns.refund');
     Route::patch('/orders/returns/{returnRequest}/complete', [AdminOrderController::class, 'completeReturn'])->name('orders.returns.complete');
 
-    Route::get('/customers', function () {
-        return view('admin.customers');
-    })->name('customers');
+    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers');
+    Route::get('/customers/export', [AdminCustomerController::class, 'export'])->name('customers.export');
+    Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
+    Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
+    Route::patch('/customers/{customer}/suspend', [AdminCustomerController::class, 'suspend'])->name('customers.suspend');
+    Route::patch('/customers/{customer}/activate', [AdminCustomerController::class, 'activate'])->name('customers.activate');
+    Route::patch('/customers/{customer}/unlock', [AdminCustomerController::class, 'unlock'])->name('customers.unlock');
+    Route::patch('/customers/{customer}/sessions/revoke', [AdminCustomerController::class, 'revokeSessions'])->name('customers.sessions.revoke');
+    Route::post('/customers/{customer}/verification', [AdminCustomerController::class, 'resendVerification'])
+        ->middleware('throttle:3,10')
+        ->name('customers.verification');
+    Route::post('/customers/{customer}/vouchers', [AdminCustomerController::class, 'assignVoucher'])->name('customers.vouchers.store');
 
     Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
     Route::get('/contacts/{contactMessage}', [AdminContactController::class, 'show'])->name('contacts.show');

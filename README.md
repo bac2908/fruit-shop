@@ -301,7 +301,7 @@ Lệnh đầu kiểm tra mailer, địa chỉ/tên người gửi, SMTP và `APP
 
 ### Checkout end-to-end
 
-Lần đầu cài Chromium cho Playwright:
+Lần đầu cài Chromium cho Playwinset-inline-end:
 
 ```powershell
 npx playwright install chromium

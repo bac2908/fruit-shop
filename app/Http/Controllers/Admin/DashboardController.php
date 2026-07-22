@@ -28,7 +28,10 @@ class DashboardController extends Controller
         $metrics = [
             'orders_today' => Order::query()->whereBetween('created_at', [$todayStart, $todayEnd])->count(),
             'monthly_revenue' => (int) (clone $activeRevenueQuery)->sum('total'),
-            'new_customers' => User::query()->where('created_at', '>=', $thirtyDaysAgo)->count(),
+            'new_customers' => User::query()
+                ->where('role', 'customer')
+                ->where('created_at', '>=', $thirtyDaysAgo)
+                ->count(),
             'conversion_rate' => $orders30Count > 0 ? round(($completedCount / max(1, $orders30Count)) * 100, 1) : 0,
             'aov' => $orders30Count > 0 ? (int) round((clone $activeRevenueQuery)->avg('total')) : 0,
             'return_rate' => $orders30Count > 0 ? round(($cancelledCount / max(1, $orders30Count)) * 100, 1) : 0,

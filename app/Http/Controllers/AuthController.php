@@ -70,7 +70,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (!Auth::attempt(['email' => $email, 'password' => $credentials['password']], $request->boolean('remember'))) {
+        if (! Auth::attempt(['email' => $email, 'password' => $credentials['password']], $request->boolean('remember'))) {
             $this->recordFailedLogin($request, $email, $user);
             $this->writeSecurityAuditLog($request, 'login_failed', $user, ['email' => $email]);
 
@@ -79,11 +79,23 @@ class AuthController extends Controller
             ]);
         }
 
-        $request->session()->regenerate();
-
         $user = $request->user();
+
+        if ($user->isSuspended()) {
+            $this->writeSecurityAuditLog($request, 'login_blocked_suspended', $user);
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'Tài khoản đang tạm ngưng. Vui lòng liên hệ cửa hàng để được hỗ trợ.',
+            ]);
+        }
+
+        $request->session()->regenerate();
         $welcomeVouchers->assignTo($user);
         $this->resetFailedLoginState($user);
+        $this->markSuccessfulLogin($request, $user);
         $this->writeSecurityAuditLog($request, 'login_success', $user);
 
         return $this->redirectAfterLogin($request, $user, 'Đăng nhập thành công.');
@@ -163,6 +175,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->markSuccessfulLogin($request, $user);
 
         try {
             event(new Registered($user));
@@ -320,7 +333,7 @@ class AuthController extends Controller
 
     public function redirectToGoogle()
     {
-        if (!$this->googleOAuthConfigured()) {
+        if (! $this->googleOAuthConfigured()) {
             return redirect()
                 ->route('login')
                 ->with('error', 'Chưa cấu hình Google OAuth. Vui lòng thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET trong file .env.');
@@ -337,7 +350,7 @@ class AuthController extends Controller
                 ->with('error', 'Bạn đã hủy đăng nhập Google hoặc Google không cấp quyền cho website.');
         }
 
-        if (!$this->googleOAuthConfigured()) {
+        if (! $this->googleOAuthConfigured()) {
             return redirect()
                 ->route('login')
                 ->with('error', 'Chưa cấu hình Google OAuth. Vui lòng thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET trong file .env.');
@@ -376,9 +389,17 @@ class AuthController extends Controller
                 ->with('error', 'Tài khoản đang bị khóa tạm thời. Vui lòng thử lại sau.');
         }
 
+        if ($existingUser && $existingUser->isSuspended()) {
+            $this->writeSecurityAuditLog($request, 'google_login_blocked_suspended', $existingUser, ['email' => $email]);
+
+            return redirect()
+                ->route('login')
+                ->with('error', 'Tài khoản đang tạm ngưng. Vui lòng liên hệ cửa hàng để được hỗ trợ.');
+        }
+
         $user = DB::transaction(function () use ($request, $existingUser, $googleUser, $googleId, $email, $welcomeVouchers) {
             $user = $existingUser;
-            $isNewUser = !$user;
+            $isNewUser = ! $user;
             $displayName = trim((string) ($googleUser->getName() ?: Str::before($email, '@')));
 
             $payload = [
@@ -390,7 +411,7 @@ class AuthController extends Controller
                 'role' => optional($user)->role ?: 'customer',
             ];
 
-            if (Schema::hasColumn('users', 'avatar_url') && $googleUser->getAvatar() && (!$user || !$user->avatar_url)) {
+            if (Schema::hasColumn('users', 'avatar_url') && $googleUser->getAvatar() && (! $user || ! $user->avatar_url)) {
                 $payload['avatar_url'] = $googleUser->getAvatar();
             }
 
@@ -418,6 +439,7 @@ class AuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
         $this->resetFailedLoginState($user);
+        $this->markSuccessfulLogin($request, $user);
         $this->writeSecurityAuditLog($request, 'google_login_success', $user, ['email' => $email]);
 
         return $this->redirectAfterLogin($request, $user, 'Đăng nhập Google thành công.');
@@ -437,7 +459,7 @@ class AuthController extends Controller
 
     private function isLocked(?User $user): bool
     {
-        if (!$user || !Schema::hasColumn('users', 'locked_until')) {
+        if (! $user || ! Schema::hasColumn('users', 'locked_until')) {
             return false;
         }
 
@@ -455,7 +477,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (!$user || !Schema::hasColumn('users', 'failed_login_attempts')) {
+        if (! $user || ! Schema::hasColumn('users', 'failed_login_attempts')) {
             return;
         }
 
@@ -481,7 +503,7 @@ class AuthController extends Controller
             $payload['locked_until'] = null;
         }
 
-        if (!empty($payload)) {
+        if (! empty($payload)) {
             $user->forceFill($payload)->save();
         }
     }
@@ -498,7 +520,7 @@ class AuthController extends Controller
             return $successMessage ? $response->with('success', $successMessage) : $response;
         }
 
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             return redirect()
                 ->route('verification.notice')
                 ->with('success', $successMessage ?: 'Vui lòng xác minh email để tiếp tục.');
@@ -507,7 +529,7 @@ class AuthController extends Controller
         if ($intendedUrl) {
             $path = parse_url($intendedUrl, PHP_URL_PATH) ?: '';
 
-            if (!Str::startsWith($path, '/admin')) {
+            if (! Str::startsWith($path, '/admin')) {
                 $response = redirect()->to($intendedUrl);
 
                 return $successMessage ? $response->with('success', $successMessage) : $response;
@@ -517,6 +539,28 @@ class AuthController extends Controller
         $response = redirect()->route('home');
 
         return $successMessage ? $response->with('success', $successMessage) : $response;
+    }
+
+    private function markSuccessfulLogin(Request $request, User $user): void
+    {
+        $payload = [];
+
+        if (Schema::hasColumn('users', 'last_login_at')) {
+            $payload['last_login_at'] = now();
+        }
+
+        if (Schema::hasColumn('users', 'last_login_ip')) {
+            $payload['last_login_ip'] = $request->ip();
+        }
+
+        if ($payload !== []) {
+            $user->forceFill($payload)->save();
+        }
+
+        $request->session()->put(
+            'auth_session_version',
+            Schema::hasColumn('users', 'session_version') ? max(1, (int) $user->session_version) : 1
+        );
     }
 
     private function normalizeRegisterInput(Request $request): void
@@ -570,7 +614,7 @@ class AuthController extends Controller
 
     private function writeSecurityAuditLog(Request $request, string $action, ?User $user = null, array $metadata = []): void
     {
-        if (!Schema::hasTable('security_audit_log')) {
+        if (! Schema::hasTable('security_audit_log')) {
             return;
         }
 
