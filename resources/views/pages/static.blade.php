@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
-@section('title', ($page['title'] ?? 'Trang nội dung') . ' - Thế Giới Trái Cây')
+@section('title', (($page['meta_title'] ?? null) ?: ($page['title'] ?? 'Trang nội dung')) . ' - Thế Giới Trái Cây')
+@section('meta_description', ($page['meta_description'] ?? null) ?: ($page['intro'] ?? ''))
 
 @section('content')
 <section class="bread_crumb py-4">
@@ -26,6 +27,10 @@
 
             @if(!empty($page['intro']))
                 <p class="static-intro">{{ $page['intro'] }}</p>
+            @endif
+
+            @if(!empty($page['content']))
+                <div class="static-section static-rich-content">{!! $page['content'] !!}</div>
             @endif
 
             @if(!empty($page['sections']))

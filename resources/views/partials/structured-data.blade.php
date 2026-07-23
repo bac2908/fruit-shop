@@ -6,7 +6,7 @@
         [
             '@type' => 'Organization',
             '@id' => $organizationId,
-            'name' => config('app.name', 'Thế Giới Trái Cây'),
+            'name' => $storeName ?? config('app.name', 'Thế Giới Trái Cây'),
             'url' => $siteUrl,
             'logo' => [
                 '@type' => 'ImageObject',
@@ -15,7 +15,7 @@
             'contactPoint' => [
                 [
                     '@type' => 'ContactPoint',
-                    'telephone' => '+84333499426',
+                    'telephone' => $storePhoneLink ?? '+84333499426',
                     'contactType' => 'customer service',
                     'areaServed' => 'VN',
                     'availableLanguage' => ['vi'],
@@ -26,7 +26,7 @@
             '@type' => 'WebSite',
             '@id' => $websiteId,
             'url' => $siteUrl,
-            'name' => config('app.name', 'Thế Giới Trái Cây'),
+            'name' => $storeName ?? config('app.name', 'Thế Giới Trái Cây'),
             'publisher' => ['@id' => $organizationId],
             'inLanguage' => 'vi-VN',
             'potentialAction' => [

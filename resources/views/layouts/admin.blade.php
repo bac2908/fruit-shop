@@ -212,6 +212,68 @@
             height: 42px;
         }
 
+        .topbar-search-wrap {
+            flex: 1;
+            max-width: 520px;
+            position: relative;
+        }
+
+        .topbar-search-wrap .topbar-search {
+            max-width: none;
+            width: 100%;
+        }
+
+        .search-suggestions {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 60;
+            padding: 7px;
+            border: 1px solid var(--admin-line);
+            border-radius: 9px;
+            background: #fff;
+            box-shadow: 0 16px 36px rgba(20, 50, 34, .14);
+        }
+
+        .search-suggestions.open {
+            display: grid;
+            gap: 3px;
+        }
+
+        .search-suggestion {
+            display: grid;
+            grid-template-columns: 78px minmax(0, 1fr);
+            gap: 9px;
+            padding: 9px;
+            border-radius: 7px;
+            color: var(--admin-ink);
+        }
+
+        .search-suggestion:hover {
+            background: var(--admin-primary-soft);
+        }
+
+        .search-suggestion small {
+            color: var(--admin-primary);
+            font-weight: 700;
+        }
+
+        .search-suggestion strong,
+        .search-suggestion span {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .search-suggestion span {
+            margin-top: 2px;
+            color: var(--admin-subtle);
+            font-size: 11px;
+        }
+
         .topbar-search i {
             color: var(--admin-subtle);
             font-size: 18px;
@@ -244,6 +306,24 @@
             place-items: center;
             color: var(--admin-ink);
             cursor: pointer;
+            position: relative;
+        }
+
+        .icon-badge {
+            position: absolute;
+            right: -5px;
+            top: -6px;
+            min-width: 19px;
+            height: 19px;
+            padding: 0 5px;
+            border: 2px solid #fff;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            background: var(--admin-danger);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
         }
 
         .profile-chip {
@@ -664,48 +744,78 @@
             </span>
         </a>
 
-        <div class="menu-label">Dieu huong</div>
+        <div class="menu-label">Điều hướng</div>
         <nav class="menu">
+            @if(auth()->user()->hasAdminPermission('dashboard.view'))
             <a href="{{ route('admin.dashboard') }}" class="menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="ri-dashboard-horizontal-line"></i>
-                <span>Tong quan</span>
+                <span>Tổng quan</span>
             </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('orders.view'))
             <a href="{{ route('admin.orders') }}" class="menu-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}">
                 <i class="ri-file-list-3-line"></i>
-                <span>Don hang</span>
+                <span>Đơn hàng</span>
             </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('catalog.manage'))
             <a href="{{ route('admin.products') }}" class="menu-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
                 <i class="ri-apple-line"></i>
-                <span>San pham</span>
+                <span>Sản phẩm</span>
             </a>
+            <a href="{{ route('admin.categories.index') }}" class="menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                <i class="ri-node-tree"></i>
+                <span>Danh mục</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('content.manage'))
+            <a href="{{ route('admin.banners.index') }}" class="menu-link {{ request()->routeIs('admin.banners.*') ? 'active' : '' }}">
+                <i class="ri-image-2-line"></i>
+                <span>Banner</span>
+            </a>
+            <a href="{{ route('admin.pages.index') }}" class="menu-link {{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
+                <i class="ri-pages-line"></i>
+                <span>Trang nội dung</span>
+            </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('customers.manage'))
             <a href="{{ route('admin.customers') }}" class="menu-link {{ request()->routeIs('admin.customers*') ? 'active' : '' }}">
                 <i class="ri-team-line"></i>
-                <span>Khach hang</span>
+                <span>Khách hàng</span>
             </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('support.manage'))
             <a href="{{ route('admin.contacts.index') }}" class="menu-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}">
                 <i class="ri-mail-open-line"></i>
-                <span>Hop thu lien he</span>
+                <span>Hộp thư liên hệ</span>
                 @if(($adminNewContactCount ?? 0) > 0)
                     <strong style="margin-left:auto;min-width:24px;padding:2px 7px;border-radius:999px;background:#fff;color:#1f7a4a;text-align:center;font-size:11px;">{{ $adminNewContactCount }}</strong>
                 @endif
             </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('promotions.manage'))
             <a href="{{ route('admin.coupons') }}" class="menu-link {{ request()->routeIs('admin.coupons*') ? 'active' : '' }}">
                 <i class="ri-coupon-2-line"></i>
-                <span>Coupon</span>
+                <span>Khuyến mãi</span>
             </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('reports.view'))
             <a href="{{ route('admin.reports') }}" class="menu-link {{ request()->routeIs('admin.reports') ? 'active' : '' }}">
                 <i class="ri-bar-chart-box-line"></i>
-                <span>Bao cao</span>
+                <span>Báo cáo</span>
             </a>
+            @endif
+            @if(auth()->user()->hasAdminPermission('settings.manage'))
             <a href="{{ route('admin.settings') }}" class="menu-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                 <i class="ri-settings-3-line"></i>
-                <span>Cai dat</span>
+                <span>Cài đặt</span>
             </a>
+            @endif
         </nav>
 
         <div class="sidebar-footer">
-            <h4>Sprint focus</h4>
-            <div>Uu tien FE truoc, san sang map API va truy van DB khi chuyen sang BE.</div>
+            <h4>Vận hành an toàn</h4>
+            <div>Dùng tài khoản riêng, bật 2FA và chỉ cấp đúng quyền cần thiết cho từng nhân viên.</div>
         </div>
     </aside>
 
@@ -715,21 +825,30 @@
                 <i class="ri-menu-3-line"></i>
             </button>
 
-            <div class="topbar-search">
-                <i class="ri-search-line"></i>
-                <input type="text" placeholder="Tim nhanh don hang, san pham, khach hang...">
+            <div class="topbar-search-wrap">
+                <form class="topbar-search" action="{{ route('admin.search') }}" method="get" role="search">
+                    <i class="ri-search-line"></i>
+                    <input id="adminGlobalSearch" type="search" name="q" value="{{ request()->routeIs('admin.search') ? request('q') : '' }}" placeholder="Tìm đơn hàng, sản phẩm, khách hàng..." autocomplete="off">
+                </form>
+                <div class="search-suggestions" id="adminSearchSuggestions" aria-live="polite"></div>
             </div>
 
             <div class="topbar-actions">
-                <button type="button" class="icon-btn" aria-label="Notifications"><i class="ri-notification-3-line"></i></button>
-                <button type="button" class="icon-btn" aria-label="Calendar"><i class="ri-calendar-2-line"></i></button>
+                <a href="{{ route('admin.notifications') }}" class="icon-btn" aria-label="Tác vụ cần xử lý" title="Tác vụ cần xử lý">
+                    <i class="ri-notification-3-line"></i>
+                    @if(($adminActionSummary['total'] ?? 0) > 0)<span class="icon-badge">{{ min(99, $adminActionSummary['total']) }}</span>@endif
+                </a>
+                @if(auth()->user()->hasAdminPermission('reports.view'))
+                    <a href="{{ route('admin.reports', ['from'=>now()->startOfMonth()->toDateString(),'to'=>now()->toDateString()]) }}" class="icon-btn" aria-label="Báo cáo tháng này" title="Báo cáo tháng này"><i class="ri-calendar-2-line"></i></a>
+                @endif
                 <div class="profile-chip">
                     <span>
-                        <strong>Admin Team</strong>
-                        <span>Operations</span>
+                        <strong>{{ auth()->user()->name }}</strong>
+                        <span>{{ $adminRoleLabel }}</span>
                     </span>
-                    <span class="profile-avatar">AD</span>
+                    <span class="profile-avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
                 </div>
+                <form method="post" action="{{ route('logout') }}">@csrf<button type="submit" class="icon-btn" aria-label="Đăng xuất" title="Đăng xuất"><i class="ri-logout-box-r-line"></i></button></form>
             </div>
         </header>
 
@@ -769,6 +888,85 @@
                 el.style.setProperty('--delay', (index * 70) + 'ms');
             }
         });
+
+        var searchInput = document.getElementById('adminGlobalSearch');
+        var suggestionBox = document.getElementById('adminSearchSuggestions');
+        var searchTimer = null;
+        var searchController = null;
+
+        function closeSuggestions() {
+            if (suggestionBox) {
+                suggestionBox.classList.remove('open');
+                suggestionBox.replaceChildren();
+            }
+        }
+
+        function renderSuggestions(items) {
+            suggestionBox.replaceChildren();
+            if (!items.length) {
+                closeSuggestions();
+                return;
+            }
+
+            items.forEach(function (item) {
+                var link = document.createElement('a');
+                var type = document.createElement('small');
+                var copy = document.createElement('span');
+                var title = document.createElement('strong');
+                var detail = document.createElement('span');
+
+                link.className = 'search-suggestion';
+                link.href = item.url;
+                type.textContent = item.type;
+                title.textContent = item.title;
+                detail.textContent = item.detail || '';
+                copy.append(title, detail);
+                link.append(type, copy);
+                suggestionBox.append(link);
+            });
+
+            suggestionBox.classList.add('open');
+        }
+
+        if (searchInput && suggestionBox) {
+            searchInput.addEventListener('input', function () {
+                window.clearTimeout(searchTimer);
+                var query = searchInput.value.trim();
+                if (query.length < 2) {
+                    closeSuggestions();
+                    return;
+                }
+
+                searchTimer = window.setTimeout(function () {
+                    if (searchController) {
+                        searchController.abort();
+                    }
+                    searchController = new AbortController();
+
+                    fetch(@json(route('admin.search.suggestions')) + '?q=' + encodeURIComponent(query), {
+                        headers: { 'Accept': 'application/json' },
+                        signal: searchController.signal
+                    })
+                        .then(function (response) { return response.ok ? response.json() : { items: [] }; })
+                        .then(function (payload) {
+                            if (query === searchInput.value.trim()) {
+                                renderSuggestions(payload.items || []);
+                            }
+                        })
+                        .catch(function (error) {
+                            if (error.name !== 'AbortError') {
+                                closeSuggestions();
+                            }
+                        });
+                }, 220);
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('.topbar-search-wrap')) {
+                    closeSuggestions();
+                }
+            });
+        }
     })();
 </script>
 

@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Models\Category;
 use App\Models\ContactMessage;
 use App\Models\Product;
+use App\Services\AdminActionCenterService;
+use App\Services\AdminPermissionService;
+use App\Services\SettingService;
 use App\Services\HomeService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -222,6 +225,7 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('headerNotifications', $headerNotifications);
             $view->with('headerUnreadNotificationCount', $headerUnreadNotificationCount);
+            $view->with('storeSettings', app(SettingService::class)->all());
         });
 
         View::composer('layouts.admin', function ($view) {
@@ -230,6 +234,17 @@ class AppServiceProvider extends ServiceProvider
                 : 0;
 
             $view->with('adminNewContactCount', $newContactCount);
+
+            $user = auth()->user();
+            $actionSummary = $user && $user->isAdmin()
+                ? app(AdminActionCenterService::class)->summary(user: $user)
+                : ['total' => 0, 'items' => collect(), 'counts' => []];
+            $permissions = app(AdminPermissionService::class);
+
+            $view->with('adminActionSummary', $actionSummary);
+            $view->with('adminRoleLabel', $user && $user->isAdmin()
+                ? ($permissions->roles()[$permissions->role($user)] ?? 'Quản trị')
+                : '');
         });
     }
 

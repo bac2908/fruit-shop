@@ -38,6 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'notify_order_status',
         'notify_promotions',
         'role',
+        'admin_role',
         'account_status',
         'suspended_at',
         'suspended_by',
@@ -48,6 +49,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_ip',
         'password_changed_at',
         'force_password_change',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'two_factor_last_used_step',
         'failed_login_attempts',
         'locked_until',
     ];
@@ -60,6 +65,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -73,11 +80,16 @@ class User extends Authenticatable implements MustVerifyEmail
         'notify_order_status' => 'boolean',
         'notify_promotions' => 'boolean',
         'role' => 'string',
+        'admin_role' => 'string',
         'suspended_at' => 'datetime',
         'session_version' => 'integer',
         'last_login_at' => 'datetime',
         'password_changed_at' => 'datetime',
         'force_password_change' => 'boolean',
+        'two_factor_secret' => 'encrypted',
+        'two_factor_recovery_codes' => 'encrypted:array',
+        'two_factor_confirmed_at' => 'datetime',
+        'two_factor_last_used_step' => 'integer',
         'failed_login_attempts' => 'integer',
         'locked_until' => 'datetime',
     ];
@@ -131,6 +143,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    public function hasAdminPermission(string $permission): bool
+    {
+        return app(\App\Services\AdminPermissionService::class)->allows($this, $permission);
+    }
+
+    public function hasTwoFactorAuthentication(): bool
+    {
+        return $this->isAdmin()
+            && $this->two_factor_confirmed_at !== null
+            && trim((string) $this->two_factor_secret) !== '';
     }
 
     public function isSuspended(): bool

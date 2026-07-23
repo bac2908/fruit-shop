@@ -19,6 +19,7 @@ use App\Services\OrderAutomationService;
 use App\Services\OrderCancellationService;
 use App\Services\OrderNotificationService;
 use App\Services\ShippingFeeService;
+use App\Services\SettingService;
 use App\Services\VietnamAddressService;
 use App\Services\VoucherSelectionService;
 use App\Support\LocalDateTime;
@@ -409,13 +410,26 @@ class CartController extends Controller
 
         $summary = $this->getCartSummary($cartItems, false, $checkoutShipping);
 
+        $settingService = app(SettingService::class);
+        $availablePaymentMethods = array_values(array_filter([
+            $settingService->bool('payment_cod_enabled', true) ? Order::PAYMENT_METHOD_COD : null,
+            $settingService->bool('payment_bank_enabled', true) ? Order::PAYMENT_METHOD_BANK_TRANSFER : null,
+            $settingService->bool('payment_momo_enabled', true) ? Order::PAYMENT_METHOD_MOMO : null,
+        ]));
+        $selectedPaymentMethod = old('payment_method', session('checkout_payment_method'));
+
+        if (! in_array($selectedPaymentMethod, $availablePaymentMethods, true)) {
+            $selectedPaymentMethod = $availablePaymentMethods[0] ?? Order::PAYMENT_METHOD_COD;
+        }
+
         return view('checkout-payment', [
             'cartItems' => $cartItems,
             'summary' => $summary,
             'appliedCoupon' => $summary['coupon'],
             'user' => $user,
             'checkoutShipping' => $checkoutShipping,
-            'selectedPaymentMethod' => old('payment_method', session('checkout_payment_method', Order::PAYMENT_METHOD_COD)),
+            'selectedPaymentMethod' => $selectedPaymentMethod,
+            'availablePaymentMethods' => $availablePaymentMethods,
         ]);
     }
 
@@ -434,12 +448,15 @@ class CartController extends Controller
             return redirect()->route('checkout')->with('error', 'Vui long kiem tra thong tin giao hang truoc khi dat hang.');
         }
 
+        $settingService = app(SettingService::class);
+        $availablePaymentMethods = array_values(array_filter([
+            $settingService->bool('payment_cod_enabled', true) ? Order::PAYMENT_METHOD_COD : null,
+            $settingService->bool('payment_bank_enabled', true) ? Order::PAYMENT_METHOD_BANK_TRANSFER : null,
+            $settingService->bool('payment_momo_enabled', true) ? Order::PAYMENT_METHOD_MOMO : null,
+        ]));
+
         $validatedPayment = $request->validate([
-            'payment_method' => ['required', Rule::in([
-                Order::PAYMENT_METHOD_COD,
-                Order::PAYMENT_METHOD_BANK_TRANSFER,
-                Order::PAYMENT_METHOD_MOMO,
-            ])],
+            'payment_method' => ['required', Rule::in($availablePaymentMethods)],
         ], [
             'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
             'payment_method.in' => 'Phương thức thanh toán không hợp lệ.',

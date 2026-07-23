@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Banner;
 use App\Services\HomeService;
 use Illuminate\Http\Request;
 
@@ -22,6 +23,8 @@ class HomeController extends Controller
             'topCategories' => $this->homeService->getTopCategories(),
             'coupons'       => $this->homeService->getActiveCoupons(6, $request->user()),
             'sections'      => $this->homeService->getHomeSections($categorySlugs),
+            'heroBanners'   => Banner::query()->visible()->where('placement', 'hero')->orderBy('sort_order')->get(),
+            'promoBanners'  => Banner::query()->visible()->where('placement', 'promo')->orderBy('sort_order')->take(3)->get(),
         ]);
     }
 }

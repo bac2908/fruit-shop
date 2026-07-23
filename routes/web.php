@@ -1,11 +1,21 @@
 <?php
 
 use App\Http\Controllers\Admin\ContactController as AdminContactController;
+use App\Http\Controllers\Admin\BannerController as AdminBannerController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\SearchController as AdminSearchController;
+use App\Http\Controllers\Admin\SecurityController as AdminSecurityController;
+use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Admin\StaffController as AdminStaffController;
+use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
@@ -41,6 +51,7 @@ Route::get('/pages/chinh-sach-doi-tra', [PageController::class, 'returnPolicy'])
 Route::get('/pages/chinh-sach-giao-hang-va-thanh-toan', [PageController::class, 'shippingPaymentPolicy'])->name('page.shipping.payment');
 Route::get('/pages/dieu-khoan-dich-vu', [PageController::class, 'termsOfService'])->name('page.terms');
 Route::get('/pages/khach-hang-doanh-nghiep', [PageController::class, 'corporateCustomers'])->name('page.corporate');
+Route::get('/pages/{slug}', [PageController::class, 'dynamic'])->name('page.dynamic');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -85,71 +96,130 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::delete('/wishlist/{item}', [ProfileController::class, 'removeWishlist'])->name('wishlist.remove');
 });
 
+// Admin two-factor challenge must stay outside the protected admin middleware.
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+    Route::get('/two-factor-challenge', [AdminTwoFactorController::class, 'challenge'])->name('2fa.challenge');
+    Route::post('/two-factor-challenge', [AdminTwoFactorController::class, 'verifyChallenge'])
+        ->middleware('throttle:6,1')
+        ->name('2fa.challenge.verify');
+});
+
 // Admin operation routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [AdminDashboardController::class, 'index'])
+        ->middleware('admin.permission:dashboard.view')
+        ->name('dashboard');
 
-    Route::get('/products', [AdminProductController::class, 'index'])->name('products');
-    Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
-    Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
-    Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
-    Route::patch('/products/{product}/visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.visibility');
-    Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
-    Route::patch('/products/{product}/restore', [AdminProductController::class, 'restore'])->name('products.restore');
-    Route::delete('/products/{product}/images/{image}', [AdminProductController::class, 'destroyImage'])->name('products.images.destroy');
+    Route::get('/search', [AdminSearchController::class, 'index'])
+        ->middleware('admin.permission:dashboard.view')
+        ->name('search');
+    Route::get('/search/suggestions', [AdminSearchController::class, 'suggestions'])
+        ->middleware(['admin.permission:dashboard.view', 'throttle:60,1'])
+        ->name('search.suggestions');
+    Route::get('/action-center', [AdminNotificationController::class, 'index'])
+        ->middleware('admin.permission:dashboard.view')
+        ->name('notifications');
 
-    Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
-    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
-    Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
-    Route::patch('/orders/{order}/shipping', [AdminOrderController::class, 'updateShipping'])->name('orders.shipping');
-    Route::patch('/orders/{order}/payment/verify', [AdminOrderController::class, 'verifyPayment'])->name('orders.payment.verify');
-    Route::patch('/orders/{order}/payment/refund', [AdminOrderController::class, 'refundPayment'])->name('orders.payment.refund');
-    Route::patch('/orders/cancellations/{cancellationRequest}/approve', [AdminOrderController::class, 'approveCancellation'])->name('orders.cancellations.approve');
-    Route::patch('/orders/cancellations/{cancellationRequest}/reject', [AdminOrderController::class, 'rejectCancellation'])->name('orders.cancellations.reject');
-    Route::patch('/orders/returns/{returnRequest}/approve', [AdminOrderController::class, 'approveReturn'])->name('orders.returns.approve');
-    Route::patch('/orders/returns/{returnRequest}/reject', [AdminOrderController::class, 'rejectReturn'])->name('orders.returns.reject');
-    Route::patch('/orders/returns/{returnRequest}/refund', [AdminOrderController::class, 'refundReturn'])->name('orders.returns.refund');
-    Route::patch('/orders/returns/{returnRequest}/complete', [AdminOrderController::class, 'completeReturn'])->name('orders.returns.complete');
+    Route::get('/security/two-factor', [AdminTwoFactorController::class, 'setup'])->name('2fa.setup');
+    Route::post('/security/two-factor', [AdminTwoFactorController::class, 'confirm'])
+        ->middleware('throttle:6,1')
+        ->name('2fa.confirm');
+    Route::delete('/security/two-factor', [AdminTwoFactorController::class, 'disable'])
+        ->middleware('throttle:6,1')
+        ->name('2fa.disable');
+    Route::get('/security/password', [AdminSecurityController::class, 'editPassword'])->name('security.password.edit');
+    Route::put('/security/password', [AdminSecurityController::class, 'updatePassword'])
+        ->middleware('throttle:5,1')
+        ->name('security.password.update');
 
-    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers');
-    Route::get('/customers/export', [AdminCustomerController::class, 'export'])->name('customers.export');
-    Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
-    Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
-    Route::patch('/customers/{customer}/suspend', [AdminCustomerController::class, 'suspend'])->name('customers.suspend');
-    Route::patch('/customers/{customer}/activate', [AdminCustomerController::class, 'activate'])->name('customers.activate');
-    Route::patch('/customers/{customer}/unlock', [AdminCustomerController::class, 'unlock'])->name('customers.unlock');
-    Route::patch('/customers/{customer}/sessions/revoke', [AdminCustomerController::class, 'revokeSessions'])->name('customers.sessions.revoke');
-    Route::post('/customers/{customer}/verification', [AdminCustomerController::class, 'resendVerification'])
-        ->middleware('throttle:3,10')
-        ->name('customers.verification');
-    Route::post('/customers/{customer}/vouchers', [AdminCustomerController::class, 'assignVoucher'])->name('customers.vouchers.store');
+    Route::middleware('admin.permission:catalog.manage')->group(function () {
+        Route::get('/products', [AdminProductController::class, 'index'])->name('products');
+        Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
+        Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
+        Route::patch('/products/{product}/visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.visibility');
+        Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
+        Route::patch('/products/{product}/restore', [AdminProductController::class, 'restore'])->name('products.restore');
+        Route::delete('/products/{product}/images/{image}', [AdminProductController::class, 'destroyImage'])->name('products.images.destroy');
+        Route::resource('categories', AdminCategoryController::class)->except(['show']);
+        Route::patch('/categories/{category}/restore', [AdminCategoryController::class, 'restore'])
+            ->whereNumber('category')
+            ->name('categories.restore');
+    });
 
-    Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
-    Route::get('/contacts/{contactMessage}', [AdminContactController::class, 'show'])->name('contacts.show');
-    Route::patch('/contacts/{contactMessage}', [AdminContactController::class, 'update'])->name('contacts.update');
-    Route::post('/contacts/{contactMessage}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
+    Route::middleware('admin.permission:content.manage')->group(function () {
+        Route::resource('banners', AdminBannerController::class)->except(['show']);
+        Route::resource('pages', AdminPageController::class)->except(['show']);
+    });
 
-    Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
-    Route::get('/coupons/create', [AdminCouponController::class, 'create'])->name('coupons.create');
-    Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
-    Route::post('/coupons/assign', [AdminCouponController::class, 'assign'])->name('coupons.assign');
-    Route::get('/coupons/{coupon}', [AdminCouponController::class, 'show'])->name('coupons.show');
-    Route::get('/coupons/{coupon}/edit', [AdminCouponController::class, 'edit'])->name('coupons.edit');
-    Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
-    Route::patch('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
-    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
-    Route::patch('/coupons/{coupon}/restore', [AdminCouponController::class, 'restore'])
-        ->whereNumber('coupon')
-        ->name('coupons.restore');
+    Route::middleware('admin.permission:orders.view')->group(function () {
+        Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
+        Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    });
+    Route::middleware('admin.permission:orders.manage')->group(function () {
+        Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
+        Route::patch('/orders/{order}/shipping', [AdminOrderController::class, 'updateShipping'])->name('orders.shipping');
+        Route::patch('/orders/{order}/payment/verify', [AdminOrderController::class, 'verifyPayment'])->name('orders.payment.verify');
+        Route::patch('/orders/{order}/payment/refund', [AdminOrderController::class, 'refundPayment'])->name('orders.payment.refund');
+        Route::patch('/orders/cancellations/{cancellationRequest}/approve', [AdminOrderController::class, 'approveCancellation'])->name('orders.cancellations.approve');
+        Route::patch('/orders/cancellations/{cancellationRequest}/reject', [AdminOrderController::class, 'rejectCancellation'])->name('orders.cancellations.reject');
+        Route::patch('/orders/returns/{returnRequest}/approve', [AdminOrderController::class, 'approveReturn'])->name('orders.returns.approve');
+        Route::patch('/orders/returns/{returnRequest}/reject', [AdminOrderController::class, 'rejectReturn'])->name('orders.returns.reject');
+        Route::patch('/orders/returns/{returnRequest}/refund', [AdminOrderController::class, 'refundReturn'])->name('orders.returns.refund');
+        Route::patch('/orders/returns/{returnRequest}/complete', [AdminOrderController::class, 'completeReturn'])->name('orders.returns.complete');
+    });
 
-    Route::get('/reports', function () {
-        return view('admin.reports');
-    })->name('reports');
+    Route::middleware('admin.permission:customers.manage')->group(function () {
+        Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers');
+        Route::get('/customers/export', [AdminCustomerController::class, 'export'])->name('customers.export');
+        Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
+        Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
+        Route::patch('/customers/{customer}/suspend', [AdminCustomerController::class, 'suspend'])->name('customers.suspend');
+        Route::patch('/customers/{customer}/activate', [AdminCustomerController::class, 'activate'])->name('customers.activate');
+        Route::patch('/customers/{customer}/unlock', [AdminCustomerController::class, 'unlock'])->name('customers.unlock');
+        Route::patch('/customers/{customer}/sessions/revoke', [AdminCustomerController::class, 'revokeSessions'])->name('customers.sessions.revoke');
+        Route::post('/customers/{customer}/verification', [AdminCustomerController::class, 'resendVerification'])
+            ->middleware('throttle:3,10')
+            ->name('customers.verification');
+        Route::post('/customers/{customer}/vouchers', [AdminCustomerController::class, 'assignVoucher'])->name('customers.vouchers.store');
+    });
 
-    Route::get('/settings', function () {
-        return view('admin.settings');
-    })->name('settings');
+    Route::middleware('admin.permission:support.manage')->group(function () {
+        Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
+        Route::get('/contacts/{contactMessage}', [AdminContactController::class, 'show'])->name('contacts.show');
+        Route::patch('/contacts/{contactMessage}', [AdminContactController::class, 'update'])->name('contacts.update');
+        Route::post('/contacts/{contactMessage}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
+    });
+
+    Route::middleware('admin.permission:promotions.manage')->group(function () {
+        Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons');
+        Route::get('/coupons/create', [AdminCouponController::class, 'create'])->name('coupons.create');
+        Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
+        Route::post('/coupons/assign', [AdminCouponController::class, 'assign'])->name('coupons.assign');
+        Route::get('/coupons/{coupon}', [AdminCouponController::class, 'show'])->name('coupons.show');
+        Route::get('/coupons/{coupon}/edit', [AdminCouponController::class, 'edit'])->name('coupons.edit');
+        Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
+        Route::patch('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
+        Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+        Route::patch('/coupons/{coupon}/restore', [AdminCouponController::class, 'restore'])
+            ->whereNumber('coupon')
+            ->name('coupons.restore');
+    });
+
+    Route::middleware('admin.permission:reports.view')->group(function () {
+        Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
+        Route::get('/reports/export', [AdminReportController::class, 'export'])->name('reports.export');
+    });
+
+    Route::middleware('admin.permission:settings.manage')->group(function () {
+        Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
+        Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+    });
+    Route::middleware('admin.permission:staff.manage')->group(function () {
+        Route::post('/staff', [AdminStaffController::class, 'store'])->name('staff.store');
+        Route::put('/staff/{staff}', [AdminStaffController::class, 'update'])->name('staff.update');
+    });
 });
 
 // Trang danh mục sản phẩm

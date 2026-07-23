@@ -55,6 +55,7 @@
                     @csrf
 
                     <div class="payment-method-grid">
+                        @if(in_array(\App\Models\Order::PAYMENT_METHOD_COD, $availablePaymentMethods ?? [], true))
                         <label class="payment-method-option">
                             <input
                                 type="radio"
@@ -68,7 +69,9 @@
                                 <small>Trả tiền mặt cho nhân viên giao hàng sau khi kiểm tra đơn.</small>
                             </span>
                         </label>
+                        @endif
 
+                        @if(in_array(\App\Models\Order::PAYMENT_METHOD_BANK_TRANSFER, $availablePaymentMethods ?? [], true))
                         <label class="payment-method-option">
                             <input
                                 type="radio"
@@ -82,7 +85,9 @@
                                 <small>Đặt hàng trước, chuyển khoản theo mã đơn ở trang cảm ơn.</small>
                             </span>
                         </label>
+                        @endif
 
+                        @if(in_array(\App\Models\Order::PAYMENT_METHOD_MOMO, $availablePaymentMethods ?? [], true))
                         <label class="payment-method-option">
                             <input
                                 type="radio"
@@ -96,6 +101,7 @@
                                 <small>Chuyển sang môi trường thử nghiệm MoMo để thanh toán đơn hàng.</small>
                             </span>
                         </label>
+                        @endif
                     </div>
 
                     @error('payment_method')

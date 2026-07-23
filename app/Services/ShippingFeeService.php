@@ -12,6 +12,10 @@ class ShippingFeeService
     const FEE_STATUS_ESTIMATED = 'estimated';
     const FEE_STATUS_PENDING_ADDRESS = 'pending_address';
 
+    public function __construct(private SettingService $settings)
+    {
+    }
+
     public function quote(int $subtotal, ?string $provinceCode, ?string $wardName = null): array
     {
         $provinceCode = trim((string) $provinceCode);
@@ -35,7 +39,7 @@ class ShippingFeeService
         }
 
         $rate = $this->rateForProvince($provinceCode);
-        $baseFee = (int) ($rate['fee'] ?? config('shop.shipping.default_fee', 70000));
+        $baseFee = (int) ($rate['fee'] ?? $this->settings->int('shipping_default_fee', 70000));
         $remoteSurcharge = $this->remoteSurcharge($wardName);
         $baseFee += $remoteSurcharge;
 
@@ -65,7 +69,7 @@ class ShippingFeeService
 
     public function freeThreshold(): int
     {
-        return (int) config('shop.shipping.free_threshold', 500000);
+        return $this->settings->int('shipping_free_threshold', (int) config('shop.shipping.free_threshold', 500000));
     }
 
     public function frontendRules(): array
@@ -75,7 +79,7 @@ class ShippingFeeService
         foreach ((array) config('shop.shipping.zones', []) as $key => $zone) {
             foreach ((array) ($zone['province_codes'] ?? []) as $provinceCode) {
                 $rules[(string) $provinceCode] = [
-                    'fee' => (int) ($zone['fee'] ?? config('shop.shipping.default_fee', 70000)),
+                    'fee' => (int) ($zone['fee'] ?? $this->settings->int('shipping_default_fee', 70000)),
                     'zone_key' => (string) $key,
                     'zone_name' => (string) ($zone['label'] ?? 'Khu vực toàn quốc'),
                 ];
@@ -84,12 +88,12 @@ class ShippingFeeService
 
         return [
             'free_threshold' => $this->freeThreshold(),
-            'default_fee' => (int) config('shop.shipping.default_fee', 70000),
+            'default_fee' => $this->settings->int('shipping_default_fee', (int) config('shop.shipping.default_fee', 70000)),
             'default_zone_name' => 'Khu vực toàn quốc',
             'local_express_province_code' => (string) config('shop.shipping.local_express_province_code', '79'),
             'local_express_eta' => (string) config('shop.shipping.local_express_eta', '30 - 90 phút'),
             'province_partner_eta' => (string) config('shop.shipping.province_partner_eta', '2 - 48 giờ làm việc'),
-            'remote_ward_surcharge' => (int) config('shop.shipping.remote_ward_surcharge', 20000),
+            'remote_ward_surcharge' => $this->settings->int('shipping_remote_surcharge', (int) config('shop.shipping.remote_ward_surcharge', 20000)),
             'remote_keywords' => array_values((array) config('shop.shipping.remote_keywords', [])),
             'province_rates' => $rules,
         ];
@@ -120,7 +124,7 @@ class ShippingFeeService
                 return [
                     'key' => (string) $key,
                     'label' => (string) ($zone['label'] ?? 'Khu vực toàn quốc'),
-                    'fee' => (int) ($zone['fee'] ?? config('shop.shipping.default_fee', 70000)),
+                    'fee' => (int) ($zone['fee'] ?? $this->settings->int('shipping_default_fee', 70000)),
                 ];
             }
         }
@@ -128,7 +132,7 @@ class ShippingFeeService
         return [
             'key' => 'other',
             'label' => 'Khu vực toàn quốc',
-            'fee' => (int) config('shop.shipping.default_fee', 70000),
+            'fee' => $this->settings->int('shipping_default_fee', (int) config('shop.shipping.default_fee', 70000)),
         ];
     }
 
@@ -142,7 +146,7 @@ class ShippingFeeService
 
         foreach ((array) config('shop.shipping.remote_keywords', []) as $keyword) {
             if ($keyword !== '' && mb_stripos($wardName, (string) $keyword) !== false) {
-                return (int) config('shop.shipping.remote_ward_surcharge', 20000);
+                return $this->settings->int('shipping_remote_surcharge', (int) config('shop.shipping.remote_ward_surcharge', 20000));
             }
         }
 

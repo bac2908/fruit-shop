@@ -15,6 +15,11 @@ class Category extends Model
     protected $fillable = [
         'name',
         'slug',
+        'description',
+        'slogan',
+        'icon_url',
+        'meta_title',
+        'meta_description',
         'parent_id',
         'sort_order',
         'is_active',
@@ -90,6 +95,10 @@ class Category extends Model
      */
     public function getIconUrl(): string
     {
+        if (trim((string) $this->icon_url) !== '') {
+            return (string) $this->icon_url;
+        }
+
         $slug = $this->slug;
 
         $iconMapping = [
@@ -139,4 +148,3 @@ class Category extends Model
         return 'https://file.hstatic.net/200000157781/file/icon_trai_cay-01_11c3a33683d047ada039913fa5e7af97.png';
     }
 }
-

@@ -30,14 +30,17 @@ class OrderNotificationService
 
     private $customerNotifications;
 
-    public function __construct(CustomerNotificationService $customerNotifications)
+    public function __construct(
+        CustomerNotificationService $customerNotifications,
+        private SettingService $settings
+    )
     {
         $this->customerNotifications = $customerNotifications;
     }
 
     public function notifyOrderPlaced(Order $order, ?int $actorId = null): bool
     {
-        if (! config('shop.order_automation.order_placed_email_enabled', true)) {
+        if (! $this->settings->bool('email_order_placed_enabled', (bool) config('shop.order_automation.order_placed_email_enabled', true))) {
             return false;
         }
 
@@ -115,7 +118,7 @@ class OrderNotificationService
 
         $this->customerNotifications->orderStatusChanged($order, Order::STATUS_CONFIRMED);
 
-        if (! config('shop.order_automation.order_confirmed_email_enabled', true)) {
+        if (! $this->settings->bool('email_order_confirmed_enabled', (bool) config('shop.order_automation.order_confirmed_email_enabled', true))) {
             return true;
         }
 
@@ -245,7 +248,7 @@ class OrderNotificationService
 
         $this->customerNotifications->orderStatusChanged($order, Order::STATUS_CANCELLED);
 
-        if (! config('shop.order_automation.order_cancelled_email_enabled', true)) {
+        if (! $this->settings->bool('email_order_cancelled_enabled', (bool) config('shop.order_automation.order_cancelled_email_enabled', true))) {
             return true;
         }
 

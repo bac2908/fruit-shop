@@ -4,13 +4,39 @@
 <h1 class="hidden">Thế Giới Trái Cây -Trái cây Việt nam loại 1 & nhập khẩu cao cấp</h1>
 
 @php
-	$sliderItems = [
-		['slug' => 'thanh-tra-thai-lan', 'file' => 'banner_custom_1', 'alt' => 'Thanh Trà Thái Lan - Thế Giới Trái Cây'],
-		['slug' => 'may-indo', 'file' => 'banner_custom_2', 'alt' => 'Mây Indo - Thế Giới Trái Cây'],
-		['slug' => 'nho-xanh-uc-btm-sweetglobe', 'file' => 'banner_custom_3', 'alt' => 'Nho xanh Úc - Thế Giới Trái Cây'],
-		['slug' => 'mang-cut-da-cam-thai-lan', 'file' => 'banner_custom_4', 'alt' => 'Măng cụt Thái Lan - Thế Giới Trái Cây'],
-		['slug' => 'vu-sua-tim', 'file' => 'banner_custom_5', 'alt' => 'Vú sữa tím Mica - Thế Giới Trái Cây'],
-	];
+	$sliderItems = ($heroBanners ?? collect())->map(fn ($banner) => [
+		'link' => $banner->resolvedLinkUrl(),
+		'image' => $banner->resolvedImageUrl(),
+		'alt' => $banner->alt_text ?: $banner->title,
+	])->values()->all();
+
+	if (empty($sliderItems)) {
+		$sliderItems = collect([
+			['slug' => 'thanh-tra-thai-lan', 'file' => 'banner_custom_1', 'alt' => 'Thanh Trà Thái Lan - Thế Giới Trái Cây'],
+			['slug' => 'may-indo', 'file' => 'banner_custom_2', 'alt' => 'Mây Indo - Thế Giới Trái Cây'],
+			['slug' => 'nho-xanh-uc-btm-sweetglobe', 'file' => 'banner_custom_3', 'alt' => 'Nho xanh Úc - Thế Giới Trái Cây'],
+			['slug' => 'mang-cut-da-cam-thai-lan', 'file' => 'banner_custom_4', 'alt' => 'Măng cụt Thái Lan - Thế Giới Trái Cây'],
+			['slug' => 'vu-sua-tim', 'file' => 'banner_custom_5', 'alt' => 'Vú sữa tím Mica - Thế Giới Trái Cây'],
+		])->map(fn ($slider) => [
+			'link' => route('products.show', $slider['slug']),
+			'image' => asset('images/sliders/' . $slider['file'] . '.webp'),
+			'alt' => $slider['alt'],
+		])->all();
+	}
+
+	$promoItems = ($promoBanners ?? collect())->map(fn ($banner) => [
+		'link' => $banner->resolvedLinkUrl(),
+		'image' => $banner->resolvedImageUrl(),
+		'alt' => $banner->alt_text ?: $banner->title,
+	])->values()->all();
+
+	if (empty($promoItems)) {
+		$promoItems = [
+			['link' => route('products.show', 'mang-cut-lai-thieu'), 'image' => '//theme.hstatic.net/200000157781/1001036201/14/banner1.jpg?v=1061', 'alt' => 'Măng cụt Lái Thiêu'],
+			['link' => route('products.show', 'vai-thieu-luc-ngan'), 'image' => '//theme.hstatic.net/200000157781/1001036201/14/banner2.jpg?v=1061', 'alt' => 'Vải Thiều hàng máy bay'],
+			['link' => route('products.show', 'sau-rieng-ri-6'), 'image' => '//theme.hstatic.net/200000157781/1001036201/14/banner3.jpg?v=1061', 'alt' => 'Sầu riêng Ri6'],
+		];
+	}
 @endphp
 
 {{-- Section 1: Slider & Sidebar --}}
@@ -23,11 +49,10 @@
 					<div class="home-slider owl-carousel" data-lg-items='1' data-md-items='1' data-sm-items='1' data-autoplay='true' data-autoplaytimeout='4000' data-xs-items="1" data-margin='0' data-nav="true">
 						@foreach($sliderItems as $slider)
 							<div class="item">
-								<a href="{{ route('products.show', $slider['slug']) }}" class="clearfix">
+								<a href="{{ $slider['link'] }}" class="clearfix">
 									<picture>
-										<source srcset="{{ asset('images/sliders/' . $slider['file'] . '.webp') }}" type="image/webp">
 										<img
-											src="{{ asset('images/sliders/' . $slider['file'] . '.jpg') }}"
+											src="{{ $slider['image'] }}"
 											alt="{{ $slider['alt'] }}"
 											width="1376"
 											height="768"
@@ -72,21 +97,13 @@
 		<div class="container">
 			<h2 class="hidden">Banner</h2>
 			<div class="row home-banner-row">
-				<div class="col-xs-12 col-sm-4 home-banner-col">
-					<a href="{{ route('products.show', 'mang-cut-lai-thieu') }}" class="home-banner-item clearfix">
-						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner1.jpg?v=1061" alt="Măng cụt Lái Thiêu" width="720" height="335" loading="lazy" decoding="async">
-					</a>
-				</div>
-				<div class="col-xs-12 col-sm-4 home-banner-col">
-					<a href="{{ route('products.show', 'vai-thieu-luc-ngan') }}" class="home-banner-item clearfix">
-						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner2.jpg?v=1061" alt="Vải Thiều hàng máy bay" width="720" height="335" loading="lazy" decoding="async">
-					</a>
-				</div>
-				<div class="col-xs-12 col-sm-4 home-banner-col">
-					<a href="{{ route('products.show', 'sau-rieng-ri-6') }}" class="home-banner-item clearfix">
-						<img src="//theme.hstatic.net/200000157781/1001036201/14/banner3.jpg?v=1061" alt="Sầu riêng Ri6" width="720" height="335" loading="lazy" decoding="async">
-					</a>
-				</div>
+				@foreach($promoItems as $promo)
+					<div class="col-xs-12 col-sm-4 home-banner-col">
+						<a href="{{ $promo['link'] }}" class="home-banner-item clearfix">
+							<img src="{{ $promo['image'] }}" alt="{{ $promo['alt'] }}" width="720" height="335" loading="lazy" decoding="async">
+						</a>
+					</div>
+				@endforeach
 			</div>
 		</div>
 	</div>

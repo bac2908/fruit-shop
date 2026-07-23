@@ -114,6 +114,10 @@ class HomeService
 
     private function categorySlogan(Category $category): string
     {
+        if (is_string($category->slogan) && trim($category->slogan) !== '') {
+            return trim($category->slogan);
+        }
+
         $configuredSlogan = config('shop.home_category_slogans.' . $category->slug);
 
         if (is_string($configuredSlogan) && trim($configuredSlogan) !== '') {

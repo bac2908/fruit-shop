@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Product;
 use App\Models\User;
 use App\Notifications\LowStockProductsNotification;
+use App\Services\SettingService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -15,15 +16,15 @@ class AlertLowStockProducts extends Command
 
     protected $description = 'Send a low stock email alert to admin users.';
 
-    public function handle(): int
+    public function handle(SettingService $settings): int
     {
-        if (!config('shop.order_automation.low_stock_alert_enabled', true)) {
+        if (! $settings->bool('low_stock_alert_enabled', (bool) config('shop.order_automation.low_stock_alert_enabled', true))) {
             $this->info('Low stock alerts are disabled.');
             return Command::SUCCESS;
         }
 
         $limit = max(1, (int) $this->option('limit'));
-        $fallbackThreshold = max(0, (int) config('shop.order_automation.low_stock_fallback_threshold', 5));
+        $fallbackThreshold = max(0, $settings->int('low_stock_default_threshold', (int) config('shop.order_automation.low_stock_fallback_threshold', 5)));
 
         $products = Product::query()
             ->with('category')

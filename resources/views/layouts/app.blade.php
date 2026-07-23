@@ -20,8 +20,15 @@
 			'products.quick-view'
 		);
 		$robotsContent = $shouldNoIndex ? 'noindex,nofollow' : 'index,follow';
+		$storeName = $storeSettings['store_name'] ?? 'Thế Giới Trái Cây';
+		$storeHotline = $storeSettings['store_hotline'] ?? '0333499426';
+		$storeAddress = $storeSettings['store_address'] ?? '74 Trần Thái Tông';
+		$storeEmail = $storeSettings['store_email'] ?? config('mail.from.address');
+		$storePhoneDigits = preg_replace('/\D+/', '', $storeHotline);
+		$storePhoneLink = str_starts_with(trim($storeHotline), '+') ? '+'.$storePhoneDigits : $storePhoneDigits;
+		$storeZaloPhone = str_starts_with($storePhoneDigits, '84') ? $storePhoneDigits : $storePhoneDigits;
 	@endphp
-	<title>@yield('title', 'Thế Giới Trái Cây - Trái cây Việt Nam loại 1 & nhập khẩu cao cấp')</title>
+	<title>@yield('title', $storeName . ' - Trái cây Việt Nam loại 1 & nhập khẩu cao cấp')</title>
 	<meta name="description" content="@yield('meta_description', 'The Gioi Trai Cay - Trai cay Viet Nam loai 1 va nhap khau chat luong cao.')">
 
 	<link rel="canonical" href="@yield('canonical', url()->current())" />
@@ -106,7 +113,7 @@
 		<div class="container">
 			<i class="fa fa-mobile" style=" font-size: 20px; display: inline-block; position: relative; transform: translateY(2px); "></i> Hotline:
 			<span>
-				<a href="tel:0333499426">0333499426</a>
+				<a href="tel:{{ $storePhoneLink }}">{{ $storeHotline }}</a>
 			</span>
 		</div>
 	</div>
@@ -115,10 +122,10 @@
 		<div class="d-flex justify-content-between align-items-center">
 			<div class="topbar-left">
 				<span class="margin-right-20">
-					<i class="fa fa-mobile" style="font-size: 16px;"></i> Hotline: <b>0333499426</b>
+					<i class="fa fa-mobile" style="font-size: 16px;"></i> Hotline: <b>{{ $storeHotline }}</b>
 				</span>
 				<span>
-					<i class="fa fa-map-marker"></i> Địa chỉ: 74 Trần Thái Tông
+					<i class="fa fa-map-marker"></i> Địa chỉ: {{ $storeAddress }}
 				</span>
 				</div>
 				<div class="topbar-right">
@@ -165,7 +172,7 @@
 				<div class="col-xs-12 col-md-3">
 					<div class="logo">
 						<a href="{{ route('home') }}" class="logo-wrapper">
-							<img src="https://theme.hstatic.net/200000157781/1001036201/14/logo.png?v=1061" alt="Thế Giới Trái Cây" width="310" height="86" loading="eager" decoding="async" fetchpriority="high">
+							<img src="https://theme.hstatic.net/200000157781/1001036201/14/logo.png?v=1061" alt="{{ $storeName }}" width="310" height="86" loading="eager" decoding="async" fetchpriority="high">
 						</a>
 					</div>
 				</div>
@@ -189,7 +196,7 @@
 								</a>
 								<div class="info">
 									<a href="{{ $contactUrl }}" class="policy-title">Hỗ trợ 24/7</a>
-									<a href="tel:0333499426" class="policy-desc">Hotline: 0333499426</a>
+									<a href="tel:{{ $storePhoneLink }}" class="policy-desc">Hotline: {{ $storeHotline }}</a>
 								</div>
 							</div>
 							<div class="item-policy d-flex align-items-center">
@@ -478,9 +485,9 @@
 							<div class="footer-widget">
 								<h3>Liên hệ</h3>
 								<ul class="list-menu footer-contact-list">
-									<li><i class="fa fa-map-marker"></i><span>74 Trần Thái Tông</span></li>
-									<li><i class="fa fa-phone"></i><span>0333499426<span class="line-break">Thứ 2 - Chủ nhật: 7:00 - 21:00</span></span></li>
-									<li><i class="fa fa-envelope"></i><span>bacnguyen2921@gmail.com</span></li>
+									<li><i class="fa fa-map-marker"></i><span>{{ $storeAddress }}</span></li>
+									<li><i class="fa fa-phone"></i><span>{{ $storeHotline }}<span class="line-break">Thứ 2 - Chủ nhật: 7:00 - 21:00</span></span></li>
+									<li><i class="fa fa-envelope"></i><span>{{ $storeEmail }}</span></li>
 								</ul>
 								<ul class="list-menu">
 									<li>Chủ sở hữu: Nguyễn Văn Bắc</li>
@@ -534,7 +541,7 @@
 			<div class="container" style="position: relative;">
 				<div class="row">
 					<div class="col-xs-12 col-md-6">
-						<div class="copyright-text">© Bản quyền thuộc về Thế giới trái cây</div>
+						<div class="copyright-text">© Bản quyền thuộc về {{ $storeName }}</div>
 					</div>
 					<div class="col-xs-12 col-md-6 hidden-xs">
 						<ul class="list-menu-footer">
@@ -556,10 +563,10 @@
 	@include('partials.category-rail')
 
 	<div class="tgc-side-icons" data-floating-actions>
-		<a class="icon-item phone" href="tel:0333499426" aria-label="Gọi hotline" title="Gọi hotline">
+		<a class="icon-item phone" href="tel:{{ $storePhoneLink }}" aria-label="Gọi hotline" title="Gọi hotline">
 			<i class="fa fa-phone" aria-hidden="true"></i>
 		</a>
-		<a class="icon-item zalo" href="https://zalo.me/0333499426" target="_blank" rel="noopener noreferrer" aria-label="Nhắn Zalo" title="Nhắn Zalo">Zalo</a>
+		<a class="icon-item zalo" href="https://zalo.me/{{ $storeZaloPhone }}" target="_blank" rel="noopener noreferrer" aria-label="Nhắn Zalo" title="Nhắn Zalo">Zalo</a>
 		<a class="icon-item location" href="{{ route('contact.page') }}" aria-label="Xem địa chỉ cửa hàng" title="Xem địa chỉ cửa hàng">
 			<i class="fa fa-map-marker" aria-hidden="true"></i>
 		</a>
@@ -607,8 +614,8 @@
 			</div>
 
 			<div class="support-widget-contact">
-				<a href="tel:0333499426"><i class="fa fa-phone" aria-hidden="true"></i> Gọi tư vấn</a>
-				<a href="https://zalo.me/0333499426" target="_blank" rel="noopener noreferrer"><strong>Zalo</strong> Nhắn cửa hàng</a>
+				<a href="tel:{{ $storePhoneLink }}"><i class="fa fa-phone" aria-hidden="true"></i> Gọi tư vấn</a>
+				<a href="https://zalo.me/{{ $storeZaloPhone }}" target="_blank" rel="noopener noreferrer"><strong>Zalo</strong> Nhắn cửa hàng</a>
 			</div>
 		</div>
 	</section>

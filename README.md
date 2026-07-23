@@ -83,14 +83,16 @@ Project này được xây dựng để đưa vào portfolio/CV intern PHP. Đi�
 ### Admin
 
 - Dashboard tổng quan đơn hàng, doanh thu, khách hàng, tồn kho thấp.
-- Quản lý đơn hàng: cập nhật trạng thái, phí ship, duyệt hủy đơn.
-- Quản lý coupon/voucher: tạo, sửa, kích hoạt, gán voucher.
-- Quản lý sản phẩm đã nối DB thật:
-  - Đọc sản phẩm từ MySQL.
-  - Lọc theo tên/SKU/slug, danh mục, trạng thái, tồn kho.
-  - Thống kê tổng sản phẩm, đang hiển thị, tạm ẩn, sắp hết hàng, hết hàng.
-  - Phân trang.
-  - Ẩn/hiện sản phẩm trên storefront.
+- Quản lý sản phẩm đầy đủ: tạo, sửa, xóa mềm, khôi phục, ảnh, giá, tồn kho và lịch sử điều chỉnh.
+- Quản lý đơn hàng theo state machine: xác minh thanh toán, phí giao hàng, vận chuyển, hủy, đổi trả và hoàn tiền.
+- Quản lý khách hàng: hồ sơ, trạng thái tài khoản, phiên đăng nhập, xác thực email và cấp voucher.
+- Quản lý coupon/voucher: quy tắc tài chính, quà tặng, phân phối, lịch sử sử dụng và tồn kho quà.
+- Báo cáo lấy từ dữ liệu thật: doanh thu, tăng trưởng, AOV, trạng thái, phương thức thanh toán, khung giờ đặt hàng và top sản phẩm; hỗ trợ xuất CSV.
+- Cài đặt vận hành từ database: thông tin cửa hàng, phí giao hàng, phương thức thanh toán, email đơn hàng và cảnh báo tồn kho.
+- Quản trị danh mục, banner và trang nội dung; nội dung HTML được làm sạch trước khi hiển thị.
+- Tìm kiếm toàn hệ thống và trung tâm tác vụ theo đúng phạm vi quyền của nhân viên.
+- RBAC gồm `super_admin`, `manager`, `catalog`, `fulfillment`, `support`, `analyst`.
+- Bảo mật quản trị: mật khẩu tạm bắt buộc đổi, thu hồi phiên, TOTP 2FA, mã khôi phục dùng một lần và audit log.
 
 ## Cấu Trúc Thư Mục
 
@@ -341,10 +343,6 @@ Khi deploy Linux, cấu hình cron gọi `php artisan schedule:run` mỗi phút.
 
 - Ảnh đại diện đã có biến thể WebP local cho phần lớn catalog; tiếp tục chuyển toàn bộ ảnh gallery còn hotlink sang storage/CDN do cửa hàng sở hữu sau khi xác nhận quyền sử dụng.
 - Duyệt nghiệp vụ 4 sản phẩm đang hết tồn để nhập thêm hoặc chủ động ẩn khỏi storefront.
-- Hoàn thiện CRUD sản phẩm admin: thêm/sửa/xóa mềm, upload ảnh, sửa giá, sửa tồn kho.
-- Admin customers: danh sách khách hàng, tổng chi tiêu, đơn gần nhất, khóa/mở tài khoản.
-- Admin reports: doanh thu, top sản phẩm, coupon usage, tồn kho thấp, tỷ lệ hủy đơn.
-- Admin settings: thông tin shop, phí ship, ngân hàng, cấu hình thanh toán.
 - Chuyển email nặng sang queue worker khi deploy thật.
 - Thiết lập CI chạy PHPUnit, build frontend, audit và Playwright trên mỗi pull request.
 - Chuẩn hóa backup/restore tự động, log tập trung và giám sát lỗi production.

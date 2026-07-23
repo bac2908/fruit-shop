@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Page;
+
 class PageController extends Controller
 {
     public function frontpage()
@@ -44,8 +46,30 @@ class PageController extends Controller
         return $this->render('khach-hang-doanh-nghiep');
     }
 
+    public function dynamic(string $slug)
+    {
+        return $this->render($slug);
+    }
+
     private function render(string $slug)
     {
+        $databasePage = Page::query()
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+
+        if ($databasePage) {
+            return view('pages.static', [
+                'page' => [
+                    'title' => $databasePage->title,
+                    'intro' => $databasePage->excerpt,
+                    'content' => $databasePage->content,
+                    'meta_title' => $databasePage->meta_title,
+                    'meta_description' => $databasePage->meta_description,
+                ],
+            ]);
+        }
+
         $pages = $this->pageContent();
 
         abort_unless(isset($pages[$slug]), 404);
