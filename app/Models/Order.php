@@ -208,6 +208,72 @@ class Order extends Model
         return $this->shipping_fee_status !== self::SHIPPING_FEE_STATUS_CONFIRMED;
     }
 
+    public function isReadyForConfirmation(): bool
+    {
+        if ($this->status !== self::STATUS_PENDING
+            || $this->requiresShippingConfirmation()
+            || $this->hasPendingCancellationRequest()) {
+            return false;
+        }
+
+        $requiresPrepayment = in_array($this->payment_method, [
+            self::PAYMENT_METHOD_BANK_TRANSFER,
+            self::PAYMENT_METHOD_MOMO,
+        ], true);
+
+        return ! $requiresPrepayment || $this->payment_status === self::PAYMENT_STATUS_PAID;
+    }
+
+    public function confirmationPendingReason(): ?string
+    {
+        if ($this->status !== self::STATUS_PENDING) {
+            return null;
+        }
+
+        if ($this->hasPendingCancellationRequest()) {
+            return 'Khách đã gửi yêu cầu hủy; cần xử lý yêu cầu này trước.';
+        }
+
+        if ($this->requiresShippingConfirmation()) {
+            return 'Phí hoặc tuyến giao hàng còn tạm tính; cần chốt thông tin vận chuyển.';
+        }
+
+        if ($this->payment_method === self::PAYMENT_METHOD_BANK_TRANSFER
+            && $this->payment_status !== self::PAYMENT_STATUS_PAID) {
+            return 'Chưa đối soát được khoản chuyển tiền của khách.';
+        }
+
+        if ($this->payment_method === self::PAYMENT_METHOD_MOMO
+            && $this->payment_status !== self::PAYMENT_STATUS_PAID) {
+            return 'Chưa nhận được callback thanh toán thành công từ MoMo.';
+        }
+
+        return 'Đơn đã đủ điều kiện và đang chờ nhân viên xác nhận.';
+    }
+
+    public function confirmationPendingCustomerMessage(): string
+    {
+        if ($this->hasPendingCancellationRequest()) {
+            return 'Shop đang xem xét yêu cầu hủy đơn của bạn.';
+        }
+
+        if ($this->requiresShippingConfirmation()) {
+            return 'Shop đang xác nhận tuyến giao, cách đóng gói và phí vận chuyển cuối cùng.';
+        }
+
+        if ($this->payment_method === self::PAYMENT_METHOD_BANK_TRANSFER
+            && $this->payment_status !== self::PAYMENT_STATUS_PAID) {
+            return 'Shop đang đối soát khoản chuyển tiền của bạn trước khi chuẩn bị hàng.';
+        }
+
+        if ($this->payment_method === self::PAYMENT_METHOD_MOMO
+            && $this->payment_status !== self::PAYMENT_STATUS_PAID) {
+            return 'Hệ thống đang chờ MoMo xác nhận giao dịch thanh toán.';
+        }
+
+        return 'Shop đang kiểm tra lần cuối trước khi chuẩn bị hàng.';
+    }
+
     public function isCustomerCancellable(): bool
     {
         return $this->status === self::STATUS_PENDING
@@ -351,14 +417,20 @@ class Order extends Model
                 'done' => true,
                 'current' => false,
             ],
-            [
+        ]);
+
+        if ($this->status === self::STATUS_PENDING) {
+            $steps->push([
                 'key' => self::STATUS_PENDING,
                 'label' => 'Chờ shop xác nhận',
-                'description' => 'Shop kiểm tra tồn kho, địa chỉ và thanh toán.',
+                'description' => $this->confirmationPendingCustomerMessage(),
                 'time' => $historyTime(self::STATUS_PENDING),
-                'done' => in_array($this->status, [self::STATUS_PENDING, self::STATUS_CONFIRMED, self::STATUS_SHIPPING, self::STATUS_DONE], true),
-                'current' => $this->status === self::STATUS_PENDING,
-            ],
+                'done' => true,
+                'current' => true,
+            ]);
+        }
+
+        $steps->push(
             [
                 'key' => self::STATUS_CONFIRMED,
                 'label' => 'Đã xác nhận',
@@ -382,8 +454,8 @@ class Order extends Model
                 'time' => $historyTime(self::STATUS_DONE),
                 'done' => $this->status === self::STATUS_DONE,
                 'current' => $this->status === self::STATUS_DONE,
-            ],
-        ]);
+            ]
+        );
 
         if ($this->status === self::STATUS_CANCELLED) {
             return collect([

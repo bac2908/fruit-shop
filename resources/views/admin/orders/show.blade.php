@@ -183,15 +183,42 @@
             <article class="panel action-panel">
                 <h3>Trạng thái đơn</h3>
                 <span class="status-pill {{ $order->status }}">{{ $order->status_label }}</span>
+                @if($order->status === \App\Models\Order::STATUS_PENDING)
+                    <div class="notice warning">
+                        <strong>Đang chờ vì:</strong> {{ $order->confirmationPendingReason() }}
+                        @if($order->requiresShippingConfirmation())
+                            <br>Thao tác tiếp theo: hoàn thiện và lưu mục <strong>Vận chuyển</strong> bên dưới.
+                        @elseif($order->payment_method === \App\Models\Order::PAYMENT_METHOD_BANK_TRANSFER && $order->payment_status !== \App\Models\Order::PAYMENT_STATUS_PAID)
+                            <br>Thao tác tiếp theo: đối soát rồi bấm <strong>Xác nhận đã nhận tiền</strong>.
+                        @elseif($order->payment_method === \App\Models\Order::PAYMENT_METHOD_MOMO && $order->payment_status !== \App\Models\Order::PAYMENT_STATUS_PAID)
+                            <br>Hệ thống sẽ tự xử lý khi nhận callback MoMo hợp lệ; admin không xác nhận thủ công.
+                        @elseif($order->isReadyForConfirmation())
+                            <br>Thao tác tiếp theo: chọn <strong>Đã xác nhận</strong> để bắt đầu chuẩn bị hàng.
+                        @endif
+                    </div>
+                @endif
                 @if(count($availableStatuses) > 1)
                     <form method="post" action="{{ route('admin.orders.status', $order) }}">
                         @csrf @method('PATCH')
-                        <div class="field"><label for="status">Chuyển trạng thái</label><select class="select" id="status" name="status" required>@foreach($availableStatuses as $value)<option value="{{ $value }}" @selected($order->status === $value)>{{ $statusLabels[$value] ?? $value }}</option>@endforeach</select></div>
+                        <div class="field">
+                            <label for="status">Hành động tiếp theo</label>
+                            <select class="select" id="status" name="status" required>
+                                <option value="">Chọn trạng thái</option>
+                                @foreach($availableStatuses as $value)
+                                    @continue($value === $order->status)
+                                    <option value="{{ $value }}">{{ $statusLabels[$value] ?? $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="field"><label for="admin_note">Ghi chú nội bộ</label><input class="input" id="admin_note" name="admin_note" maxlength="500" placeholder="Lý do hoặc thông tin bàn giao"></div>
-                        <button class="btn btn-primary" type="submit"><i class="ri-save-3-line"></i>Lưu trạng thái</button>
+                        <button class="btn btn-primary" type="submit"><i class="ri-arrow-right-circle-line"></i>Cập nhật trạng thái</button>
                     </form>
                 @else
-                    <div class="notice">Đơn đã ở trạng thái kết thúc và không thể chuyển tiếp.</div>
+                    @if($isTerminal)
+                        <div class="notice">Đơn đã ở trạng thái kết thúc và không thể chuyển tiếp.</div>
+                    @else
+                        <div class="notice">Hoàn thành điều kiện được hướng dẫn ở trên để mở bước trạng thái tiếp theo.</div>
+                    @endif
                 @endif
             </article>
 

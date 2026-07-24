@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderCancellationRequest;
 use App\Models\OrderReturnRequest;
 use App\Models\User;
+use App\Services\OrderAutomationService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -134,6 +135,67 @@ class AdminOrderManagementTest extends TestCase
         $this->assertSame(Order::STATUS_DONE, $order->status);
         $this->assertSame(Order::SHIPPING_STATUS_DELIVERED, $order->shipping_status);
         $this->assertSame(Order::PAYMENT_STATUS_PAID, $order->payment_status);
+    }
+
+    public function test_confirmation_rules_match_payment_method_and_customer_timeline(): void
+    {
+        $automation = app(OrderAutomationService::class);
+        $bankOrder = $this->order([
+            'payment_method' => Order::PAYMENT_METHOD_BANK_TRANSFER,
+            'payment_status' => Order::PAYMENT_STATUS_UNPAID,
+        ]);
+
+        $this->assertFalse($automation->autoConfirmAfterStockReserved($bankOrder));
+        $this->assertSame(Order::STATUS_PENDING, $bankOrder->fresh()->status);
+        $this->assertTrue($bankOrder->trackingTimeline()->contains(
+            fn (array $step) => $step['key'] === Order::STATUS_PENDING && $step['current']
+        ));
+        $this->assertTrue($bankOrder->trackingTimeline()->contains(
+            fn (array $step) => str_contains($step['description'], 'đối soát khoản chuyển tiền')
+        ));
+
+        $bankOrder->forceFill([
+            'payment_status' => Order::PAYMENT_STATUS_PAID,
+            'paid_at' => now(),
+        ])->save();
+        $this->assertTrue($automation->autoConfirmAfterStockReserved($bankOrder->refresh()));
+
+        $confirmedTimeline = $bankOrder->fresh()->trackingTimeline();
+        $this->assertFalse($confirmedTimeline->contains(
+            fn (array $step) => $step['key'] === Order::STATUS_PENDING
+        ));
+        $this->assertTrue($confirmedTimeline->contains(
+            fn (array $step) => $step['key'] === Order::STATUS_CONFIRMED && $step['current']
+        ));
+
+        $estimatedCodOrder = $this->order([
+            'shipping_fee_status' => Order::SHIPPING_FEE_STATUS_ESTIMATED,
+        ]);
+        $this->assertFalse($automation->autoConfirmAfterStockReserved($estimatedCodOrder));
+        $this->assertSame(Order::STATUS_PENDING, $estimatedCodOrder->fresh()->status);
+    }
+
+    public function test_admin_order_screen_explains_why_confirmation_is_waiting(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $bankOrder = $this->order([
+            'payment_method' => Order::PAYMENT_METHOD_BANK_TRANSFER,
+            'payment_status' => Order::PAYMENT_STATUS_UNPAID,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.orders.show', $bankOrder))
+            ->assertOk()
+            ->assertSee('Chưa đối soát được khoản chuyển tiền của khách.')
+            ->assertSee('Xác nhận đã nhận tiền')
+            ->assertDontSee('<option value="confirmed">', false);
+
+        $codOrder = $this->order();
+        $this->actingAs($admin)
+            ->get(route('admin.orders.show', $codOrder))
+            ->assertOk()
+            ->assertSee('Đơn đã đủ điều kiện và đang chờ nhân viên xác nhận.')
+            ->assertSee('<option value="confirmed">Đã xác nhận</option>', false);
     }
 
     public function test_paid_cancellation_waits_for_real_refund_confirmation(): void

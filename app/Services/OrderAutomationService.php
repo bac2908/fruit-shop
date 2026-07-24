@@ -30,18 +30,7 @@ class OrderAutomationService
             return false;
         }
 
-        if ($order->status !== Order::STATUS_PENDING) {
-            return false;
-        }
-
-        if ($order->hasPendingCancellationRequest()) {
-            return false;
-        }
-
-        if (
-            $order->payment_method === Order::PAYMENT_METHOD_MOMO
-            && $order->payment_status !== Order::PAYMENT_STATUS_PAID
-        ) {
+        if (! $order->isReadyForConfirmation()) {
             return false;
         }
 

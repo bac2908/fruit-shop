@@ -14,7 +14,7 @@
     $latestCancellationRequest = $order->latest_cancellation_request;
     $cancellationReasons = \App\Models\OrderCancellationRequest::reasonLabels();
     $statusDescriptions = [
-        \App\Models\Order::STATUS_PENDING => 'Shop đang kiểm tra tồn kho, địa chỉ giao hàng và thanh toán trước khi xử lý đơn.',
+        \App\Models\Order::STATUS_PENDING => $order->confirmationPendingCustomerMessage(),
         \App\Models\Order::STATUS_CONFIRMED => 'Đơn đã được hệ thống xác nhận vì sản phẩm còn hàng và tồn kho đã được giữ cho bạn.',
         \App\Models\Order::STATUS_SHIPPING => 'Đơn đã rời shop và đang được giao tới địa chỉ bạn đã cung cấp.',
         \App\Models\Order::STATUS_DONE => 'Đơn đã hoàn tất. Cảm ơn bạn đã mua hàng tại Thế Giới Trái Cây.',

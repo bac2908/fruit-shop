@@ -106,10 +106,24 @@ class OrderController extends Controller
             'refundProcessor',
         ]);
 
+        $availableStatuses = $stateTransitions->availableStatuses($order);
+        if (! $order->isReadyForConfirmation()) {
+            $availableStatuses = array_values(array_filter(
+                $availableStatuses,
+                fn (string $status) => $status !== Order::STATUS_CONFIRMED
+            ));
+        }
+        if (trim((string) $order->shipping_provider) === '') {
+            $availableStatuses = array_values(array_filter(
+                $availableStatuses,
+                fn (string $status) => $status !== Order::STATUS_SHIPPING
+            ));
+        }
+
         return view('admin.orders.show', [
             'order' => $order,
             'statusLabels' => Order::statusLabels(),
-            'availableStatuses' => $stateTransitions->availableStatuses($order),
+            'availableStatuses' => $availableStatuses,
         ]);
     }
 
