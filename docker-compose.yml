@@ -9,6 +9,9 @@ services:
       - "8080:80"
     volumes:
       - ./:/var/www/html
+      - app_vendor:/var/www/html/vendor
+      - app_framework:/var/www/html/storage/framework
+      - app_bootstrap_cache:/var/www/html/bootstrap/cache
     environment:
       APP_URL: http://localhost:8080
       DB_CONNECTION: mysql
@@ -25,13 +28,18 @@ services:
       MAIL_ENCRYPTION: ""
       MAIL_FROM_ADDRESS: thegioitraicay@example.test
       MAIL_FROM_NAME: The Gioi Trai Cay
-      ADMIN_EMAIL: ${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set a strong ADMIN_PASSWORD in .env}
+      GOOGLE_REDIRECT_URI: http://localhost:8080/auth/google/callback
     depends_on:
       mysql:
         condition: service_healthy
       mailpit:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - fruitshop
 
@@ -104,3 +112,6 @@ networks:
 
 volumes:
   mysql_data:
+  app_vendor:
+  app_framework:
+  app_bootstrap_cache:

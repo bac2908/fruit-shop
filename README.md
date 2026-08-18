@@ -133,18 +133,36 @@ Website chạy tại `http://127.0.0.1:8000`. Nếu dùng virtual host của AMP
 
 ## Chạy bằng Docker
 
-Docker Compose tạo bốn service: ứng dụng, MySQL, phpMyAdmin và Mailpit.
+Docker Compose tạo bốn service: ứng dụng, MySQL, phpMyAdmin và Mailpit. Docker tự động:
 
-```powershell
-Copy-Item .env.docker.example .env
-```
+- tạo file `.env` và `APP_KEY` nếu dự án chưa có;
+- khởi tạo MySQL từ `docker/mysql/init/10-web-traicay.sql` trong lần chạy đầu tiên;
+- chạy toàn bộ migration còn thiếu;
+- tạo liên kết `public/storage`.
 
-Sau khi đặt `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env`:
+Không cần mở Apache hoặc MySQL của AMPPS. Docker Desktop cần được mở trước khi chạy. Trong lần build đầu tiên, từ thư mục `fruitshop`, dùng:
 
 ```powershell
 docker compose up -d --build
-docker compose exec app php artisan migrate --seed
-docker compose exec app php artisan storage:link
+```
+
+Các lần chạy sau chỉ cần:
+
+```powershell
+docker compose up -d
+```
+
+Các container dùng `restart: unless-stopped`, nên chúng cũng tự chạy lại khi Docker Desktop khởi động. Muốn dừng và gỡ container nhưng vẫn giữ nguyên database:
+
+```powershell
+docker compose down
+```
+
+Theo dõi quá trình khởi động:
+
+```powershell
+docker compose ps
+docker compose logs -f app
 ```
 
 Các địa chỉ mặc định:
@@ -156,6 +174,12 @@ Các địa chỉ mặc định:
 | Mailpit | http://localhost:8025 |
 | MySQL từ máy host | `127.0.0.1:3307` |
 
+Để đăng nhập Google hoạt động trong Docker, OAuth 2.0 Web Client trên Google Cloud Console phải có đúng Authorized redirect URI sau (không thêm dấu `/` ở cuối):
+
+```text
+http://localhost:8080/auth/google/callback
+```
+
 Thông tin database Docker dành cho môi trường local:
 
 ```text
@@ -165,6 +189,17 @@ Password: fruitshop
 ```
 
 Không sử dụng các giá trị này khi triển khai production.
+
+File SQL khởi tạo chứa snapshot dữ liệu thật của dự án, có thể gồm thông tin tài khoản và đơn hàng. Không đưa file này lên repository công khai nếu chưa ẩn danh dữ liệu.
+
+Database nằm trong volume `fruitshop_mysql_data`, nên dữ liệu vẫn còn sau khi chạy `docker compose down` hoặc khởi động lại máy. Muốn xóa database Docker và nhập lại snapshot SQL ban đầu:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
+
+Lệnh `down -v` xóa toàn bộ dữ liệu đã phát sinh bên trong MySQL Docker, vì vậy chỉ dùng khi thực sự muốn khởi tạo lại database.
 
 ## Kiểm thử
 

@@ -250,7 +250,7 @@ class AppServiceProvider extends ServiceProvider
 
     private function getSalesPopupProducts(): array
     {
-        return cache()->remember('sales_popup_products_v1', now()->addMinutes(15), function () {
+        return cache()->remember('sales_popup_products_v2', now()->addMinutes(15), function () {
             $products = collect();
             $bestSellerIds = $this->getBestSellerProductIds();
 
@@ -279,13 +279,37 @@ class AppServiceProvider extends ServiceProvider
                 ->map(function (Product $product) {
                     return [
                         'name' => (string) $product->name,
-                        'url' => route('products.show', $product->slug),
-                        'image' => $product->primary_image_url,
+                        'url' => route('products.show', $product->slug, false),
+                        'image' => $this->getSalesPopupImage($product),
                     ];
                 })
                 ->values()
                 ->all();
         });
+    }
+
+    private function getSalesPopupImage(Product $product): string
+    {
+        $thumb = trim((string) $product->thumb);
+        $galleryImage = trim((string) optional($product->images->first())->url);
+        $paths = collect([$thumb, $galleryImage])
+            ->filter()
+            ->unique()
+            ->values();
+
+        $image = $paths->first(
+            fn (string $path) => !Str::startsWith($path, ['http://', 'https://', '//', 'data:'])
+        ) ?? $paths->first();
+
+        if (!$image) {
+            return '';
+        }
+
+        if (Str::startsWith($image, ['http://', 'https://', '//', 'data:'])) {
+            return $image;
+        }
+
+        return '/'.ltrim(str_replace('\\', '/', $image), '/');
     }
 
     private function getBestSellerProductIds(): array

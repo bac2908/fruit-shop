@@ -4,7 +4,10 @@
 .vscode
 node_modules
 vendor
+public/storage
 storage/logs/*.log
+storage/app/ui-audit
+storage/app/recovery
 storage/framework/cache/data/*
 storage/framework/sessions/*
 storage/framework/views/*
