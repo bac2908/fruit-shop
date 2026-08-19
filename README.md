@@ -66,7 +66,7 @@ Một số nguyên tắc đang được áp dụng:
 - Laravel Socialite cho Google OAuth
 - PHPUnit cho feature/unit test
 - Playwright và axe-core cho E2E, responsive và accessibility
-- Docker Compose, Apache, phpMyAdmin và Mailpit
+- Docker Compose, Apache và phpMyAdmin
 
 ## Cấu trúc thư mục
 
@@ -133,7 +133,7 @@ Website chạy tại `http://127.0.0.1:8000`. Nếu dùng virtual host của AMP
 
 ## Chạy bằng Docker
 
-Docker Compose tạo bốn service: ứng dụng, MySQL, phpMyAdmin và Mailpit. Docker tự động:
+Docker Compose tạo ba service chính: ứng dụng, MySQL và phpMyAdmin. Docker tự động:
 
 - tạo file `.env` và `APP_KEY` nếu dự án chưa có;
 - khởi tạo MySQL từ `docker/mysql/init/10-web-traicay.sql` trong lần chạy đầu tiên;
@@ -171,7 +171,6 @@ Các địa chỉ mặc định:
 | --- | --- |
 | Website | http://localhost:8080 |
 | phpMyAdmin | http://localhost:8081 |
-| Mailpit | http://localhost:8025 |
 | MySQL từ máy host | `127.0.0.1:3307` |
 
 Để đăng nhập Google hoạt động trong Docker, OAuth 2.0 Web Client trên Google Cloud Console phải có đúng Authorized redirect URI sau (không thêm dấu `/` ở cuối):
@@ -206,8 +205,13 @@ Lệnh `down -v` xóa toàn bộ dữ liệu đã phát sinh bên trong MySQL Do
 Chạy toàn bộ backend test:
 
 ```powershell
-php artisan test
+docker compose --profile test up -d mysql_test
+& 'C:\Program Files\Ampps\php82\php.exe' scripts/run-php-tests.php
 ```
+
+Test runner luôn dùng MySQL riêng tại cổng `3308`, chạy `migrate:fresh` trên
+database `fruitshop_test` và từ chối mọi tên database không chứa `test/testing`.
+Không chạy PHPUnit trực tiếp với database trong `.env` phát triển.
 
 Kiểm tra build frontend:
 
@@ -272,6 +276,10 @@ Scheduler phụ trách cảnh báo tồn kho thấp và hủy các đơn chuyể
 | Analytics | `ANALYTICS_ENABLED`, `ANALYTICS_MEASUREMENT_ID` |
 
 Sau khi sửa `.env` trên hosting, chạy `php artisan config:clear` trước khi kiểm tra lại.
+
+Có thể bắt đầu từ `.env.production.example`. File mẫu đã bật chế độ production,
+cookie bảo mật và CORS giới hạn theo domain; hãy thay toàn bộ giá trị placeholder
+trước khi triển khai.
 
 ## Giới hạn trước khi dùng thực tế
 

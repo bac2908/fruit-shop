@@ -11,9 +11,12 @@ if [ ! -f .env ]; then
     fi
 fi
 
-if [ ! -f vendor/autoload.php ]; then
-    composer install --no-interaction --prefer-dist --no-progress
-fi
+composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --no-progress \
+    --optimize-autoloader
 
 mkdir -p \
     storage/app/private \

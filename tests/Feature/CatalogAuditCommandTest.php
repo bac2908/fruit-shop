@@ -14,7 +14,7 @@ class CatalogAuditCommandTest extends TestCase
 
     public function test_safe_fix_generates_sku_maps_thumb_and_normalizes_metadata(): void
     {
-        $category = Category::query()->firstOrFail();
+        $category = $this->createCategory();
         $product = Product::query()->create([
             'category_id' => $category->id,
             'name' => '  Sản phẩm   kiểm thử  ',
@@ -46,7 +46,7 @@ class CatalogAuditCommandTest extends TestCase
 
     public function test_safe_fix_prefers_an_owned_optimized_primary_image(): void
     {
-        $category = Category::query()->firstOrFail();
+        $category = $this->createCategory();
         $product = Product::query()->create([
             'category_id' => $category->id,
             'name' => 'Sản phẩm ảnh cục bộ',
@@ -85,7 +85,7 @@ class CatalogAuditCommandTest extends TestCase
 
     public function test_safe_fix_finds_an_owned_image_when_the_historical_filename_slug_differs(): void
     {
-        $category = Category::query()->firstOrFail();
+        $category = $this->createCategory();
         $product = Product::query()->create([
             'category_id' => $category->id,
             'name' => 'Sản phẩm đã đổi slug',
@@ -124,7 +124,7 @@ class CatalogAuditCommandTest extends TestCase
 
     public function test_safe_fix_infers_only_an_unambiguous_selling_unit(): void
     {
-        $category = Category::query()->firstOrFail();
+        $category = $this->createCategory();
         $product = Product::query()->create([
             'category_id' => $category->id,
             'name' => 'Mâm trái cây kiểm thử',
@@ -145,5 +145,15 @@ class CatalogAuditCommandTest extends TestCase
         ])->assertSuccessful();
 
         $this->assertSame('mâm', $product->fresh()->unit);
+    }
+
+    private function createCategory(): Category
+    {
+        return Category::query()->create([
+            'name' => 'Danh mục kiểm thử',
+            'slug' => 'catalog-audit-category-'.uniqid(),
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
     }
 }

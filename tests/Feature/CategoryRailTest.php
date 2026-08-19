@@ -10,6 +10,20 @@ class CategoryRailTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        foreach (config('shop.quick_category_slugs', []) as $sortOrder => $slug) {
+            Category::query()->create([
+                'name' => 'Danh mục '.($sortOrder + 1),
+                'slug' => $slug,
+                'sort_order' => $sortOrder,
+                'is_active' => true,
+            ]);
+        }
+    }
+
     public function test_storefront_renders_the_configured_quick_category_rail_in_order(): void
     {
         $slugs = config('shop.quick_category_slugs');

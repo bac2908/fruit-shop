@@ -2,14 +2,37 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class SalesPopupUrlTest extends TestCase
 {
+    use DatabaseTransactions;
+
     public function test_sales_popup_uses_host_independent_local_urls(): void
     {
         Cache::forget('sales_popup_products_v2');
+
+        $category = Category::query()->create([
+            'name' => 'Sản phẩm bán chạy',
+            'slug' => 'san-pham-ban-chay',
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
+        Product::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Sản phẩm popup kiểm thử',
+            'slug' => 'sales-popup-test-product',
+            'sku' => 'SALES-POPUP-TEST',
+            'unit' => 'kg',
+            'stock' => 10,
+            'price' => 100000,
+            'thumb' => 'images/placeholder-product.svg',
+            'is_active' => true,
+        ]);
 
         $response = $this
             ->withServerVariables(['HTTP_HOST' => '127.0.0.1'])

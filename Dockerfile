@@ -28,7 +28,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN printf 'ServerName localhost\n' > /etc/apache2/conf-available/servername.conf \
-    && a2enconf servername
+    && printf 'ServerTokens Prod\nServerSignature Off\n' > /etc/apache2/conf-available/zz-security-hardening.conf \
+    && a2enconf servername zz-security-hardening
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
