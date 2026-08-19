@@ -1,8 +1,25 @@
 # Thế Giới Trái Cây
 
+[![CI](https://github.com/bac2908/fruit-shop/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bac2908/fruit-shop/actions/workflows/ci.yml)
+[![PHP 8.2+](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![Laravel 12](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Đây là dự án ecommerce bán trái cây mình xây dựng để luyện cách tổ chức một ứng dụng Laravel có nghiệp vụ thực tế. Ngoài phần cửa hàng dành cho khách, dự án còn có khu vực quản trị để xử lý sản phẩm, tồn kho, đơn hàng, voucher, khách hàng và nội dung website.
 
 Điểm mình tập trung nhiều nhất là luồng đặt hàng: dữ liệu được kiểm tra lại ở server, tồn kho được cập nhật trong transaction, trạng thái đơn chỉ được chuyển theo đúng thứ tự và mỗi phương thức thanh toán có điều kiện xác nhận riêng.
+
+## Ảnh giao diện
+
+| Trang chủ cửa hàng | Chi tiết sản phẩm |
+| --- | --- |
+| ![Trang chủ cửa hàng trái cây](docs/screenshots/storefront-home.png) | ![Trang chi tiết sản phẩm](docs/screenshots/product-detail.png) |
+
+| Thanh toán | Dashboard quản trị |
+| --- | --- |
+| ![Trang thanh toán](docs/screenshots/checkout.png) | ![Dashboard quản trị](docs/screenshots/admin-dashboard.png) |
+
+![Chi tiết đơn hàng trong trang quản trị](docs/screenshots/admin-order-detail.png)
 
 ## Phạm vi hiện tại
 
@@ -295,7 +312,7 @@ Dự án hiện phù hợp để demo và trình bày portfolio, chưa nên xem 
 - kết nối đơn vị vận chuyển hoặc quy trình giao hàng nội bộ thực tế;
 - rà soát quyền sử dụng toàn bộ ảnh và dữ liệu catalog;
 - chuyển email/tác vụ nặng sang queue worker;
-- thiết lập backup, monitoring, HTTPS và CI/CD;
+- thiết lập backup, monitoring, HTTPS và quy trình CD cho môi trường production;
 - kiểm thử SMTP, OAuth và callback thanh toán trên tên miền thật.
 
 ## Bảo mật khi chia sẻ repository
@@ -308,3 +325,9 @@ Dự án hiện phù hợp để demo và trình bày portfolio, chưa nên xem 
 ## Mục đích sử dụng
 
 Dự án được xây dựng cho mục đích học tập và portfolio PHP/Laravel. Các tích hợp thanh toán hiện chỉ phục vụ môi trường thử nghiệm.
+
+## Giấy phép
+
+Mã nguồn được phát hành theo [MIT License](LICENSE). Dữ liệu catalog và hình ảnh
+sản phẩm chỉ dùng để minh họa cho dự án portfolio; giấy phép MIT không mặc định
+cấp lại quyền sử dụng đối với nội dung của bên thứ ba.

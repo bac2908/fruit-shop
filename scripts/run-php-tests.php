@@ -12,6 +12,8 @@ if (preg_match('/(^|[_-])test(ing)?($|[_-])/i', $database) !== 1) {
 
 $environment = [
     'APP_ENV' => 'testing',
+    // Public, deterministic key used only by the isolated test environment.
+    'APP_KEY' => getenv('TEST_APP_KEY') ?: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     'APP_URL' => 'http://localhost',
     'DB_CONNECTION' => 'mysql',
     'DB_HOST' => getenv('TEST_DB_HOST') ?: '127.0.0.1',
