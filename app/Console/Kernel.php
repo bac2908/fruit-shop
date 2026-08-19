@@ -15,9 +15,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('shop:cancel-expired-bank-transfers')->hourly();
+        $businessTimezone = (string) config('app.display_timezone', 'Asia/Ho_Chi_Minh');
+
+        $schedule->command('shop:cancel-expired-bank-transfers')->hourly()->withoutOverlapping();
         $schedule->command('shop:cancel-expired-momo-orders')->everyFiveMinutes()->withoutOverlapping();
-        $schedule->command('shop:alert-low-stock')->dailyAt('08:00');
+        $schedule->command('shop:alert-low-stock')
+            ->dailyAt('08:00')
+            ->timezone($businessTimezone)
+            ->withoutOverlapping();
+        $schedule->command('shop:prune-security-data')
+            ->dailyAt('02:30')
+            ->timezone($businessTimezone)
+            ->withoutOverlapping();
     }
 
     /**

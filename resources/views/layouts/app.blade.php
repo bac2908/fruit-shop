@@ -779,6 +779,16 @@
 			var detailLink = modal.querySelector('[data-qv-detail-link]');
 			var lastFocusedElement = null;
 
+			if (mainImage) {
+				mainImage.addEventListener('error', function() {
+					var fallbackImage = mainImage.getAttribute('data-fallback-image');
+
+					if (fallbackImage && mainImage.getAttribute('src') !== fallbackImage) {
+						mainImage.src = fallbackImage;
+					}
+				});
+			}
+
 			function openModal() {
 				modal.hidden = false;
 				modal.setAttribute('aria-hidden', 'false');
@@ -850,6 +860,9 @@
 					image.height = 80;
 					image.loading = 'lazy';
 					image.decoding = 'async';
+					image.addEventListener('error', function() {
+						button.hidden = true;
+					});
 
 					button.appendChild(image);
 					button.addEventListener('click', function() {
@@ -898,6 +911,7 @@
 				}
 
 				if (mainImage) {
+					mainImage.setAttribute('data-fallback-image', product.fallback_image || firstImage);
 					mainImage.src = firstImage;
 					mainImage.alt = product.name || 'Sản phẩm';
 				}

@@ -239,7 +239,7 @@
                             <div class="pdx-gallery-wrap">
                                 <div class="pdx-zoom-stage" id="pdx-zoom-stage">
                                     <a href="{{ $mainImage }}" class="pdx-main-image-link" target="_blank" rel="noopener noreferrer">
-                                        <img id="pdx-main-image" src="{{ $mainImage }}" alt="{{ $product->name }}" class="pdx-main-image" width="720" height="720" loading="eager" decoding="async" fetchpriority="high">
+                                        <img id="pdx-main-image" src="{{ $mainImage }}" data-fallback-image="{{ $mainImage }}" alt="{{ $product->name }}" class="pdx-main-image" width="720" height="720" loading="eager" decoding="async" fetchpriority="high">
                                     </a>
                                     <span class="pdx-zoom-lens" aria-hidden="true"></span>
                                 </div>
@@ -1659,6 +1659,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (mainImage) {
+        var handleMainImageError = function () {
+            var fallbackImage = mainImage.getAttribute('data-fallback-image');
+
+            if (!fallbackImage || mainImage.getAttribute('src') === fallbackImage) {
+                return;
+            }
+
+            mainImage.setAttribute('src', fallbackImage);
+            if (mainImageLink) {
+                mainImageLink.setAttribute('href', fallbackImage);
+            }
+            syncZoomImage(fallbackImage);
+        };
+
+        mainImage.addEventListener('error', handleMainImageError);
+        if (mainImage.complete && mainImage.naturalWidth === 0) {
+            handleMainImageError();
+        }
+
         syncZoomImage(mainImage.getAttribute('src'));
         mainImage.addEventListener('load', function () {
             updateZoomMetrics();
@@ -1667,6 +1686,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     thumbButtons.forEach(function (button) {
+        var thumbnail = button.querySelector('img');
+        var hideBrokenThumbnail = function () {
+            button.hidden = true;
+        };
+
+        if (thumbnail) {
+            thumbnail.addEventListener('error', hideBrokenThumbnail);
+            if (thumbnail.complete && thumbnail.naturalWidth === 0) {
+                hideBrokenThumbnail();
+            }
+        }
+
         button.addEventListener('click', function () {
             var nextImage = button.getAttribute('data-image');
             if (!nextImage || !mainImage) {

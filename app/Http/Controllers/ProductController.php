@@ -133,6 +133,7 @@ class ProductController extends Controller
                 'url' => $category ? route('categories.show', $category->slug) : route('products.index'),
             ],
             'images' => $images->all(),
+            'fallback_image' => (string) $images->first(),
             'price' => [
                 'value' => $displayPrice,
                 'formatted' => $displayPrice > 0

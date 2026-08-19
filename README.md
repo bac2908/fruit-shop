@@ -133,11 +133,13 @@ Website chạy tại `http://127.0.0.1:8000`. Nếu dùng virtual host của AMP
 
 ## Chạy bằng Docker
 
-Docker Compose tạo ba service chính: ứng dụng, MySQL và phpMyAdmin. Docker tự động:
+Docker Compose tạo bốn service chính: ứng dụng, scheduler, MySQL và phpMyAdmin.
+Docker tự động:
 
 - tạo file `.env` và `APP_KEY` nếu dự án chưa có;
 - khởi tạo MySQL từ `docker/mysql/init/10-web-traicay.sql` trong lần chạy đầu tiên;
 - chạy toàn bộ migration còn thiếu;
+- chạy các tác vụ định kỳ bằng Laravel scheduler;
 - tạo liên kết `public/storage`.
 
 Không cần mở Apache hoặc MySQL của AMPPS. Docker Desktop cần được mở trước khi chạy. Trong lần build đầu tiên, từ thư mục `fruitshop`, dùng:
@@ -189,7 +191,9 @@ Password: fruitshop
 
 Không sử dụng các giá trị này khi triển khai production.
 
-File SQL khởi tạo chứa snapshot dữ liệu thật của dự án, có thể gồm thông tin tài khoản và đơn hàng. Không đưa file này lên repository công khai nếu chưa ẩn danh dữ liệu.
+File SQL khởi tạo chỉ giữ schema và dữ liệu catalog/demo đã được làm sạch. Không
+đưa tài khoản, đơn hàng, phiên đăng nhập, audit log hoặc thông tin khách hàng vào
+snapshot được theo dõi bởi Git.
 
 Database nằm trong volume `fruitshop_mysql_data`, nên dữ liệu vẫn còn sau khi chạy `docker compose down` hoặc khởi động lại máy. Muốn xóa database Docker và nhập lại snapshot SQL ban đầu:
 
@@ -255,13 +259,15 @@ php artisan mail:check
 php artisan mail:check --send=nguoi-nhan@example.com
 ```
 
-Chạy scheduler ở local:
+Scheduler chạy tự động trong service `scheduler` khi dùng Docker. Nếu chạy ứng
+dụng trực tiếp ngoài Docker, khởi động thủ công:
 
 ```powershell
 php artisan schedule:work
 ```
 
-Scheduler phụ trách cảnh báo tồn kho thấp và hủy các đơn chuyển khoản/MoMo quá hạn chưa thanh toán.
+Scheduler phụ trách cảnh báo tồn kho thấp, hủy các đơn chuyển khoản/MoMo quá hạn
+chưa thanh toán và dọn session/log bảo mật đã hết thời gian lưu trữ.
 
 ## Biến môi trường cần chú ý
 
